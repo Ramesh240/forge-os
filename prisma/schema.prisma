@@ -1,0 +1,67 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model IdentityVector {
+  id                   String       @id @default(cuid())
+  lifesTaskStatement   String
+  title                String       // e.g., "Algorithms Specialist"
+  totalVotes           Int          @default(0)
+  weightedScore        Float        @default(0.0)
+  totalHoursLogged     Float        @default(0.0)
+  currentPhase         String       @default("OBSERVATION") // OBSERVATION | PRACTICE | EXPERIMENTATION
+  habits               Habit[]
+  sessions             SessionLog[]
+  createdAt            DateTime     @default(now())
+}
+
+model Habit {
+  id                  String         @id @default(cuid())
+  identityId          String
+  identity            IdentityVector @relation(fields: [identityId], references: [id], onDelete: Cascade)
+  title               String         // Full habit: "Solve 1 LeetCode Medium / SQL Query"
+  gatewayVersion      String         // 2-Min Rule: "Open IDE & read problem prompt"
+  defaultPhase        String         // PASSIVE | PRACTICE | ACTIVE
+  
+  // 1st Law: Habit Stacking (Self-relation)
+  anchorHabitId       String?        @unique
+  anchorHabit         Habit?         @relation("HabitStack", fields: [anchorHabitId], references: [id])
+  nextStackedHabit    Habit?         @relation("HabitStack")
+
+  // 2nd Law: Temptation Bundling
+  temptationBundleUrl String?        // Locked until 2-min gateway completes
+  temptationLabel     String?        // e.g., "Unlock Lo-Fi Beats / YouTube Breakdown"
+
+  // 4th Law: Visual Chain, "Never Miss Twice" & 3rd Law Auto-Downscaler
+  currentStreak           Int            @default(0)
+  missedYesterday         Boolean        @default(false)
+  isReboundPriority       Boolean        @default(false)
+  downscaledDaysRemaining Int            @default(0) // Forces 2-Min Gateway mode for 3 days after missing twice
+  lastCompletedDate       String?        // Format: YYYY-MM-DD
+
+  sessions            SessionLog[]
+}
+
+model SessionLog {
+  id                   String         @id @default(cuid())
+  habitId              String
+  habit                Habit          @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  identityId           String
+  identity             IdentityVector @relation(fields: [identityId], references: [id], onDelete: Cascade)
+  phase                String         // PASSIVE | PRACTICE | ACTIVE
+  durationMinutes      Int
+  completedGatewayOnly Boolean        @default(false)
+  isResistancePractice Boolean        @default(false)
+  frictionRating       Int            @default(3)     // 1 to 5 cognitive friction scale
+  bottleneckAttacked   String?        // Specific weak spot targeted during the session
+  tacitInsight         String?        // Mental model or intuition unlocked post-session
+  votesEarned          Float
+  loggedAt             DateTime       @default(now())
+}
