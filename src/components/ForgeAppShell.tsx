@@ -173,6 +173,46 @@ export default function ForgeAppShell({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // --- Pomodoro Extension State ---
+  const [timerMode, setTimerMode] = useState<'FLOW' | 'POMO_25_5' | 'POMO_50_10'>('FLOW');
+  const [pomoPhase, setPomoPhase] = useState<'WORK' | 'BREAK'>('WORK');
+  const [pomoSecondsLeft, setPomoSecondsLeft] = useState<number>(23 * 60);
+  const [pomoCyclesCompleted, setPomoCyclesCompleted] = useState<number>(0);
+
+  // Switch from 2-Min Micro-Start / Open Flow into a Pomodoro preset
+  const activatePomodoroMode = (mode: 'FLOW' | 'POMO_25_5' | 'POMO_50_10') => {
+    soundEngine.playTactileClick(soundEnabled);
+    setTimerMode(mode);
+    setPomoPhase('WORK');
+
+    if (mode === 'POMO_25_5') {
+      // Credit up to 2 minutes already spent in the micro-start!
+      const credited = Math.min(120, secondsElapsed);
+      setPomoSecondsLeft(25 * 60 - credited);
+    } else if (mode === 'POMO_50_10') {
+      const credited = Math.min(120, secondsElapsed);
+      setPomoSecondsLeft(50 * 60 - credited);
+    }
+    setIsRunning(true);
+  };
+
+  // Skip current Work or Break phase (or transition when countdown hits 0)
+  const transitionPomodoroPhase = () => {
+    const breakMins = timerMode === 'POMO_50_10' ? 10 : 5;
+    const workMins = timerMode === 'POMO_50_10' ? 50 : 25;
+
+    if (pomoPhase === 'WORK') {
+      soundEngine.playBreakStartChime(soundEnabled);
+      setPomoCyclesCompleted((c) => c + 1);
+      setPomoPhase('BREAK');
+      setPomoSecondsLeft(breakMins * 60);
+    } else {
+      soundEngine.playBreakOverChime(soundEnabled);
+      setPomoPhase('WORK');
+      setPomoSecondsLeft(workMins * 60);
+    }
+  };
+
   // Create Modal State + Custom Popover States
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
   const [creatorTab, setCreatorTab] = useState<'HABIT' | 'IDENTITY'>('HABIT');
@@ -354,11 +394,27 @@ export default function ForgeAppShell({
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (isRunning) {
-      timer = setInterval(() => setSecondsElapsed((s) => s + 1), 1000);
+    if (isRunning && activeHabit) {
+      timer = setInterval(() => {
+        if (timerMode === 'FLOW') {
+          setSecondsElapsed((s) => s + 1);
+        } else {
+          // In Pomodoro mode: only add to total focus seconds during WORK phase
+          if (pomoPhase === 'WORK') {
+            setSecondsElapsed((s) => s + 1);
+          }
+          setPomoSecondsLeft((rem) => {
+            if (rem <= 1) {
+              setTimeout(() => transitionPomodoroPhase(), 50);
+              return 0;
+            }
+            return rem - 1;
+          });
+        }
+      }, 1000);
     }
     return () => clearInterval(timer);
-  }, [isRunning]);
+  }, [isRunning, activeHabit, timerMode, pomoPhase]);
 
   useEffect(() => {
     if (
@@ -423,6 +479,9 @@ export default function ForgeAppShell({
     setActiveHabit(habit);
     setStage((habit.defaultPhase as SkillStage) || 'PRACTICE');
     setSecondsElapsed(0);
+    setTimerMode('FLOW');
+    setPomoPhase('WORK');
+    setPomoCyclesCompleted(0);
     setIsChallenge(false);
     setDifficulty(3);
     setShowDebrief(false);
@@ -2358,16 +2417,23 @@ export default function ForgeAppShell({
       )}
 
       {/* ========================================================= */}
-      {/* FOCUS TIMER MODAL                                         */}
+      {/* FOCUS TIMER & POMODORO EXTENSION MODAL                    */}
       {/* ========================================================= */}
       {activeHabit && (
         <div className="fixed inset-0 z-50 theme-surface p-4 sm:p-8 flex flex-col justify-between overflow-y-auto">
           <div className="max-w-xl w-full mx-auto flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
             <div>
-              <span className="text-xs font-mono uppercase theme-muted">
-                {activeHabit.identityTitle}
-              </span>
-              <h3 className="text-base font-bold theme-text">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono uppercase theme-muted">
+                  {activeHabit.identityTitle}
+                </span>
+                {pomoCyclesCompleted > 0 && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500">
+                    🍅 {pomoCyclesCompleted} {pomoCyclesCompleted === 1 ? 'Cycle' : 'Cycles'} Done
+                  </span>
+                )}
+              </div>
+              <h3 className="text-base font-bold theme-text mt-0.5">
                 {microCleared ? activeHabit.title : activeHabit.gatewayVersion}
               </h3>
             </div>
@@ -2383,17 +2449,76 @@ export default function ForgeAppShell({
           </div>
 
           {!showDebrief ? (
-            <div className="max-w-xl w-full mx-auto my-auto space-y-6 py-6 text-center">
-              <div className="glass-nav p-8 rounded-3xl space-y-5">
-                <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full glass-panel theme-text">
-                  {microCleared ? '✓ Deep Flow Unlocked' : '2-Minute Micro-Start'}
+            <div className="max-w-xl w-full mx-auto my-auto space-y-5 py-6 text-center">
+              {/* Pomodoro Extension Bar (Appears once 2-Min Micro-Start clears, or anytime) */}
+              {microCleared && (
+                <div className="p-1.5 rounded-2xl glass-nav inline-flex flex-wrap items-center justify-center gap-1.5">
+                  {[
+                    { id: 'FLOW', label: '∞ Open Flow' },
+                    { id: 'POMO_25_5', label: '🍅 Pomodoro 25m / 5m' },
+                    { id: 'POMO_50_10', label: '⚡ Deep 50m / 10m' },
+                  ].map((m) => {
+                    const active = timerMode === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() =>
+                          activatePomodoroMode(
+                            m.id as 'FLOW' | 'POMO_25_5' | 'POMO_50_10'
+                          )
+                        }
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                          active ? 'glass-tab-active' : 'theme-subtext hover:opacity-80'
+                        }`}
+                      >
+                        {m.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Main Clock Card */}
+              <div
+                className={`glass-nav p-8 rounded-3xl space-y-5 transition-all ${
+                  timerMode !== 'FLOW' && pomoPhase === 'BREAK'
+                    ? 'ring-2 ring-emerald-500/50'
+                    : ''
+                }`}
+              >
+                <span
+                  className={`text-xs font-bold uppercase tracking-wider px-3.5 py-1 rounded-full inline-block ${
+                    timerMode !== 'FLOW' && pomoPhase === 'BREAK'
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : microCleared
+                      ? 'glass-panel theme-text'
+                      : 'glass-panel text-indigo-400'
+                  }`}
+                >
+                  {timerMode === 'FLOW'
+                    ? microCleared
+                      ? '✓ 2m Cleared — Open Flow Active (Pick Pomodoro Above)'
+                      : 'Stage 1: 2-Minute Micro-Start'
+                    : pomoPhase === 'WORK'
+                    ? `🍅 Cycle #${pomoCyclesCompleted + 1} Focus Block`
+                    : '☕ Rest & Recharge Break (Focus Paused)'}
                 </span>
 
+                {/* Clock Readout: Stopwatch in FLOW, Countdown in POMODORO */}
                 <div className="text-6xl sm:text-7xl font-mono font-black theme-text">
-                  {formatClock(secondsElapsed)}
+                  {timerMode === 'FLOW'
+                    ? formatClock(secondsElapsed)
+                    : formatClock(pomoSecondsLeft)}
                 </div>
 
-                <div className="flex flex-wrap justify-center gap-3">
+                {timerMode !== 'FLOW' && (
+                  <p className="text-xs font-mono theme-muted">
+                    Total Net Focus Time Logged: {formatClock(secondsElapsed)} ({sessionMins}m)
+                  </p>
+                )}
+
+                <div className="flex flex-wrap justify-center gap-2.5">
                   <button
                     onClick={() => setIsRunning((r) => !r)}
                     className="px-5 py-2.5 rounded-xl glass-panel theme-text text-xs font-bold flex items-center gap-2 cursor-pointer"
@@ -2402,13 +2527,25 @@ export default function ForgeAppShell({
                     {isRunning ? 'Pause' : 'Resume'}
                   </button>
 
-                  {!microCleared && (
+                  {/* Fast-Forward / Skip Phase Helpers */}
+                  {!microCleared && timerMode === 'FLOW' && (
                     <button
                       type="button"
                       onClick={() => setSecondsElapsed((s) => s + 30)}
                       className="px-4 py-2.5 rounded-xl glass-panel theme-subtext text-xs font-semibold flex items-center gap-1 cursor-pointer"
                     >
                       <FastForward className="w-3.5 h-3.5" /> +30s
+                    </button>
+                  )}
+
+                  {timerMode !== 'FLOW' && (
+                    <button
+                      type="button"
+                      onClick={transitionPomodoroPhase}
+                      className="px-4 py-2.5 rounded-xl glass-panel theme-subtext text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <FastForward className="w-3.5 h-3.5 text-emerald-500" />
+                      {pomoPhase === 'WORK' ? 'Start Break Now' : 'Skip Break → Next Cycle'}
                     </button>
                   )}
 
@@ -2420,11 +2557,12 @@ export default function ForgeAppShell({
                     className="px-5 py-2.5 rounded-xl text-white text-xs font-bold cursor-pointer"
                     style={{ background: 'var(--accent-primary)' }}
                   >
-                    Finish (+{liveScorePreview} pts)
+                    Finish &amp; Bank (+{liveScorePreview} pts)
                   </button>
                 </div>
               </div>
 
+              {/* Challenge & Difficulty Controls */}
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
@@ -2455,17 +2593,24 @@ export default function ForgeAppShell({
             </div>
           ) : (
             <div className="max-w-md w-full mx-auto my-auto glass-nav rounded-3xl p-6 space-y-4">
-              <h3 className="text-base font-bold theme-text">Session Notes (Optional)</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold theme-text">Session Summary</h3>
+                {pomoCyclesCompleted > 0 && (
+                  <span className="text-xs font-bold text-emerald-500">
+                    🍅 {pomoCyclesCompleted} Pomodoro Cycles
+                  </span>
+                )}
+              </div>
               <input
                 type="text"
-                placeholder="Challenge or bottleneck tackled"
+                placeholder="Challenge or bottleneck tackled (Optional)"
                 value={bottleneckNote}
                 onChange={(e) => setBottleneckNote(e.target.value)}
                 className="w-full theme-input rounded-xl p-3 text-sm"
               />
               <textarea
                 rows={3}
-                placeholder="Key insight or takeaway"
+                placeholder="Key insight or takeaway (Optional)"
                 value={insightNote}
                 onChange={(e) => setInsightNote(e.target.value)}
                 className="w-full theme-input rounded-xl p-3 text-sm"
@@ -2484,7 +2629,7 @@ export default function ForgeAppShell({
                   className="py-3 rounded-xl text-white font-bold text-xs cursor-pointer"
                   style={{ background: 'var(--accent-primary)' }}
                 >
-                  Log Full ({sessionMins}m)
+                  Log Focus ({sessionMins}m)
                 </button>
               </div>
             </div>

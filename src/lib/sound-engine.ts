@@ -125,6 +125,78 @@ class ForgeSoundEngine {
       navigator.vibrate([60, 40, 60, 40, 180]);
     }
   }
+
+  /**
+   * Calming descending chime when a Pomodoro work block finishes and Break begins
+   */
+  playBreakStartChime(enabled = true) {
+    if (!enabled) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const notes = [880, 659.25, 523.25, 440]; // Descending A5 -> E5 -> C5 -> A4
+    const now = ctx.currentTime;
+
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      const startTime = now + idx * 0.11;
+      const duration = 0.7;
+
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0.001, startTime);
+      gain.gain.linearRampToValueAtTime(0.14, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0008, startTime + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration + 0.05);
+    });
+
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([100, 60, 100]);
+    }
+  }
+
+  /**
+   * Energizing double-pulse chime when Break ends and the next Pomodoro starts
+   */
+  playBreakOverChime(enabled = true) {
+    if (!enabled) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const notes = [587.33, 880, 1174.66]; // D5 -> A5 -> D6
+    const now = ctx.currentTime;
+
+    notes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'triangle';
+      const startTime = now + idx * 0.08;
+      const duration = 0.5;
+
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0.001, startTime);
+      gain.gain.linearRampToValueAtTime(0.15, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0008, startTime + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration + 0.05);
+    });
+
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([70, 40, 120]);
+    }
+  }
 }
 
 export const soundEngine = new ForgeSoundEngine();
