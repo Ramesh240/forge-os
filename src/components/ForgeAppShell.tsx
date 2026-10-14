@@ -56,6 +56,9 @@ import {
   LogOut,
   ShieldCheck,
   Sliders,
+  ChevronDown,
+  ChevronUp,
+  Check,
 } from 'lucide-react';
 
 export interface UserProfile {
@@ -169,6 +172,7 @@ export default function ForgeAppShell({
   const [newHabitAnchorId, setNewHabitAnchorId] = useState('NONE');
   const [newRewardLabel, setNewRewardLabel] = useState('');
   const [newRewardUrl, setNewRewardUrl] = useState('');
+  const [isIdentityPickerOpen, setIsIdentityPickerOpen] = useState(false);
 
   // Edit Identity Modal State
   const [editingIdentity, setEditingIdentity] = useState<SerializedIdentity | null>(null);
@@ -239,6 +243,7 @@ export default function ForgeAppShell({
   const openCenteredCreator = (tab: 'HABIT' | 'IDENTITY') => {
     soundEngine.playTactileClick(soundEnabled);
     setCreatorTab(tab);
+    setIsIdentityPickerOpen(false);
     if (selectedIdentityFilter !== 'ALL') {
       setNewHabitIdentityId(selectedIdentityFilter);
     } else if (identities[0]?.id) {
@@ -311,6 +316,37 @@ export default function ForgeAppShell({
       if (matchedPreset) return matchedPreset.examples;
     }
     return IDENTITY_PRESETS.slice(0, 3).flatMap((p) => p.examples.slice(0, 1));
+  }, [newHabitIdentityId, identities]);
+
+  const selectedIdentityInfo = useMemo(() => {
+    if (newHabitIdentityId.startsWith('preset:')) {
+      const key = newHabitIdentityId.replace('preset:', '');
+      const preset = IDENTITY_PRESETS.find((p) => p.key === key);
+      return {
+        isPreset: true,
+        title: preset?.title || 'Focused Deep Worker',
+        category: preset?.category || 'Focus & Productivity',
+        statement: preset?.lifesTaskStatement || '',
+        badgeColor: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+      };
+    }
+    const existing = identities.find((i) => i.id === newHabitIdentityId);
+    if (existing) {
+      return {
+        isPreset: false,
+        title: existing.title,
+        category: existing.currentPhase,
+        statement: existing.lifesTaskStatement,
+        badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+      };
+    }
+    return {
+      isPreset: true,
+      title: IDENTITY_PRESETS[0]?.title || 'Select Identity',
+      category: IDENTITY_PRESETS[0]?.category || 'Template',
+      statement: IDENTITY_PRESETS[0]?.lifesTaskStatement || '',
+      badgeColor: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
+    };
   }, [newHabitIdentityId, identities]);
 
   const startFocusSession = (habit: SerializedHabit) => {
@@ -1530,40 +1566,165 @@ export default function ForgeAppShell({
 
             {creatorTab === 'HABIT' ? (
               <form onSubmit={handleCreateHabitSubmit} className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold theme-subtext block mb-1">
-                    1. Choose Identity (Auto-created if you pick a Template)
-                  </label>
-                  <select
-                    value={newHabitIdentityId}
-                    onChange={(e) => setNewHabitIdentityId(e.target.value)}
-                    className="w-full theme-input rounded-xl p-2.5 text-sm font-medium"
-                  >
-                    {identities.length > 0 && (
-                      <optgroup label="Your Active Identities">
-                        {identities.map((i) => (
-                          <option key={i.id} value={i.id}>
-                            ✓ {i.title}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
+                {/* 1. Unified Identity Selector (User-Friendly Card & Drawer) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold theme-subtext">
+                      1. Target Identity Vector
+                    </label>
+                    <span className="text-[10px] font-mono theme-muted">
+                      {selectedIdentityInfo.isPreset
+                        ? '✨ Template (Auto-Created on Save)'
+                        : '✓ Active Identity'}
+                    </span>
+                  </div>
 
-                    <optgroup label="✨ Common Identity Templates (Instant Setup)">
-                      {IDENTITY_PRESETS.filter(
-                        (preset) =>
-                          !identities.some(
-                            (existing) =>
-                              existing.title.toLowerCase() ===
-                              preset.title.toLowerCase()
-                          )
-                      ).map((preset) => (
-                        <option key={preset.key} value={`preset:${preset.key}`}>
-                          + {preset.title} ({preset.category})
-                        </option>
-                      ))}
-                    </optgroup>
-                  </select>
+                  {/* Selected Identity Display / Trigger Card */}
+                  <div
+                    onClick={() => {
+                      soundEngine.playTactileClick(soundEnabled);
+                      setIsIdentityPickerOpen((prev) => !prev);
+                    }}
+                    className={`p-3 rounded-2xl border text-left transition flex items-center justify-between gap-3 cursor-pointer ${
+                      isIdentityPickerOpen
+                        ? 'glass-tab-active border-[var(--border-strong)] ring-2 ring-indigo-500/30'
+                        : 'glass-panel hover:border-[var(--border-strong)]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-sm"
+                        style={{ background: 'var(--accent-primary)' }}
+                      >
+                        {selectedIdentityInfo.title[0]?.toUpperCase() || 'I'}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold theme-text truncate">
+                            {selectedIdentityInfo.title}
+                          </span>
+                          <span
+                            className={`text-[10px] font-mono px-2 py-0.5 rounded-full border shrink-0 ${selectedIdentityInfo.badgeColor}`}
+                          >
+                            {selectedIdentityInfo.category}
+                          </span>
+                        </div>
+                        {selectedIdentityInfo.statement && (
+                          <p className="text-[11px] theme-subtext truncate max-w-sm mt-0.5">
+                            {selectedIdentityInfo.statement}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0 theme-subtext">
+                      <span className="text-xs font-semibold hidden sm:inline">
+                        {isIdentityPickerOpen ? 'Close' : 'Change'}
+                      </span>
+                      {isIdentityPickerOpen ? (
+                        <ChevronUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Expanded Identity Selection Drawer */}
+                  {isIdentityPickerOpen && (
+                    <div className="p-3.5 rounded-2xl glass-panel space-y-3.5 border border-[var(--border-strong)] max-h-72 overflow-y-auto">
+                      {/* Active Workspace Identities */}
+                      {identities.length > 0 && (
+                        <div className="space-y-1.5">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> Your Active Identities
+                          </span>
+                          <div className="space-y-1">
+                            {identities.map((idObj) => {
+                              const isSelected = newHabitIdentityId === idObj.id;
+                              return (
+                                <button
+                                  key={idObj.id}
+                                  type="button"
+                                  onClick={() => {
+                                    soundEngine.playTactileClick(soundEnabled);
+                                    setNewHabitIdentityId(idObj.id);
+                                    setIsIdentityPickerOpen(false);
+                                  }}
+                                  className={`w-full p-2.5 rounded-xl text-left transition flex items-center justify-between gap-3 cursor-pointer ${
+                                    isSelected
+                                      ? 'glass-tab-active ring-1 ring-emerald-500'
+                                      : 'hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
+                                  }`}
+                                >
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs font-bold theme-text truncate">
+                                        {idObj.title}
+                                      </span>
+                                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        {idObj.currentPhase}
+                                      </span>
+                                    </div>
+                                    <span className="text-[11px] theme-subtext truncate block mt-0.5">
+                                      {idObj.totalHoursLogged}h logged • {idObj.totalVotes} sessions
+                                    </span>
+                                  </div>
+                                  {isSelected && (
+                                    <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Universal Templates & Archetypes */}
+                      <div className="space-y-2 pt-2 border-t border-[var(--border-subtle)]">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" /> Universal Archetypes (Instant Setup)
+                          </span>
+                          <span className="text-[10px] font-mono theme-muted">
+                            8 templates
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                          {IDENTITY_PRESETS.map((preset) => {
+                            const isSelected = newHabitIdentityId === `preset:${preset.key}`;
+                            return (
+                              <button
+                                key={preset.key}
+                                type="button"
+                                onClick={() => {
+                                  soundEngine.playTactileClick(soundEnabled);
+                                  setNewHabitIdentityId(`preset:${preset.key}`);
+                                  setIsIdentityPickerOpen(false);
+                                }}
+                                className={`p-2.5 rounded-xl text-left transition flex flex-col justify-between gap-1 cursor-pointer ${
+                                  isSelected
+                                    ? 'glass-tab-active ring-1 ring-amber-500'
+                                    : 'glass-panel hover:border-[var(--border-strong)]'
+                                }`}
+                              >
+                                <div>
+                                  <span className="text-[10px] font-mono text-amber-500 block truncate">
+                                    {preset.category}
+                                  </span>
+                                  <span className="text-xs font-bold theme-text block truncate">
+                                    {preset.title}
+                                  </span>
+                                </div>
+                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono block">
+                                  +2 Habit Examples Ready
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {activeHabitExamples.length > 0 && (
