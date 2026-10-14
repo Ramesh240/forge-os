@@ -28,6 +28,46 @@ export async function signOutAction() {
 }
 
 /**
+ * Permanently deletes all user identities, habit chains, and focus sessions,
+ * complying with Google Play Store & privacy policies, then signs out the user.
+ */
+export async function deleteUserAccountAndData() {
+  const userId = await getActiveUserId();
+
+  const userIdentities = await prisma.identityVector.findMany({
+    where: { userId },
+    select: { id: true },
+  });
+  const identityIds = userIdentities.map((i) => i.id);
+
+  if (identityIds.length > 0) {
+    // 1. Break self-referential anchorHabitId links to prevent foreign key constraint violations
+    await prisma.habit.updateMany({
+      where: { identityId: { in: identityIds } },
+      data: { anchorHabitId: null },
+    });
+
+    // 2. Delete all SessionLogs explicitly
+    await prisma.sessionLog.deleteMany({
+      where: { identityId: { in: identityIds } },
+    });
+
+    // 3. Delete all Habits
+    await prisma.habit.deleteMany({
+      where: { identityId: { in: identityIds } },
+    });
+
+    // 4. Delete all IdentityVectors
+    await prisma.identityVector.deleteMany({
+      where: { userId },
+    });
+  }
+
+  revalidatePath('/');
+  await signOut({ redirectTo: '/' });
+}
+
+/**
  * Ensures a newly signed-in Google user gets a starter set of Identities & Habits
  * if their workspace is completely empty.
  */

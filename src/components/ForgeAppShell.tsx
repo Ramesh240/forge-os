@@ -24,6 +24,7 @@ import {
   runMidnightGuardrailAudit,
   signInWithGoogleAction,
   signOutAction,
+  deleteUserAccountAndData,
 } from '@/app/actions';
 import {
   Zap,
@@ -186,6 +187,7 @@ export default function ForgeAppShell({
   const [editRewardLabel, setEditRewardLabel] = useState('');
   const [editRewardUrl, setEditRewardUrl] = useState('');
   const [confirmDeleteHabit, setConfirmDeleteHabit] = useState(false);
+  const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
 
   const [inspectedDay, setInspectedDay] = useState<ContinuityDay | null>(null);
 
@@ -1179,15 +1181,49 @@ export default function ForgeAppShell({
                     </div>
                   </div>
 
-                  <form action={signOutAction}>
-                    <button
-                      type="submit"
-                      className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-panel text-xs font-bold text-rose-500 hover:opacity-90 cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Sign Out
-                    </button>
-                  </form>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <form action={signOutAction}>
+                      <button
+                        type="submit"
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-panel text-xs font-bold theme-text hover:opacity-90 cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </button>
+                    </form>
+
+                    {!confirmDeleteAccount ? (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteAccount(true)}
+                        className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 text-xs font-bold cursor-pointer transition"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete Account &amp; Data
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-2 p-1.5 rounded-xl bg-rose-950/40 border border-rose-500/50">
+                        <span className="text-[11px] text-rose-300 font-semibold px-1">
+                          Delete all habits &amp; cloud data?
+                        </span>
+                        <form action={deleteUserAccountAndData}>
+                          <button
+                            type="submit"
+                            className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold cursor-pointer transition"
+                          >
+                            Yes, Delete Forever
+                          </button>
+                        </form>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteAccount(false)}
+                          className="px-2 py-1.5 rounded-lg glass-panel theme-subtext text-xs hover:opacity-80 cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
@@ -1235,6 +1271,16 @@ export default function ForgeAppShell({
                   )}
                 </div>
               )}
+
+              <div className="pt-3 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs theme-subtext">
+                <span>Google Play &amp; Privacy Policy Compliant. Only session logs and profile are stored.</span>
+                <a
+                  href="/privacy"
+                  className="text-xs font-semibold theme-text underline hover:opacity-80 transition inline-flex items-center gap-1"
+                >
+                  Privacy Policy &amp; Data Deletion Instructions &rarr;
+                </a>
+              </div>
             </div>
 
             {/* 2. Appearance & Theme Selector Card */}
