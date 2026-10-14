@@ -46,8 +46,12 @@ model Habit {
   currentStreak           Int            @default(0)
   missedYesterday         Boolean        @default(false)
   isReboundPriority       Boolean        @default(false)
-  downscaledDaysRemaining Int            @default(0) // Forces 2-Min Gateway mode for 3 days after missing twice
+  downscaledDaysRemaining Int            @default(0)
   lastCompletedDate       String?        // Format: YYYY-MM-DD
+
+  // Daily Reminder & Sorting
+  reminderTime            String?        // Format: "HH:MM" (24h, e.g. "09:00" or "20:30")
+  createdAt               DateTime       @default(now())
 
   sessions            SessionLog[]
 }

@@ -44,7 +44,8 @@ export default async function ForgeOSPage() {
         identity: { select: { title: true } },
         nextStackedHabit: { select: { id: true, title: true } },
       },
-      orderBy: [{ isReboundPriority: 'desc' }, { currentStreak: 'desc' }],
+      // Rebound habits & newest created habits always show at the very top!
+      orderBy: [{ isReboundPriority: 'desc' }, { createdAt: 'desc' }],
     });
 
     const rawSessions = await prisma.sessionLog.findMany({
@@ -73,6 +74,8 @@ export default async function ForgeOSPage() {
       gatewayVersion: h.gatewayVersion,
       defaultPhase: h.defaultPhase,
       anchorHabitId: h.anchorHabitId ?? null,
+      reminderTime: h.reminderTime ?? null,
+      lastCompletedDate: h.lastCompletedDate ?? null,
       temptationBundleUrl: h.temptationBundleUrl,
       temptationLabel: h.temptationLabel,
       currentStreak: h.currentStreak,

@@ -19,5 +19,13 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: 'any',
       },
     ],
+    shortcuts: [
+      {
+        name: 'Quick Habit Widget',
+        short_name: 'Habit Widget',
+        description: 'View all habits in a compact list and start a 2-minute session immediately',
+        url: '/widget',
+      },
+    ],
   };
 }

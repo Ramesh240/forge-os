@@ -40,7 +40,6 @@ import {
   Sparkles,
   Swords,
   Lock,
-  Unlock,
   ArrowRight,
   X,
   RefreshCw,
@@ -56,9 +55,12 @@ import {
   LogOut,
   ShieldCheck,
   Sliders,
+  Bell,
+  BellRing,
+  LayoutGrid,
   ChevronDown,
-  ChevronUp,
   Check,
+  ExternalLink,
 } from 'lucide-react';
 
 export interface UserProfile {
@@ -84,6 +86,8 @@ export interface SerializedHabit {
   gatewayVersion: string;
   defaultPhase: string;
   anchorHabitId: string | null;
+  reminderTime?: string | null;
+  lastCompletedDate?: string | null;
   temptationBundleUrl: string | null;
   temptationLabel: string | null;
   currentStreak: number;
@@ -120,6 +124,14 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+const REMINDER_PRESETS = [
+  { label: 'Off', value: '' },
+  { label: 'Morning 08:00', value: '08:00' },
+  { label: 'Noon 12:30', value: '12:30' },
+  { label: 'Afternoon 17:00', value: '17:00' },
+  { label: 'Evening 20:30', value: '20:30' },
+];
+
 export default function ForgeAppShell({
   identities,
   habits,
@@ -137,11 +149,16 @@ export default function ForgeAppShell({
   const [selectedIdentityFilter, setSelectedIdentityFilter] = useState<string>('ALL');
   const [theme, setTheme] = useState<ThemeMode>('obsidian');
 
-  // Sound & PWA Install State
+  // Quick Widget Drawer State
+  const [isWidgetDrawerOpen, setIsWidgetDrawerOpen] = useState(false);
+
+  // Sound, Notifications & PWA Install State
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
+  const [notifPermission, setNotifPermission] = useState<string>('default');
   const [installPromptEvent, setInstallPromptEvent] =
     useState<BeforeInstallPromptEvent | null>(null);
   const chimePlayedRef = useRef<boolean>(false);
+  const firedRemindersRef = useRef<Set<string>>(new Set());
 
   // Focus Timer Modal State
   const [activeHabit, setActiveHabit] = useState<SerializedHabit | null>(null);
@@ -156,12 +173,12 @@ export default function ForgeAppShell({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Create Modal State
+  // Create Modal State + Custom Popover States
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
   const [creatorTab, setCreatorTab] = useState<'HABIT' | 'IDENTITY'>('HABIT');
   const [newIdTitle, setNewIdTitle] = useState('');
   const [newIdMission, setNewIdMission] = useState('');
-  const [newIdStage, setNewIdStage] = useState('OBSERVATION');
+  const [newIdStage, setNewIdStage] = useState('PRACTICE');
 
   const [newHabitIdentityId, setNewHabitIdentityId] = useState(
     identities[0]?.id || 'preset:deep-worker'
@@ -170,15 +187,14 @@ export default function ForgeAppShell({
   const [newHabitMicro, setNewHabitMicro] = useState('');
   const [newHabitStage, setNewHabitStage] = useState<SkillStage>('PRACTICE');
   const [newHabitAnchorId, setNewHabitAnchorId] = useState('NONE');
-  const [newRewardLabel, setNewRewardLabel] = useState('');
-  const [newRewardUrl, setNewRewardUrl] = useState('');
-  const [isIdentityPickerOpen, setIsIdentityPickerOpen] = useState(false);
+  const [newHabitReminder, setNewHabitReminder] = useState('');
+  const [isChainPickerOpen, setIsChainPickerOpen] = useState(false);
 
   // Edit Identity Modal State
   const [editingIdentity, setEditingIdentity] = useState<SerializedIdentity | null>(null);
   const [editIdTitle, setEditIdTitle] = useState('');
   const [editIdMission, setEditIdMission] = useState('');
-  const [editIdStage, setEditIdStage] = useState('OBSERVATION');
+  const [editIdStage, setEditIdStage] = useState('PRACTICE');
   const [confirmDeleteIdentity, setConfirmDeleteIdentity] = useState(false);
 
   // Edit & Rewire Habit Modal State
@@ -188,9 +204,11 @@ export default function ForgeAppShell({
   const [editHabitMicro, setEditHabitMicro] = useState('');
   const [editHabitStage, setEditHabitStage] = useState<SkillStage>('PRACTICE');
   const [editHabitAnchorId, setEditHabitAnchorId] = useState('NONE');
-  const [editRewardLabel, setEditRewardLabel] = useState('');
-  const [editRewardUrl, setEditRewardUrl] = useState('');
+  const [editHabitReminder, setEditHabitReminder] = useState('');
+  const [isEditChainPickerOpen, setIsEditChainPickerOpen] = useState(false);
   const [confirmDeleteHabit, setConfirmDeleteHabit] = useState(false);
+
+  // Delete User Account Confirmation
   const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
 
   const [inspectedDay, setInspectedDay] = useState<ContinuityDay | null>(null);
@@ -198,7 +216,9 @@ export default function ForgeAppShell({
   const MICRO_THRESHOLD = 120;
   const microCleared = secondsElapsed >= MICRO_THRESHOLD;
   const sessionMins = Math.max(2, Math.round(secondsElapsed / 60));
+  const todayStr = new Date().toISOString().split('T')[0];
 
+  // Initialize Theme, Sound, Notification Permission, and Deep-Link Auto-Start (?startHabit=<id>)
   useEffect(() => {
     const savedTheme = (localStorage.getItem('forge_theme') as ThemeMode) || 'obsidian';
     setTheme(savedTheme);
@@ -206,6 +226,26 @@ export default function ForgeAppShell({
 
     const savedSound = localStorage.getItem('forge_sound_enabled');
     if (savedSound !== null) setSoundEnabled(savedSound === 'true');
+
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotifPermission(Notification.permission);
+    }
+
+    // Check if launched from /widget or notification with ?startHabit=<id>
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const startHabitId = params.get('startHabit');
+      if (startHabitId) {
+        const target = habits.find((h) => h.id === startHabitId);
+        if (target) {
+          setActiveHabit(target);
+          setStage((target.defaultPhase as SkillStage) || 'PRACTICE');
+          setSecondsElapsed(0);
+          setIsRunning(true);
+          window.history.replaceState({}, '', '/');
+        }
+      }
+    }
 
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
@@ -215,7 +255,65 @@ export default function ForgeAppShell({
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () =>
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, []);
+  }, [habits]);
+
+  // Background Habit Reminder Scheduler (Checks every 20 seconds against HH:MM)
+  useEffect(() => {
+    const checkReminders = () => {
+      const now = new Date();
+      const hh = now.getHours().toString().padStart(2, '0');
+      const mm = now.getMinutes().toString().padStart(2, '0');
+      const currentHHMM = `${hh}:${mm}`;
+      const dStr = now.toISOString().split('T')[0];
+
+      habits.forEach((h) => {
+        if (!h.reminderTime || h.reminderTime !== currentHHMM) return;
+        if (h.lastCompletedDate === dStr) return; // Already completed today
+
+        const fireKey = `${h.id}-${dStr}-${currentHHMM}`;
+        if (firedRemindersRef.current.has(fireKey)) return;
+        firedRemindersRef.current.add(fireKey);
+
+        // Play audio chime & show toast + OS notification
+        soundEngine.playMicroClearedChime(soundEnabled);
+        setToastMessage(`⏰ Reminder: Time for "${h.title}" (2m: ${h.gatewayVersion})`);
+
+        if (
+          typeof window !== 'undefined' &&
+          'Notification' in window &&
+          Notification.permission === 'granted'
+        ) {
+          const n = new Notification(`ForgeOS: ${h.title}`, {
+            body: `2-Min Micro-Start: ${h.gatewayVersion}`,
+            icon: '/icon',
+          });
+          n.onclick = () => {
+            window.focus();
+            startFocusSession(h);
+          };
+        }
+      });
+    };
+
+    const interval = setInterval(checkReminders, 20000);
+    return () => clearInterval(interval);
+  }, [habits, soundEnabled]);
+
+  const requestNotificationAccess = async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      setToastMessage('Notifications are not supported in this browser.');
+      return;
+    }
+    const perm = await Notification.requestPermission();
+    setNotifPermission(perm);
+    if (perm === 'granted') {
+      soundEngine.playMicroClearedChime(soundEnabled);
+      new Notification('ForgeOS Reminders Active', {
+        body: 'You will receive daily habit micro-start notifications right on time.',
+        icon: '/icon',
+      });
+    }
+  };
 
   const selectTheme = (nextTheme: ThemeMode) => {
     setTheme(nextTheme);
@@ -243,7 +341,7 @@ export default function ForgeAppShell({
   const openCenteredCreator = (tab: 'HABIT' | 'IDENTITY') => {
     soundEngine.playTactileClick(soundEnabled);
     setCreatorTab(tab);
-    setIsIdentityPickerOpen(false);
+    setIsChainPickerOpen(false);
     if (selectedIdentityFilter !== 'ALL') {
       setNewHabitIdentityId(selectedIdentityFilter);
     } else if (identities[0]?.id) {
@@ -318,40 +416,10 @@ export default function ForgeAppShell({
     return IDENTITY_PRESETS.slice(0, 3).flatMap((p) => p.examples.slice(0, 1));
   }, [newHabitIdentityId, identities]);
 
-  const selectedIdentityInfo = useMemo(() => {
-    if (newHabitIdentityId.startsWith('preset:')) {
-      const key = newHabitIdentityId.replace('preset:', '');
-      const preset = IDENTITY_PRESETS.find((p) => p.key === key);
-      return {
-        isPreset: true,
-        title: preset?.title || 'Focused Deep Worker',
-        category: preset?.category || 'Focus & Productivity',
-        statement: preset?.lifesTaskStatement || '',
-        badgeColor: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
-      };
-    }
-    const existing = identities.find((i) => i.id === newHabitIdentityId);
-    if (existing) {
-      return {
-        isPreset: false,
-        title: existing.title,
-        category: existing.currentPhase,
-        statement: existing.lifesTaskStatement,
-        badgeColor: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
-      };
-    }
-    return {
-      isPreset: true,
-      title: IDENTITY_PRESETS[0]?.title || 'Select Identity',
-      category: IDENTITY_PRESETS[0]?.category || 'Template',
-      statement: IDENTITY_PRESETS[0]?.lifesTaskStatement || '',
-      badgeColor: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
-    };
-  }, [newHabitIdentityId, identities]);
-
   const startFocusSession = (habit: SerializedHabit) => {
     soundEngine.playTactileClick(soundEnabled);
     chimePlayedRef.current = false;
+    setIsWidgetDrawerOpen(false);
     setActiveHabit(habit);
     setStage((habit.defaultPhase as SkillStage) || 'PRACTICE');
     setSecondsElapsed(0);
@@ -378,8 +446,8 @@ export default function ForgeAppShell({
     setEditHabitMicro(habit.gatewayVersion);
     setEditHabitStage((habit.defaultPhase as SkillStage) || 'PRACTICE');
     setEditHabitAnchorId(habit.anchorHabitId || 'NONE');
-    setEditRewardLabel(habit.temptationLabel || '');
-    setEditRewardUrl(habit.temptationBundleUrl || '');
+    setEditHabitReminder(habit.reminderTime || '');
+    setIsEditChainPickerOpen(false);
     setConfirmDeleteHabit(false);
   };
 
@@ -484,15 +552,14 @@ export default function ForgeAppShell({
         gatewayVersion: newHabitMicro,
         defaultPhase: newHabitStage,
         anchorHabitId: newHabitAnchorId === 'NONE' ? null : newHabitAnchorId,
-        temptationLabel: newRewardLabel || null,
-        temptationBundleUrl: newRewardUrl || null,
+        reminderTime: newHabitReminder || null,
       });
       setNewHabitTitle('');
       setNewHabitMicro('');
-      setNewRewardLabel('');
-      setNewRewardUrl('');
+      setNewHabitReminder('');
+      setNewHabitAnchorId('NONE');
       setIsCreatorOpen(false);
-      setToastMessage('Habit added to your queue!');
+      setToastMessage('New habit added to the top of your queue!');
     } finally {
       setIsSubmitting(false);
     }
@@ -510,8 +577,7 @@ export default function ForgeAppShell({
         gatewayVersion: editHabitMicro,
         defaultPhase: editHabitStage,
         anchorHabitId: editHabitAnchorId === 'NONE' ? null : editHabitAnchorId,
-        temptationLabel: editRewardLabel || null,
-        temptationBundleUrl: editRewardUrl || null,
+        reminderTime: editHabitReminder || null,
       });
       setEditingHabit(null);
       setToastMessage('Habit updated!');
@@ -546,7 +612,8 @@ export default function ForgeAppShell({
   const activeDayDetail =
     inspectedDay || analytics.daysGrid[analytics.daysGrid.length - 1];
 
-  const selectedEditAnchor = habits.find((h) => h.id === editHabitAnchorId);
+  const selectedNewAnchorObj = habits.find((h) => h.id === newHabitAnchorId);
+  const selectedEditAnchorObj = habits.find((h) => h.id === editHabitAnchorId);
 
   const navItems = [
     { id: 'WORKSPACE', label: 'Home', icon: Zap },
@@ -618,8 +685,20 @@ export default function ForgeAppShell({
             })}
           </nav>
 
-          {/* Right Status: Only Streak + Clean Avatar Button */}
+          {/* Right Status: Widget Launcher + Streak + Account Pill */}
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                soundEngine.playTactileClick(soundEnabled);
+                setIsWidgetDrawerOpen(true);
+              }}
+              title="Open Quick Habit Widget"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl glass-panel text-xs font-semibold theme-text hover:opacity-90 cursor-pointer"
+            >
+              <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="hidden sm:inline">Widget</span>
+            </button>
+
             <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl glass-panel text-xs font-bold text-orange-500">
               <Flame className="w-3.5 h-3.5 fill-orange-500" />
               <span>{analytics.resilientStreak}d</span>
@@ -648,7 +727,11 @@ export default function ForgeAppShell({
                   className="w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-bold text-white"
                   style={{ background: 'var(--accent-primary)' }}
                 >
-                  {currentUser?.name ? currentUser.name[0]?.toUpperCase() : <User className="w-3.5 h-3.5" />}
+                  {currentUser?.name ? (
+                    currentUser.name[0]?.toUpperCase()
+                  ) : (
+                    <User className="w-3.5 h-3.5" />
+                  )}
                 </div>
               )}
               <span className="text-xs font-semibold hidden sm:inline max-w-[80px] truncate">
@@ -680,12 +763,12 @@ export default function ForgeAppShell({
         )}
 
         {/* ========================================================= */}
-        {/* TAB 1: MINIMALISTIC HOME WORKSPACE                        */}
+        {/* TAB 1: MINIMALISTIC HOME WORKSPACE (HABITS ON TOP)        */}
         {/* ========================================================= */}
         {activeTab === 'WORKSPACE' && (
-          <div className="space-y-9">
+          <div className="space-y-8">
             {/* CENTERED HERO & PRIMARY ACTION DOCK */}
-            <section className="text-center max-w-xl mx-auto space-y-5 pt-2">
+            <section className="text-center max-w-xl mx-auto space-y-5 pt-1">
               <div className="space-y-1.5">
                 <span className="text-[11px] font-mono uppercase tracking-widest theme-muted">
                   {analytics.effectiveHours} Effective Hrs • {analytics.completionRate14d}% Consistency
@@ -725,7 +808,7 @@ export default function ForgeAppShell({
                       : 'glass-panel theme-subtext hover:opacity-80'
                   }`}
                 >
-                  All ({habits.length})
+                  All Habits ({habits.length})
                 </button>
                 {identities.map((idObj) => (
                   <div
@@ -747,49 +830,26 @@ export default function ForgeAppShell({
                       title="Edit Identity"
                       className="opacity-60 hover:opacity-100 p-0.5 cursor-pointer"
                     >
-                      <Pencil className="w-3.5 h-3.5" />
+                      <Pencil className="w-3 h-3" />
                     </button>
                   </div>
                 ))}
               </div>
             </section>
 
-            {/* COMPACT IDENTITY SUMMARY STRIP */}
-            <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {identities.map((idVec) => (
-                <div
-                  key={idVec.id}
-                  className="glass-panel glass-panel-hover rounded-2xl p-4 flex items-center justify-between gap-3"
-                >
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-mono uppercase theme-muted block">
-                      {idVec.currentPhase}
-                    </span>
-                    <h3 className="text-sm font-bold theme-text truncate mt-0.5">
-                      {idVec.title}
-                    </h3>
-                    <span className="text-xs theme-subtext">
-                      {idVec.totalHoursLogged}h • {idVec.weightedScore.toFixed(0)} pts
-                    </span>
-                  </div>
-
-                  <button
-                    onClick={() => openEditIdentityModal(idVec)}
-                    className="p-2 rounded-xl glass-panel theme-subtext hover:opacity-80 shrink-0 cursor-pointer"
-                    title="Edit Identity"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </section>
-
-            {/* MINIMALISTIC DAILY HABIT QUEUE */}
+            {/* DAILY HABIT QUEUE PLACED DIRECTLY ON TOP FOR IMMEDIATE ACTION */}
             <section className="space-y-3">
               <div className="flex items-center justify-between px-1">
                 <span className="text-xs font-bold uppercase tracking-wider theme-muted">
-                  Today&apos;s Focus Queue ({visibleHabits.length})
+                  Active Habit Queue ({visibleHabits.length}) — Newest First
                 </span>
+                <button
+                  onClick={() => setIsWidgetDrawerOpen(true)}
+                  className="text-xs font-semibold theme-subtext hover:opacity-80 flex items-center gap-1 cursor-pointer"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
+                  Compact Widget View
+                </button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -797,6 +857,7 @@ export default function ForgeAppShell({
                   const stageMeta =
                     STAGE_LABELS[habit.defaultPhase as SkillStage] ||
                     STAGE_LABELS.PRACTICE;
+                  const doneToday = habit.lastCompletedDate === todayStr;
 
                   return (
                     <div
@@ -807,16 +868,27 @@ export default function ForgeAppShell({
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-medium theme-subtext">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-lg glass-panel theme-text">
                               {habit.identityTitle}
                             </span>
                             <span className="text-[10px] font-mono px-2 py-0.5 rounded-md glass-panel theme-muted">
                               {stageMeta.name.split(' ')[0]}
                             </span>
+                            {habit.reminderTime && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md glass-panel text-indigo-400">
+                                <Bell className="w-2.5 h-2.5" />
+                                {habit.reminderTime}
+                              </span>
+                            )}
                           </div>
 
                           <div className="flex items-center gap-2">
+                            {doneToday && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500">
+                                Done Today
+                              </span>
+                            )}
                             <span className="flex items-center gap-1 text-xs font-bold text-orange-500">
                               <Flame className="w-3.5 h-3.5 fill-orange-500" />
                               {habit.currentStreak}d
@@ -824,7 +896,7 @@ export default function ForgeAppShell({
                             <button
                               onClick={() => openEditHabitModal(habit)}
                               className="p-1.5 rounded-lg theme-muted hover:opacity-80 cursor-pointer"
-                              title="Edit or Rewire"
+                              title="Edit Habit"
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
@@ -868,6 +940,41 @@ export default function ForgeAppShell({
                     </div>
                   );
                 })}
+              </div>
+            </section>
+
+            {/* COMPACT IDENTITY SUMMARY STRIP BELOW HABITS */}
+            <section className="space-y-2.5 pt-2">
+              <span className="text-xs font-bold uppercase tracking-wider theme-muted px-1 block">
+                Your Identity Vectors ({identities.length})
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {identities.map((idVec) => (
+                  <div
+                    key={idVec.id}
+                    className="glass-panel glass-panel-hover rounded-2xl p-4 flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-mono uppercase theme-muted block">
+                        {idVec.currentPhase}
+                      </span>
+                      <h3 className="text-sm font-bold theme-text truncate mt-0.5">
+                        {idVec.title}
+                      </h3>
+                      <span className="text-xs theme-subtext">
+                        {idVec.totalHoursLogged}h • {idVec.weightedScore.toFixed(0)} pts
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => openEditIdentityModal(idVec)}
+                      className="p-2 rounded-xl glass-panel theme-subtext hover:opacity-80 shrink-0 cursor-pointer"
+                      title="Edit Identity"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
               </div>
             </section>
           </div>
@@ -1171,18 +1278,18 @@ export default function ForgeAppShell({
         )}
 
         {/* ========================================================= */}
-        {/* TAB 5: ACCOUNT, THEMES & SYSTEM PREFERENCES               */}
+        {/* TAB 5: ACCOUNT, THEMES, NOTIFICATIONS & WIDGETS           */}
         {/* ========================================================= */}
         {activeTab === 'ACCOUNT' && (
           <div className="max-w-3xl mx-auto space-y-6">
             <div>
               <h2 className="text-xl font-bold theme-text">Account &amp; Preferences</h2>
               <p className="text-xs theme-subtext">
-                Manage cloud sync, visual themes, audio feedback, and workspace tools.
+                Manage cloud sync, visual themes, reminder notifications, and widget tools.
               </p>
             </div>
 
-            {/* 1. Profile & Google Cloud Sync Card */}
+            {/* 1. Profile & Google Cloud Sync */}
             <div className="glass-panel p-6 rounded-2xl space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider theme-muted flex items-center gap-1.5">
@@ -1279,24 +1386,6 @@ export default function ForgeAppShell({
                         className="flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-white text-xs font-bold shadow-sm hover:opacity-95 shrink-0 cursor-pointer"
                         style={{ background: 'var(--accent-primary)' }}
                       >
-                        <svg className="w-4 h-4 bg-white rounded-full p-0.5" viewBox="0 0 24 24">
-                          <path
-                            fill="#4285F4"
-                            d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-                          />
-                          <path
-                            fill="#34A853"
-                            d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"
-                          />
-                          <path
-                            fill="#FBBC05"
-                            d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"
-                          />
-                          <path
-                            fill="#EA4335"
-                            d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"
-                          />
-                        </svg>
                         <span>Continue with Google</span>
                       </button>
                     </form>
@@ -1319,7 +1408,69 @@ export default function ForgeAppShell({
               </div>
             </div>
 
-            {/* 2. Appearance & Theme Selector Card */}
+            {/* 2. Habit Reminder Notifications & Standalone Widget */}
+            <div className="glass-panel p-6 rounded-2xl space-y-4">
+              <span className="text-xs font-bold uppercase tracking-wider theme-muted flex items-center gap-1.5">
+                <BellRing className="w-4 h-4 text-indigo-400" />
+                Habit Reminders &amp; Quick Widget
+              </span>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-bold theme-text">
+                    Daily Habit Push Notifications
+                  </h4>
+                  <p className="text-xs theme-subtext">
+                    Triggers a native alert &amp; chime at any habit&apos;s scheduled reminder time.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={requestNotificationAccess}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white shrink-0 cursor-pointer ${
+                    notifPermission === 'granted' ? 'bg-emerald-600' : 'bg-indigo-600'
+                  }`}
+                >
+                  <Bell className="w-3.5 h-3.5" />
+                  {notifPermission === 'granted'
+                    ? 'Notifications Active (Test)'
+                    : 'Enable Notifications'}
+                </button>
+              </div>
+
+              <div className="pt-3 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-sm font-bold theme-text">
+                    Standalone Habit Launcher Widget
+                  </h4>
+                  <p className="text-xs theme-subtext">
+                    Open a compact widget window listing all habits for 1-tap timer launch.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setIsWidgetDrawerOpen(true)}
+                    className="px-3.5 py-2 rounded-xl glass-panel text-xs font-semibold theme-text cursor-pointer"
+                  >
+                    Open In-App Widget
+                  </button>
+                  <a
+                    href="/widget"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glass-panel text-xs font-semibold text-indigo-400"
+                  >
+                    <span>/widget URL</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Appearance & Theme Selector */}
             <div className="glass-panel p-6 rounded-2xl space-y-4">
               <span className="text-xs font-bold uppercase tracking-wider theme-muted flex items-center gap-1.5">
                 <Palette className="w-4 h-4 text-amber-500" />
@@ -1386,32 +1537,22 @@ export default function ForgeAppShell({
               </div>
             </div>
 
-            {/* 3. Audio, Haptics & Mobile App Installation */}
+            {/* 4. Sound & App Installation */}
             <div className="glass-panel p-6 rounded-2xl space-y-4">
               <span className="text-xs font-bold uppercase tracking-wider theme-muted flex items-center gap-1.5">
                 <Sliders className="w-4 h-4 text-indigo-400" />
-                Sound, Haptics &amp; App Installation
+                Audio &amp; App Controls
               </span>
 
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-                <div>
-                  <h4 className="text-sm font-bold theme-text">
-                    2-Minute Micro-Start Chimes &amp; Haptics
-                  </h4>
-                  <p className="text-xs theme-subtext">
-                    Plays a harmonic bell chime when your 120-second gateway timer clears.
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => soundEngine.playMicroClearedChime(true)}
-                    className="px-3.5 py-2 rounded-xl glass-panel text-xs font-semibold theme-text hover:opacity-80 cursor-pointer"
+                    className="px-3.5 py-2 rounded-xl glass-panel text-xs font-semibold theme-text cursor-pointer"
                   >
-                    Test Chime
+                    Test 2m Chime
                   </button>
-
                   <button
                     type="button"
                     onClick={toggleSound}
@@ -1421,7 +1562,7 @@ export default function ForgeAppShell({
                   >
                     {soundEnabled ? (
                       <>
-                        <Volume2 className="w-3.5 h-3.5" /> On
+                        <Volume2 className="w-3.5 h-3.5" /> Sound On
                       </>
                     ) : (
                       <>
@@ -1430,61 +1571,38 @@ export default function ForgeAppShell({
                     )}
                   </button>
                 </div>
-              </div>
 
-              {installPromptEvent && (
-                <div className="pt-4 border-t border-[var(--border-subtle)] flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-bold theme-text">
-                      Install ForgeOS Web App
-                    </h4>
-                    <p className="text-xs theme-subtext">
-                      Add ForgeOS to your home screen for full-screen offline access.
-                    </p>
-                  </div>
+                <div className="flex items-center gap-2">
+                  {installPromptEvent && (
+                    <button
+                      type="button"
+                      onClick={handleInstallPWA}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Install App
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={handleInstallPWA}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold cursor-pointer"
+                    onClick={async () => {
+                      await seedSampleChainHistory();
+                      setToastMessage('21 days of sample analytics loaded!');
+                    }}
+                    className="px-3.5 py-2 rounded-xl glass-panel text-xs font-semibold theme-text cursor-pointer"
                   >
-                    <Download className="w-3.5 h-3.5" />
-                    Install App
+                    Load 21d Demo Data
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await runMidnightGuardrailAudit();
+                      setToastMessage('Simulated next-day rollover!');
+                    }}
+                    className="px-3.5 py-2 rounded-xl glass-panel text-xs font-semibold theme-text cursor-pointer"
+                  >
+                    Simulate Rollover
                   </button>
                 </div>
-              )}
-            </div>
-
-            {/* 4. Workspace Simulation & Demo Data Tools */}
-            <div className="glass-panel p-6 rounded-2xl space-y-4">
-              <span className="text-xs font-bold uppercase tracking-wider theme-muted flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                Workspace Telemetry &amp; Testing Tools
-              </span>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await seedSampleChainHistory();
-                    setToastMessage('21 days of sample analytics loaded!');
-                  }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-panel text-xs font-semibold theme-text hover:opacity-80 cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  Load 21d Sample Telemetry
-                </button>
-
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await runMidnightGuardrailAudit();
-                    setToastMessage('Simulated next-day rollover & Streak Shield audit!');
-                  }}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl glass-panel text-xs font-semibold theme-text hover:opacity-80 cursor-pointer"
-                >
-                  <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
-                  Simulate Midnight Rollover (+24h)
-                </button>
               </div>
             </div>
           </div>
@@ -1492,7 +1610,7 @@ export default function ForgeAppShell({
       </main>
 
       {/* ========================================================= */}
-      {/* FLOATING FROSTED-GLASS MOBILE DOCK (5 TABS)               */}
+      {/* FLOATING FROSTED-GLASS MOBILE DOCK                        */}
       {/* ========================================================= */}
       <nav className="md:hidden fixed bottom-4 inset-x-4 z-40 glass-nav rounded-2xl p-1.5 flex items-center justify-around">
         {navItems.map((item) => {
@@ -1517,22 +1635,113 @@ export default function ForgeAppShell({
       </nav>
 
       {/* ========================================================= */}
-      {/* CENTERED CREATOR MODAL (WITH PRESET IDENTITIES & EXAMPLES)*/}
+      {/* IN-APP COMPACT QUICK-LAUNCH WIDGET OVERLAY                */}
+      {/* ========================================================= */}
+      {isWidgetDrawerOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md p-4 flex items-center justify-center">
+          <div className="glass-nav rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <div className="flex items-center gap-2">
+                <LayoutGrid className="w-4 h-4 text-indigo-400" />
+                <div>
+                  <h3 className="text-sm font-bold theme-text">
+                    Quick Habit Widget ({habits.length})
+                  </h3>
+                  <p className="text-[11px] theme-subtext">
+                    Tap any habit to immediately launch its 2-minute micro-timer.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsWidgetDrawerOpen(false)}
+                className="theme-muted hover:opacity-80 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+              {habits.map((h) => {
+                const doneToday = h.lastCompletedDate === todayStr;
+                return (
+                  <div
+                    key={h.id}
+                    className="p-3 rounded-2xl glass-panel flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-medium theme-muted truncate">
+                          {h.identityTitle}
+                        </span>
+                        <span className="flex items-center gap-0.5 text-[10px] font-bold text-orange-500">
+                          <Flame className="w-3 h-3 fill-orange-500" />
+                          {h.currentStreak}d
+                        </span>
+                        {doneToday && (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                        )}
+                      </div>
+                      <h4 className="text-xs font-bold theme-text truncate mt-0.5">
+                        {h.title}
+                      </h4>
+                      <p className="text-[11px] theme-subtext truncate">
+                        2m: {h.gatewayVersion}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => startFocusSession(h)}
+                      className="px-3.5 py-2 rounded-xl text-white text-xs font-bold flex items-center gap-1 shrink-0 cursor-pointer"
+                      style={{ background: 'var(--accent-primary)' }}
+                    >
+                      <Play className="w-3 h-3 fill-white" />
+                      Start
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between text-xs">
+              <a
+                href="/widget"
+                target="_blank"
+                rel="noreferrer"
+                className="text-indigo-400 hover:underline flex items-center gap-1 font-medium"
+              >
+                Open Standalone /widget Window <ExternalLink className="w-3 h-3" />
+              </a>
+              <button
+                onClick={() => {
+                  setIsWidgetDrawerOpen(false);
+                  openCenteredCreator('HABIT');
+                }}
+                className="font-bold theme-text hover:opacity-80 cursor-pointer"
+              >
+                + New Habit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* CUSTOM GLASS CREATOR MODAL (ZERO NATIVE <select> LISTS!)  */}
       {/* ========================================================= */}
       {isCreatorOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
-          <div className="glass-nav rounded-3xl max-w-lg w-full p-6 space-y-5 my-8">
+        <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
+          <div className="glass-nav rounded-3xl max-w-lg w-full p-6 space-y-5 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <div>
                 <h3 className="text-base font-bold theme-text">
                   {creatorTab === 'HABIT'
-                    ? 'Add Habit (Pick Identity or Template)'
+                    ? 'Create New Habit'
                     : 'Choose or Create an Identity'}
                 </h3>
                 <p className="text-xs theme-subtext">
                   {creatorTab === 'HABIT'
-                    ? 'Select any common identity below—no need to create one first.'
-                    : 'Pick a ready-made identity template or write your own.'}
+                    ? 'Tap any identity card below—no ugly dropdowns.'
+                    : 'Pick a ready-made template or define your own.'}
                 </p>
               </div>
               <button
@@ -1566,172 +1775,80 @@ export default function ForgeAppShell({
 
             {creatorTab === 'HABIT' ? (
               <form onSubmit={handleCreateHabitSubmit} className="space-y-4">
-                {/* 1. Unified Identity Selector (User-Friendly Card & Drawer) */}
+                {/* 1. Custom Visual Identity Card Grid (Replaces native <select>) */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold theme-subtext">
-                      1. Target Identity Vector
-                    </label>
-                    <span className="text-[10px] font-mono theme-muted">
-                      {selectedIdentityInfo.isPreset
-                        ? '✨ Template (Auto-Created on Save)'
-                        : '✓ Active Identity'}
-                    </span>
-                  </div>
-
-                  {/* Selected Identity Display / Trigger Card */}
-                  <div
-                    onClick={() => {
-                      soundEngine.playTactileClick(soundEnabled);
-                      setIsIdentityPickerOpen((prev) => !prev);
-                    }}
-                    className={`p-3 rounded-2xl border text-left transition flex items-center justify-between gap-3 cursor-pointer ${
-                      isIdentityPickerOpen
-                        ? 'glass-tab-active border-[var(--border-strong)] ring-2 ring-indigo-500/30'
-                        : 'glass-panel hover:border-[var(--border-strong)]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-sm"
-                        style={{ background: 'var(--accent-primary)' }}
-                      >
-                        {selectedIdentityInfo.title[0]?.toUpperCase() || 'I'}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold theme-text truncate">
-                            {selectedIdentityInfo.title}
-                          </span>
-                          <span
-                            className={`text-[10px] font-mono px-2 py-0.5 rounded-full border shrink-0 ${selectedIdentityInfo.badgeColor}`}
-                          >
-                            {selectedIdentityInfo.category}
-                          </span>
-                        </div>
-                        {selectedIdentityInfo.statement && (
-                          <p className="text-[11px] theme-subtext truncate max-w-sm mt-0.5">
-                            {selectedIdentityInfo.statement}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0 theme-subtext">
-                      <span className="text-xs font-semibold hidden sm:inline">
-                        {isIdentityPickerOpen ? 'Close' : 'Change'}
-                      </span>
-                      {isIdentityPickerOpen ? (
-                        <ChevronUp className="w-4 h-4" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4" />
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Expanded Identity Selection Drawer */}
-                  {isIdentityPickerOpen && (
-                    <div className="p-3.5 rounded-2xl glass-panel space-y-3.5 border border-[var(--border-strong)] max-h-72 overflow-y-auto">
-                      {/* Active Workspace Identities */}
-                      {identities.length > 0 && (
-                        <div className="space-y-1.5">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500 flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> Your Active Identities
-                          </span>
-                          <div className="space-y-1">
-                            {identities.map((idObj) => {
-                              const isSelected = newHabitIdentityId === idObj.id;
-                              return (
-                                <button
-                                  key={idObj.id}
-                                  type="button"
-                                  onClick={() => {
-                                    soundEngine.playTactileClick(soundEnabled);
-                                    setNewHabitIdentityId(idObj.id);
-                                    setIsIdentityPickerOpen(false);
-                                  }}
-                                  className={`w-full p-2.5 rounded-xl text-left transition flex items-center justify-between gap-3 cursor-pointer ${
-                                    isSelected
-                                      ? 'glass-tab-active ring-1 ring-emerald-500'
-                                      : 'hover:bg-black/5 dark:hover:bg-white/5 border border-transparent'
-                                  }`}
-                                >
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs font-bold theme-text truncate">
-                                        {idObj.title}
-                                      </span>
-                                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                        {idObj.currentPhase}
-                                      </span>
-                                    </div>
-                                    <span className="text-[11px] theme-subtext truncate block mt-0.5">
-                                      {idObj.totalHoursLogged}h logged • {idObj.totalVotes} sessions
-                                    </span>
-                                  </div>
-                                  {isSelected && (
-                                    <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                                  )}
-                                </button>
-                              );
-                            })}
+                  <label className="text-xs font-semibold theme-subtext block">
+                    1. Choose Identity (Tap a Card)
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                    {identities.map((i) => {
+                      const selected = newHabitIdentityId === i.id;
+                      return (
+                        <button
+                          key={i.id}
+                          type="button"
+                          onClick={() => setNewHabitIdentityId(i.id)}
+                          className={`p-2.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
+                            selected
+                              ? 'glass-tab-active border-transparent'
+                              : 'glass-panel hover:border-[var(--border-strong)]'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <span className="text-[10px] font-mono uppercase opacity-75 block">
+                              Active Identity
+                            </span>
+                            <span className="text-xs font-bold block truncate">
+                              {i.title}
+                            </span>
                           </div>
-                        </div>
-                      )}
+                          {selected && <Check className="w-4 h-4 shrink-0" />}
+                        </button>
+                      );
+                    })}
 
-                      {/* Universal Templates & Archetypes */}
-                      <div className="space-y-2 pt-2 border-t border-[var(--border-subtle)]">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" /> Universal Archetypes (Instant Setup)
-                          </span>
-                          <span className="text-[10px] font-mono theme-muted">
-                            8 templates
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                          {IDENTITY_PRESETS.map((preset) => {
-                            const isSelected = newHabitIdentityId === `preset:${preset.key}`;
-                            return (
-                              <button
-                                key={preset.key}
-                                type="button"
-                                onClick={() => {
-                                  soundEngine.playTactileClick(soundEnabled);
-                                  setNewHabitIdentityId(`preset:${preset.key}`);
-                                  setIsIdentityPickerOpen(false);
-                                }}
-                                className={`p-2.5 rounded-xl text-left transition flex flex-col justify-between gap-1 cursor-pointer ${
-                                  isSelected
-                                    ? 'glass-tab-active ring-1 ring-amber-500'
-                                    : 'glass-panel hover:border-[var(--border-strong)]'
-                                }`}
-                              >
-                                <div>
-                                  <span className="text-[10px] font-mono text-amber-500 block truncate">
-                                    {preset.category}
-                                  </span>
-                                  <span className="text-xs font-bold theme-text block truncate">
-                                    {preset.title}
-                                  </span>
-                                </div>
-                                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono block">
-                                  +2 Habit Examples Ready
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                    {IDENTITY_PRESETS.filter(
+                      (preset) =>
+                        !identities.some(
+                          (existing) =>
+                            existing.title.toLowerCase() ===
+                            preset.title.toLowerCase()
+                        )
+                    ).map((preset) => {
+                      const val = `preset:${preset.key}`;
+                      const selected = newHabitIdentityId === val;
+                      return (
+                        <button
+                          key={preset.key}
+                          type="button"
+                          onClick={() => setNewHabitIdentityId(val)}
+                          className={`p-2.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
+                            selected
+                              ? 'glass-tab-active border-transparent'
+                              : 'glass-panel hover:border-[var(--border-strong)]'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <span className="text-[10px] font-mono text-amber-500 block truncate">
+                              ✨ {preset.category}
+                            </span>
+                            <span className="text-xs font-bold block truncate">
+                              {preset.title}
+                            </span>
+                          </div>
+                          {selected && <Check className="w-4 h-4 shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
+                {/* 2. 1-Tap Habit Examples */}
                 {activeHabitExamples.length > 0 && (
                   <div className="p-3 rounded-2xl glass-panel space-y-2">
                     <span className="text-[11px] font-bold uppercase tracking-wider theme-muted flex items-center gap-1">
                       <Sparkles className="w-3 h-3 text-amber-500" />
-                      1-Tap Habit Examples (Click to Auto-Fill):
+                      1-Tap Habit Examples (Tap to Auto-Fill):
                     </span>
                     <div className="flex flex-col gap-1.5">
                       {activeHabitExamples.map((ex, idx) => (
@@ -1755,6 +1872,7 @@ export default function ForgeAppShell({
                   </div>
                 )}
 
+                {/* 3. Habit Title & 2-Min Micro-Start */}
                 <div>
                   <label className="text-xs font-semibold theme-subtext block mb-1">
                     2. Full Habit Action
@@ -1771,7 +1889,7 @@ export default function ForgeAppShell({
 
                 <div>
                   <label className="text-xs font-semibold theme-subtext block mb-1">
-                    3. 2-Minute Micro-Start Step (Frictionless Entry)
+                    3. 2-Minute Micro-Start Step
                   </label>
                   <input
                     type="text"
@@ -1783,34 +1901,123 @@ export default function ForgeAppShell({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs theme-subtext block mb-1">Stage</label>
-                    <select
-                      value={newHabitStage}
-                      onChange={(e) => setNewHabitStage(e.target.value as SkillStage)}
-                      className="w-full theme-input rounded-xl p-2.5 text-sm"
-                    >
-                      <option value="PASSIVE">Absorb (Study)</option>
-                      <option value="PRACTICE">Drill (Practice)</option>
-                      <option value="ACTIVE">Build (Create)</option>
-                    </select>
+                {/* 4. Custom Segmented Stage Pill Selector (Replaces native <select>) */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold theme-subtext block">
+                    4. Skill Stage
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'PASSIVE' as SkillStage, title: 'Absorb', sub: 'Study • 0.8x' },
+                      { id: 'PRACTICE' as SkillStage, title: 'Drill', sub: 'Practice • 1.2x' },
+                      { id: 'ACTIVE' as SkillStage, title: 'Build', sub: 'Create • 1.75x' },
+                    ].map((st) => {
+                      const active = newHabitStage === st.id;
+                      return (
+                        <button
+                          key={st.id}
+                          type="button"
+                          onClick={() => setNewHabitStage(st.id)}
+                          className={`p-2.5 rounded-xl border text-center transition cursor-pointer ${
+                            active
+                              ? 'glass-tab-active border-transparent'
+                              : 'glass-panel theme-subtext'
+                          }`}
+                        >
+                          <div className="text-xs font-bold">{st.title}</div>
+                          <div className="text-[10px] opacity-80">{st.sub}</div>
+                        </button>
+                      );
+                    })}
                   </div>
+                </div>
 
-                  <div>
-                    <label className="text-xs theme-subtext block mb-1">Chain After</label>
-                    <select
-                      value={newHabitAnchorId}
-                      onChange={(e) => setNewHabitAnchorId(e.target.value)}
-                      className="w-full theme-input rounded-xl p-2.5 text-sm"
-                    >
-                      <option value="NONE">Standalone</option>
+                {/* 5. Custom Glass Popover for "Chain After" (Replaces native <select>) */}
+                <div className="space-y-1.5 relative">
+                  <label className="text-xs font-semibold theme-subtext block">
+                    5. Chain Sequence (Optional)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsChainPickerOpen((o) => !o)}
+                    className="w-full p-2.5 rounded-xl glass-panel flex items-center justify-between text-xs font-semibold theme-text cursor-pointer"
+                  >
+                    <span className="truncate">
+                      {selectedNewAnchorObj
+                        ? `After: ${selectedNewAnchorObj.title}`
+                        : '⚡ Standalone (Start of Chain)'}
+                    </span>
+                    <ChevronDown className="w-4 h-4 shrink-0" />
+                  </button>
+
+                  {isChainPickerOpen && (
+                    <div className="p-2 rounded-2xl glass-nav space-y-1 max-h-40 overflow-y-auto border border-[var(--border-strong)]">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewHabitAnchorId('NONE');
+                          setIsChainPickerOpen(false);
+                        }}
+                        className={`w-full text-left p-2 rounded-xl text-xs font-semibold flex items-center justify-between cursor-pointer ${
+                          newHabitAnchorId === 'NONE'
+                            ? 'glass-tab-active'
+                            : 'hover:bg-white/5 theme-text'
+                        }`}
+                      >
+                        <span>⚡ Standalone (No preceding habit)</span>
+                        {newHabitAnchorId === 'NONE' && <Check className="w-3.5 h-3.5" />}
+                      </button>
                       {habits.map((h) => (
-                        <option key={h.id} value={h.id}>
-                          After: {h.title}
-                        </option>
+                        <button
+                          key={h.id}
+                          type="button"
+                          onClick={() => {
+                            setNewHabitAnchorId(h.id);
+                            setIsChainPickerOpen(false);
+                          }}
+                          className={`w-full text-left p-2 rounded-xl text-xs flex items-center justify-between cursor-pointer ${
+                            newHabitAnchorId === h.id
+                              ? 'glass-tab-active'
+                              : 'hover:bg-white/5 theme-text'
+                          }`}
+                        >
+                          <span className="truncate">After: {h.title}</span>
+                          {newHabitAnchorId === h.id && <Check className="w-3.5 h-3.5" />}
+                        </button>
                       ))}
-                    </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* 6. Daily Reminder Preset Pills + Custom Time */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-semibold theme-subtext flex items-center gap-1">
+                      <Bell className="w-3.5 h-3.5 text-indigo-400" />
+                      Daily Reminder Notification (Optional)
+                    </label>
+                    <input
+                      type="time"
+                      value={newHabitReminder}
+                      onChange={(e) => setNewHabitReminder(e.target.value)}
+                      className="theme-input rounded-lg px-2 py-1 text-xs font-mono"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {REMINDER_PRESETS.map((p) => (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => setNewHabitReminder(p.value)}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer ${
+                          newHabitReminder === p.value
+                            ? 'glass-tab-active'
+                            : 'glass-panel theme-subtext'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
@@ -1820,7 +2027,7 @@ export default function ForgeAppShell({
                   className="w-full py-3 rounded-xl text-white font-bold text-xs cursor-pointer shadow-sm"
                   style={{ background: 'var(--accent-primary)' }}
                 >
-                  {isSubmitting ? 'Adding Habit...' : 'Save Habit & Start Tracking'}
+                  {isSubmitting ? 'Adding Habit...' : 'Save Habit to Top of Queue'}
                 </button>
               </form>
             ) : (
@@ -1898,11 +2105,11 @@ export default function ForgeAppShell({
       )}
 
       {/* ========================================================= */}
-      {/* EDIT HABIT MODAL                                          */}
+      {/* EDIT HABIT MODAL (CUSTOM GLASS PICKERS — ZERO <select>!)  */}
       {/* ========================================================= */}
       {editingHabit && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
-          <div className="glass-nav rounded-3xl max-w-md w-full p-6 space-y-4 my-8">
+        <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
+          <div className="glass-nav rounded-3xl max-w-md w-full p-6 space-y-4 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <h3 className="text-base font-bold theme-text">Edit Habit</h3>
               <button
@@ -1913,7 +2120,7 @@ export default function ForgeAppShell({
               </button>
             </div>
 
-            <form onSubmit={handleUpdateHabitSubmit} className="space-y-3.5">
+            <form onSubmit={handleUpdateHabitSubmit} className="space-y-4">
               <div>
                 <label className="text-xs theme-subtext block mb-1">Habit Title</label>
                 <input
@@ -1938,59 +2145,111 @@ export default function ForgeAppShell({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs theme-subtext block mb-1">Identity</label>
-                  <select
-                    value={editHabitIdentityId}
-                    onChange={(e) => setEditHabitIdentityId(e.target.value)}
-                    className="w-full theme-input rounded-xl p-2.5 text-sm"
-                  >
-                    {identities.map((i) => (
-                      <option key={i.id} value={i.id}>
-                        {i.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs theme-subtext block mb-1">Stage</label>
-                  <select
-                    value={editHabitStage}
-                    onChange={(e) => setEditHabitStage(e.target.value as SkillStage)}
-                    className="w-full theme-input rounded-xl p-2.5 text-sm"
-                  >
-                    <option value="PASSIVE">Absorb</option>
-                    <option value="PRACTICE">Drill</option>
-                    <option value="ACTIVE">Build</option>
-                  </select>
+              {/* Custom Identity Pill Selector */}
+              <div className="space-y-1.5">
+                <label className="text-xs theme-subtext block">Identity</label>
+                <div className="grid grid-cols-2 gap-1.5 max-h-28 overflow-y-auto">
+                  {identities.map((i) => (
+                    <button
+                      key={i.id}
+                      type="button"
+                      onClick={() => setEditHabitIdentityId(i.id)}
+                      className={`p-2 rounded-xl text-xs font-semibold text-left truncate cursor-pointer ${
+                        editHabitIdentityId === i.id
+                          ? 'glass-tab-active'
+                          : 'glass-panel theme-text'
+                      }`}
+                    >
+                      {i.title}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs theme-subtext block mb-1">
-                  Chain Sequence (&ldquo;After Habit&rdquo;)
-                </label>
-                <select
-                  value={editHabitAnchorId}
-                  onChange={(e) => setEditHabitAnchorId(e.target.value)}
-                  className="w-full theme-input rounded-xl p-2.5 text-sm"
+              {/* Custom Segmented Stage Selector */}
+              <div className="space-y-1.5">
+                <label className="text-xs theme-subtext block">Skill Stage</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['PASSIVE', 'PRACTICE', 'ACTIVE'] as SkillStage[]).map((st) => (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setEditHabitStage(st)}
+                      className={`py-2 rounded-xl text-xs font-bold cursor-pointer ${
+                        editHabitStage === st
+                          ? 'glass-tab-active'
+                          : 'glass-panel theme-subtext'
+                      }`}
+                    >
+                      {st === 'PASSIVE' ? 'Absorb' : st === 'PRACTICE' ? 'Drill' : 'Build'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Chain Picker Popover */}
+              <div className="space-y-1.5">
+                <label className="text-xs theme-subtext block">Chain Sequence</label>
+                <button
+                  type="button"
+                  onClick={() => setIsEditChainPickerOpen((o) => !o)}
+                  className="w-full p-2.5 rounded-xl glass-panel flex items-center justify-between text-xs font-semibold theme-text cursor-pointer"
                 >
-                  <option value="NONE">Standalone</option>
-                  {habits
-                    .filter((h) => h.id !== editingHabit.id)
-                    .map((h) => (
-                      <option key={h.id} value={h.id}>
-                        After: {h.title}
-                      </option>
-                    ))}
-                </select>
-                {selectedEditAnchor && (
-                  <p className="text-[11px] theme-muted mt-1">
-                    Flow: {selectedEditAnchor.title} &rarr; {editHabitTitle}
-                  </p>
+                  <span className="truncate">
+                    {selectedEditAnchorObj
+                      ? `After: ${selectedEditAnchorObj.title}`
+                      : '⚡ Standalone'}
+                  </span>
+                  <ChevronDown className="w-4 h-4 shrink-0" />
+                </button>
+
+                {isEditChainPickerOpen && (
+                  <div className="p-2 rounded-2xl glass-nav space-y-1 max-h-36 overflow-y-auto border border-[var(--border-strong)]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditHabitAnchorId('NONE');
+                        setIsEditChainPickerOpen(false);
+                      }}
+                      className={`w-full text-left p-2 rounded-xl text-xs font-semibold cursor-pointer ${
+                        editHabitAnchorId === 'NONE' ? 'glass-tab-active' : 'theme-text'
+                      }`}
+                    >
+                      ⚡ Standalone
+                    </button>
+                    {habits
+                      .filter((h) => h.id !== editingHabit.id)
+                      .map((h) => (
+                        <button
+                          key={h.id}
+                          type="button"
+                          onClick={() => {
+                            setEditHabitAnchorId(h.id);
+                            setIsEditChainPickerOpen(false);
+                          }}
+                          className={`w-full text-left p-2 rounded-xl text-xs truncate cursor-pointer ${
+                            editHabitAnchorId === h.id ? 'glass-tab-active' : 'theme-text'
+                          }`}
+                        >
+                          After: {h.title}
+                        </button>
+                      ))}
+                  </div>
                 )}
+              </div>
+
+              {/* Daily Reminder Time */}
+              <div className="flex items-center justify-between pt-1">
+                <label className="text-xs theme-subtext flex items-center gap-1">
+                  <Bell className="w-3.5 h-3.5 text-indigo-400" />
+                  Daily Reminder Time
+                </label>
+                <input
+                  type="time"
+                  value={editHabitReminder}
+                  onChange={(e) => setEditHabitReminder(e.target.value)}
+                  className="theme-input rounded-lg px-2.5 py-1 text-xs font-mono"
+                />
               </div>
 
               <div className="pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between">
@@ -2030,7 +2289,7 @@ export default function ForgeAppShell({
       {/* EDIT IDENTITY MODAL                                       */}
       {/* ========================================================= */}
       {editingIdentity && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md p-4 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md p-4 flex items-center justify-center">
           <div className="glass-nav rounded-3xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <h3 className="text-base font-bold theme-text">Edit Identity</h3>

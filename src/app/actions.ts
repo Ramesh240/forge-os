@@ -262,6 +262,7 @@ export async function createStackedHabit(data: {
   gatewayVersion: string;
   defaultPhase: SkillStage;
   anchorHabitId?: string | null;
+  reminderTime?: string | null;
   temptationLabel?: string | null;
   temptationBundleUrl?: string | null;
 }) {
@@ -319,6 +320,7 @@ export async function createStackedHabit(data: {
         gatewayVersion: data.gatewayVersion.trim(),
         defaultPhase: data.defaultPhase,
         anchorHabitId: anchorId,
+        reminderTime: data.reminderTime?.trim() || null,
         temptationLabel: data.temptationLabel?.trim() || null,
         temptationBundleUrl: data.temptationBundleUrl?.trim() || null,
       },
@@ -342,6 +344,7 @@ export async function updateStackedHabit(data: {
   gatewayVersion: string;
   defaultPhase: SkillStage;
   anchorHabitId?: string | null;
+  reminderTime?: string | null;
   temptationLabel?: string | null;
   temptationBundleUrl?: string | null;
 }) {
@@ -414,6 +417,7 @@ export async function updateStackedHabit(data: {
         title: data.title.trim(),
         gatewayVersion: data.gatewayVersion.trim(),
         defaultPhase: data.defaultPhase,
+        reminderTime: data.reminderTime?.trim() || null,
         temptationLabel: data.temptationLabel?.trim() || null,
         temptationBundleUrl: data.temptationBundleUrl?.trim() || null,
       },
