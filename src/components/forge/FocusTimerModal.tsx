@@ -128,32 +128,32 @@ export function FocusTimerModal({
         <div className="absolute bottom-1/4 right-1/3 w-[450px] h-[450px] rounded-full bg-[var(--forge-tertiary)]/10 blur-[140px]" />
       </div>
 
-      <div className="relative z-10 w-full max-w-lg bg-[#131317]/95 border border-[rgba(255,255,255,0.12)] rounded-3xl p-5 sm:p-7 shadow-[0_16px_64px_rgba(0,0,0,0.8)] my-auto flex flex-col space-y-5">
+      <div className="relative z-10 w-full max-w-lg bg-[var(--forge-surface-low)] border border-[var(--forge-border)] rounded-3xl p-5 sm:p-7 shadow-[0_16px_64px_rgba(0,0,0,0.5)] my-auto flex flex-col space-y-5">
         {/* Top Header Bar */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 rounded-full bg-[var(--forge-primary-tint)] border border-[rgba(192,193,255,0.25)] text-[var(--forge-primary)] font-mono-forge text-[10px] font-bold uppercase tracking-wider">
-                {activeHabit.identityTitle || 'Core Archetype'}
+              <span className="px-2.5 py-0.5 rounded-full bg-[var(--forge-primary-tint)] border border-[var(--forge-border-mid)] text-[var(--forge-primary)] font-mono-forge text-[10px] font-bold uppercase tracking-wider">
+                {activeHabit.identityTitle || 'Archetype'}
               </span>
               {timerMode !== 'FLOW' && (
                 <span className="px-2 py-0.5 rounded-full bg-[#f43f5e]/20 text-[#f43f5e] font-mono-forge text-[10px] font-bold uppercase">
-                  {pomoPhase} PHASE
+                  {pomoPhase}
                 </span>
               )}
             </div>
-            <h3 className="text-xl font-bold text-white tracking-tight truncate">
+            <h3 className="text-xl font-bold text-[var(--forge-text-primary)] tracking-tight truncate">
               {activeHabit.title}
             </h3>
             <p className="text-xs text-[var(--forge-text-secondary)] mt-0.5 truncate">
-              2-Min Gateway: {activeHabit.gatewayVersion}
+              Gateway: {activeHabit.gatewayVersion}
             </p>
           </div>
 
           <button
             onClick={onAbort}
-            className="w-9 h-9 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-text-muted)] hover:text-white flex items-center justify-center transition-colors shrink-0"
-            title="Abort Gateway"
+            className="w-9 h-9 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)] flex items-center justify-center transition-colors shrink-0 border border-[var(--forge-border)]"
+            title="Close"
           >
             <X className="w-5 h-5" />
           </button>
@@ -202,10 +202,10 @@ export function FocusTimerModal({
                     <Hourglass className="w-3.5 h-3.5 text-[var(--forge-primary)] animate-pulse" />
                     <span>
                       {timerMode !== 'FLOW'
-                        ? `${pomoPhase} COUNTDOWN`
+                        ? `${pomoPhase}`
                         : microCleared
-                        ? 'FLOW CHRONOMETER'
-                        : 'GATEWAY BURN'}
+                        ? 'FLOW'
+                        : 'GATEWAY'}
                     </span>
                   </div>
 
@@ -218,7 +218,7 @@ export function FocusTimerModal({
 
                   <div className="mt-2 flex items-center gap-2">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-[var(--forge-surface-highest)] font-mono-forge text-[10px] text-[var(--forge-text-secondary)] uppercase tracking-wider">
-                      {microCleared ? `+${scorePreview.toFixed(1)} XP Minting` : 'Gateway 02:00'}
+                      {microCleared ? `+${scorePreview.toFixed(1)} XP` : '02:00 Gateway'}
                     </span>
                     <span className="font-mono-forge text-xs text-[var(--forge-tertiary)] font-bold">
                       {timerMode}
@@ -232,14 +232,14 @@ export function FocusTimerModal({
             <div className="w-full space-y-1.5">
               <div className="flex items-center justify-between text-[11px] font-mono-forge">
                 <span className="uppercase text-[var(--forge-text-muted)] tracking-wider">
-                  Mastery Phase Level
+                  Mastery Phase
                 </span>
                 <span className="text-[var(--forge-primary)] font-bold">
-                  {stage} Active
+                  {stage}
                 </span>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 p-1 bg-[#0e0e12] rounded-xl border border-white/5">
+              <div className="grid grid-cols-3 gap-2 p-1 bg-[var(--forge-surface-lowest)] rounded-xl border border-[var(--forge-border)]">
                 {(['PASSIVE', 'PRACTICE', 'ACTIVE'] as const).map((s) => {
                   const isActive = stage === s;
                   const rate = s === 'PASSIVE' ? 'x0.8' : s === 'PRACTICE' ? 'x1.2' : 'x1.75';
@@ -249,13 +249,13 @@ export function FocusTimerModal({
                       onClick={() => onSetStage(s)}
                       className={`py-2 px-1 rounded-lg text-center transition-all ${
                         isActive
-                          ? 'bg-[var(--forge-surface-high)] text-[var(--forge-primary)] shadow-[0_0_12px_rgba(192,193,255,0.2)] font-bold'
-                          : 'text-[var(--forge-text-muted)] hover:text-white'
+                          ? 'bg-[var(--forge-surface-high)] text-[var(--forge-primary)] shadow-sm font-bold border border-[var(--forge-border-mid)]'
+                          : 'text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)]'
                       }`}
                     >
                       <div className="font-mono-forge text-[11px] uppercase">{s}</div>
                       <div className="text-[10px] text-[var(--forge-text-faint)] mt-0.5">
-                        {rate} Multiplier
+                        {rate}
                       </div>
                     </button>
                   );
@@ -264,7 +264,7 @@ export function FocusTimerModal({
             </div>
 
             {/* Resistance Mode & Friction Matrix */}
-            <div className="bg-[#1b1b22] border border-white/5 rounded-2xl p-3.5 space-y-3">
+            <div className="bg-[var(--forge-surface-mid)] border border-[var(--forge-border)] rounded-2xl p-3.5 space-y-3">
               {/* Resistance Toggle */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -273,13 +273,13 @@ export function FocusTimerModal({
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-bold text-white">Resistance Mode</span>
+                      <span className="text-sm font-bold text-[var(--forge-text-primary)]">Resistance Mode</span>
                       <span className="px-1.5 py-0.2 rounded bg-[var(--forge-secondary-tint)] text-[var(--forge-secondary)] font-mono-forge text-[9px] font-bold">
-                        +1.5x Multiplier
+                        +1.5x
                       </span>
                     </div>
                     <p className="text-[11px] text-[var(--forge-text-secondary)]">
-                      Deliberate high-friction cognitive challenge
+                      High cognitive strain challenge
                     </p>
                   </div>
                 </div>
@@ -299,10 +299,10 @@ export function FocusTimerModal({
               </div>
 
               {/* Perceived Friction Slider (1 to 5) */}
-              <div className="space-y-1.5 pt-1 border-t border-white/5">
+              <div className="space-y-1.5 pt-1 border-t border-[var(--forge-border)]">
                 <div className="flex items-center justify-between text-xs font-mono-forge">
                   <span className="text-[var(--forge-text-muted)] uppercase">
-                    Perceived Friction
+                    Friction
                   </span>
                   <span className="text-[var(--forge-error)] font-bold">
                     {frictionLabels[difficulty]}
@@ -328,8 +328,8 @@ export function FocusTimerModal({
                 </div>
               </div>
 
-              {/* Pomodoro Seamless Upgrades */}
-              <div className="space-y-1.5 pt-1 border-t border-white/5">
+              {/* Pomodoro Modes */}
+              <div className="space-y-1.5 pt-1 border-t border-[var(--forge-border)]">
                 <span className="text-[10px] font-mono-forge uppercase text-[var(--forge-text-muted)]">
                   Mode Upgrades
                 </span>
@@ -338,8 +338,8 @@ export function FocusTimerModal({
                     onClick={() => onActivatePomodoroMode('POMO_25_5')}
                     className={`py-2 px-2 rounded-xl text-center font-mono-forge text-xs font-bold transition-all ${
                       timerMode === 'POMO_25_5'
-                        ? 'bg-[var(--forge-primary)] text-[#1000a9] shadow-md'
-                        : 'bg-[#141418] text-[var(--forge-text-secondary)] hover:text-white'
+                        ? 'bg-[var(--forge-primary)] text-white shadow-md'
+                        : 'bg-[var(--forge-surface-lowest)] text-[var(--forge-text-secondary)] hover:text-[var(--forge-text-primary)] border border-[var(--forge-border)]'
                     }`}
                   >
                     Pomo 25/5
@@ -348,8 +348,8 @@ export function FocusTimerModal({
                     onClick={() => onActivatePomodoroMode('POMO_50_10')}
                     className={`py-2 px-2 rounded-xl text-center font-mono-forge text-xs font-bold transition-all ${
                       timerMode === 'POMO_50_10'
-                        ? 'bg-[var(--forge-secondary)] text-[#490080] shadow-md'
-                        : 'bg-[#141418] text-[var(--forge-text-secondary)] hover:text-white'
+                        ? 'bg-[var(--forge-secondary)] text-white shadow-md'
+                        : 'bg-[var(--forge-surface-lowest)] text-[var(--forge-text-secondary)] hover:text-[var(--forge-text-primary)] border border-[var(--forge-border)]'
                     }`}
                   >
                     Pomo 50/10
@@ -358,8 +358,8 @@ export function FocusTimerModal({
                     onClick={() => onActivatePomodoroMode('FLOW')}
                     className={`py-2 px-2 rounded-xl text-center font-mono-forge text-xs font-bold transition-all ${
                       timerMode === 'FLOW'
-                        ? 'bg-[var(--forge-tertiary)] text-[#003640] shadow-md'
-                        : 'bg-[#141418] text-[var(--forge-text-secondary)] hover:text-white'
+                        ? 'bg-[var(--forge-tertiary)] text-white shadow-md'
+                        : 'bg-[var(--forge-surface-lowest)] text-[var(--forge-text-secondary)] hover:text-[var(--forge-text-primary)] border border-[var(--forge-border)]'
                     }`}
                   >
                     Open Flow
@@ -377,25 +377,25 @@ export function FocusTimerModal({
                 <LockOpen className="w-4 h-4" />
                 <span>
                   {microCleared
-                    ? 'COMPLETE & LOG FOCUS SESSION'
-                    : 'CLEAR 2-MIN GATEWAY EARLY'}
+                    ? 'COMPLETE & LOG FOCUS'
+                    : 'COMPLETE 2-MIN NOW'}
                 </span>
               </button>
 
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={onTogglePlayPause}
-                  className="py-2.5 px-3 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-text-primary)] font-mono-forge text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                  className="py-2.5 px-3 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-text-primary)] font-mono-forge text-xs font-bold flex items-center justify-center gap-1.5 transition-all border border-[var(--forge-border)]"
                 >
                   {isRunning ? (
                     <>
                       <Pause className="w-3.5 h-3.5" />
-                      <span>Pause Session</span>
+                      <span>Pause</span>
                     </>
                   ) : (
                     <>
                       <Play className="w-3.5 h-3.5 fill-current" />
-                      <span>Resume Session</span>
+                      <span>Resume</span>
                     </>
                   )}
                 </button>
@@ -403,18 +403,18 @@ export function FocusTimerModal({
                 {timerMode !== 'FLOW' ? (
                   <button
                     onClick={onTransitionPomodoro}
-                    className="py-2.5 px-3 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-tertiary)] font-mono-forge text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                    className="py-2.5 px-3 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-tertiary)] font-mono-forge text-xs font-bold flex items-center justify-center gap-1.5 transition-all border border-[var(--forge-border)]"
                   >
                     <FastForward className="w-3.5 h-3.5" />
-                    <span>Skip to Next</span>
+                    <span>Skip</span>
                   </button>
                 ) : (
                   <button
                     onClick={onAbort}
-                    className="py-2.5 px-3 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-error)] font-mono-forge text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                    className="py-2.5 px-3 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-error)] font-mono-forge text-xs font-bold flex items-center justify-center gap-1.5 transition-all border border-[var(--forge-border)]"
                   >
                     <X className="w-3.5 h-3.5" />
-                    <span>Abort Gateway</span>
+                    <span>Abort</span>
                   </button>
                 )}
               </div>
@@ -425,13 +425,13 @@ export function FocusTimerModal({
               MODE B: POST-SESSION DEBRIEF FORM
           ─────────────────────────────────────────────────────────── */
           <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+            <div className="flex items-center justify-between border-b border-[var(--forge-border)] pb-3">
               <div>
-                <h4 className="text-base font-bold text-white tracking-tight">
-                  Session Reflection & Debrief
+                <h4 className="text-base font-bold text-[var(--forge-text-primary)] tracking-tight">
+                  Session Reflection
                 </h4>
                 <p className="text-xs text-[var(--forge-text-secondary)]">
-                  Crystallize tacit breakthroughs for your insights vault.
+                  Save tacit notes for your insights vault.
                 </p>
               </div>
               <span className="font-mono-forge text-xs font-bold text-[var(--forge-primary)]">
@@ -442,28 +442,28 @@ export function FocusTimerModal({
             {/* Bottleneck Input */}
             <div className="space-y-1.5">
               <label className="font-mono-forge text-[11px] uppercase tracking-wider text-[var(--forge-tertiary)] font-bold">
-                Bottleneck Attacked (Optional)
+                Bottleneck (Optional)
               </label>
               <input
                 type="text"
                 value={bottleneckNote}
                 onChange={(e) => onSetBottleneckNote(e.target.value)}
-                placeholder="e.g., Debugged recursive call stack overflow under high depth"
-                className="w-full px-3.5 py-3 rounded-xl bg-[#0e0e12] border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-[var(--forge-primary)]"
+                placeholder="e.g., Debugged recursive call stack overflow"
+                className="w-full px-3.5 py-3 rounded-xl bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] text-[var(--forge-text-primary)] text-xs sm:text-sm focus:outline-none focus:border-[var(--forge-primary)]"
               />
             </div>
 
             {/* Tacit Insight Input */}
             <div className="space-y-1.5">
               <label className="font-mono-forge text-[11px] uppercase tracking-wider text-[var(--forge-primary)] font-bold">
-                Tacit Law or Breakthrough Unlocked (Optional)
+                Tacit Law / Insight (Optional)
               </label>
               <textarea
                 rows={3}
                 value={insightNote}
                 onChange={(e) => onSetInsightNote(e.target.value)}
-                placeholder="e.g., Memoizing top-down earlier eliminates redundant cache misses..."
-                className="w-full px-3.5 py-3 rounded-xl bg-[#0e0e12] border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-[var(--forge-primary)] resize-none"
+                placeholder="e.g., Top-down memoization eliminates redundant cache misses..."
+                className="w-full px-3.5 py-3 rounded-xl bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] text-[var(--forge-text-primary)] text-xs sm:text-sm focus:outline-none focus:border-[var(--forge-primary)] resize-none"
               />
             </div>
 
@@ -472,9 +472,9 @@ export function FocusTimerModal({
               <button
                 disabled={isSubmitting}
                 onClick={() => onFinishSession(true)}
-                className="py-3 px-4 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-white font-mono-forge text-xs font-bold transition-all"
+                className="py-3 px-4 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-text-primary)] font-mono-forge text-xs font-bold transition-all border border-[var(--forge-border)]"
               >
-                Log 2m Gateway Only
+                Log 2m Gateway
               </button>
 
               <button
@@ -482,13 +482,13 @@ export function FocusTimerModal({
                 onClick={() => onFinishSession(false)}
                 className="py-3 px-4 rounded-xl bg-gradient-to-r from-[#8083ff] to-[#6f00be] text-white font-mono-forge text-xs font-bold shadow-[0_0_20px_rgba(128,131,255,0.4)] hover:brightness-110 active:scale-[0.98] transition-all"
               >
-                Log Full Focus ({sessionMins}m)
+                Log Focus ({sessionMins}m)
               </button>
             </div>
 
             <button
               onClick={() => onSetShowDebrief(false)}
-              className="w-full text-center text-xs text-[var(--forge-text-muted)] hover:text-white pt-1 font-mono-forge"
+              className="w-full text-center text-xs text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)] pt-1 font-mono-forge"
             >
               ← Back to timer view
             </button>

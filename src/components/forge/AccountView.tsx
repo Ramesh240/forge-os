@@ -94,7 +94,7 @@ export function AccountView({
       {/* ─────────────────────────────────────────────────────────────
           1. USER IDENTITY PROFILE CARD
       ───────────────────────────────────────────────────────────── */}
-      <div className="bg-[#1b1b24]/90 backdrop-blur-xl border border-[rgba(255,255,255,0.08)] rounded-2xl p-5 shadow-xl relative overflow-hidden">
+      <div className="bg-[var(--forge-surface-low)]/90 backdrop-blur-xl border border-[var(--forge-border)] rounded-2xl p-5 shadow-xl relative overflow-hidden">
         <div className="flex items-center gap-4">
           {currentUser?.image ? (
             <img
@@ -113,7 +113,7 @@ export function AccountView({
               <h2 className="text-lg font-bold text-[var(--forge-text-primary)] truncate">
                 {currentUser?.name || 'Systems Architect'}
               </h2>
-              <span className="px-2 py-0.5 rounded-full bg-[var(--forge-primary-tint)] border border-[rgba(192,193,255,0.25)] text-[var(--forge-primary)] font-mono-forge text-[10px] font-bold">
+              <span className="px-2 py-0.5 rounded-full bg-[var(--forge-primary-tint)] border border-[var(--forge-border-mid)] text-[var(--forge-primary)] font-mono-forge text-[10px] font-bold">
                 TIER IV
               </span>
             </div>
@@ -124,19 +124,19 @@ export function AccountView({
         </div>
 
         {/* Quick telemetry mini-row */}
-        <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/5 text-center font-mono-forge">
-          <div className="bg-[#141418] rounded-xl p-2.5">
+        <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-[var(--forge-border)] text-center font-mono-forge">
+          <div className="bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] rounded-xl p-2.5">
             <span className="text-[10px] text-[var(--forge-text-muted)] uppercase">Hours</span>
-            <p className="text-base font-bold text-white mt-0.5">{totalHours.toFixed(1)}h</p>
+            <p className="text-base font-bold text-[var(--forge-text-primary)] mt-0.5">{totalHours.toFixed(1)}h</p>
           </div>
-          <div className="bg-[#141418] rounded-xl p-2.5">
+          <div className="bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] rounded-xl p-2.5">
             <span className="text-[10px] text-[var(--forge-text-muted)] uppercase">Streak</span>
             <p className="text-base font-bold text-[var(--forge-flame)] mt-0.5 flex items-center justify-center gap-1">
               <Flame className="w-3.5 h-3.5 fill-current" />
               {streak}d
             </p>
           </div>
-          <div className="bg-[#141418] rounded-xl p-2.5">
+          <div className="bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] rounded-xl p-2.5">
             <span className="text-[10px] text-[var(--forge-text-muted)] uppercase">Archetypes</span>
             <p className="text-base font-bold text-[var(--forge-tertiary)] mt-0.5">
               {identities.length}
@@ -153,11 +153,11 @@ export function AccountView({
           <div className="flex items-center gap-2">
             <Palette className="w-4 h-4 text-[var(--forge-primary)]" />
             <span className="font-mono-forge text-xs uppercase tracking-wider font-bold text-[var(--forge-text-secondary)]">
-              Appearance & Theme Engine
+              Theme & Appearance
             </span>
           </div>
           <span className="font-mono-forge text-[10px] tracking-wider text-[var(--forge-tertiary)] uppercase">
-            Dynamic HUD
+            3 Themes
           </span>
         </div>
 
@@ -168,8 +168,8 @@ export function AccountView({
             onClick={() => onSelectTheme('obsidian')}
             className={`relative flex flex-col p-3 rounded-2xl border text-left transition-all overflow-hidden ${
               theme === 'obsidian'
-                ? 'bg-[#1f1f28] border-[var(--forge-primary)] shadow-[0_0_20px_rgba(192,193,255,0.25)]'
-                : 'bg-[#181820] border-[rgba(255,255,255,0.06)] opacity-70 hover:opacity-100'
+                ? 'bg-[var(--forge-surface-low)] border-[var(--forge-primary)] shadow-[0_0_20px_rgba(192,193,255,0.25)] ring-2 ring-[var(--forge-primary)]'
+                : 'bg-[var(--forge-surface-low)] border-[var(--forge-border)] opacity-70 hover:opacity-100'
             }`}
           >
             {theme === 'obsidian' && (
@@ -177,9 +177,9 @@ export function AccountView({
                 <CheckCircle2 className="w-4 h-4 text-[var(--forge-primary)] fill-current" />
               </div>
             )}
-            <div className="h-10 w-full rounded-xl bg-[#0e0e12] p-2 flex flex-col justify-between mb-2 border border-white/5">
+            <div className="h-10 w-full rounded-xl bg-[#0e0e12] p-2 flex flex-col justify-between mb-2 border border-white/10 shadow-inner">
               <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-[var(--forge-primary)] shadow-[0_0_6px_#c0c1ff]" />
+                <span className="h-2 w-2 rounded-full bg-[#c0c1ff] shadow-[0_0_6px_#c0c1ff]" />
                 <span className="h-1 w-6 rounded bg-[#353438]" />
               </div>
               <div className="h-2 w-3/4 rounded bg-[#8083ff]/40" />
@@ -188,7 +188,7 @@ export function AccountView({
               Obsidian
             </span>
             <span className="font-mono-forge text-[9px] text-[var(--forge-primary)] uppercase mt-0.5">
-              Default Void
+              Default Dark
             </span>
           </button>
 
@@ -197,8 +197,8 @@ export function AccountView({
             onClick={() => onSelectTheme('sepia')}
             className={`relative flex flex-col p-3 rounded-2xl border text-left transition-all overflow-hidden ${
               theme === 'sepia'
-                ? 'bg-[#2b241c] border-[#b45309] shadow-[0_0_20px_rgba(180,83,9,0.3)]'
-                : 'bg-[#1f1b16] border-[rgba(255,255,255,0.06)] opacity-70 hover:opacity-100'
+                ? 'bg-[var(--forge-surface-low)] border-[#b45309] shadow-[0_0_20px_rgba(180,83,9,0.3)] ring-2 ring-[#b45309]'
+                : 'bg-[var(--forge-surface-low)] border-[var(--forge-border)] opacity-70 hover:opacity-100'
             }`}
           >
             {theme === 'sepia' && (
@@ -206,16 +206,18 @@ export function AccountView({
                 <CheckCircle2 className="w-4 h-4 text-[#ea580c] fill-current" />
               </div>
             )}
-            <div className="h-10 w-full rounded-xl bg-[#ede8d8] p-2 flex flex-col justify-between mb-2 border border-white/10">
+            <div className="h-10 w-full rounded-xl bg-[#ede8d8] p-2 flex flex-col justify-between mb-2 border border-[rgba(100,70,30,0.2)] shadow-inner">
               <div className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-[#b45309]" />
                 <span className="h-1 w-6 rounded bg-[#8a735c]" />
               </div>
               <div className="h-2 w-3/4 rounded bg-[#b45309]/50" />
             </div>
-            <span className="font-bold text-xs text-white">Parchment</span>
-            <span className="font-mono-forge text-[9px] text-[#f59e0b] uppercase mt-0.5">
-              Warm Monastic
+            <span className="font-bold text-xs text-[var(--forge-text-primary)]">
+              Monastic
+            </span>
+            <span className="font-mono-forge text-[9px] text-[#f59e0b] uppercase mt-0.5 font-bold">
+              Warm Sepia
             </span>
           </button>
 
@@ -224,25 +226,27 @@ export function AccountView({
             onClick={() => onSelectTheme('light')}
             className={`relative flex flex-col p-3 rounded-2xl border text-left transition-all overflow-hidden ${
               theme === 'light'
-                ? 'bg-[#222736] border-[#4f46e5] shadow-[0_0_20px_rgba(79,70,229,0.3)]'
-                : 'bg-[#181a24] border-[rgba(255,255,255,0.06)] opacity-70 hover:opacity-100'
+                ? 'bg-[var(--forge-surface-low)] border-[#4f46e5] shadow-[0_0_20px_rgba(79,70,229,0.3)] ring-2 ring-[#4f46e5]'
+                : 'bg-[var(--forge-surface-low)] border-[var(--forge-border)] opacity-70 hover:opacity-100'
             }`}
           >
             {theme === 'light' && (
               <div className="absolute top-2 right-2">
-                <CheckCircle2 className="w-4 h-4 text-[#818cf8] fill-current" />
+                <CheckCircle2 className="w-4 h-4 text-[#4f46e5] fill-current" />
               </div>
             )}
-            <div className="h-10 w-full rounded-xl bg-[#f8fafc] p-2 flex flex-col justify-between mb-2 border border-white/10">
+            <div className="h-10 w-full rounded-xl bg-[#f8fafc] p-2 flex flex-col justify-between mb-2 border border-slate-300 shadow-inner">
               <div className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-[#4f46e5]" />
                 <span className="h-1 w-6 rounded bg-[#cbd5e1]" />
               </div>
               <div className="h-2 w-3/4 rounded bg-[#4f46e5]/40" />
             </div>
-            <span className="font-bold text-xs text-white">Daylight</span>
-            <span className="font-mono-forge text-[9px] text-[#818cf8] uppercase mt-0.5">
-              High Contrast
+            <span className="font-bold text-xs text-[var(--forge-text-primary)]">
+              Contrast
+            </span>
+            <span className="font-mono-forge text-[9px] text-[#4f46e5] uppercase mt-0.5 font-bold">
+              Daylight
             </span>
           </button>
         </div>
@@ -251,17 +255,17 @@ export function AccountView({
       {/* ─────────────────────────────────────────────────────────────
           3. SOUND & AUDIO ENGINE MODULE
       ───────────────────────────────────────────────────────────── */}
-      <section className="bg-[#1b1b22]/90 border border-[rgba(255,255,255,0.08)] rounded-2xl p-4 flex items-center justify-between shadow-lg">
+      <section className="bg-[var(--forge-surface-low)] border border-[var(--forge-border)] rounded-2xl p-4 flex items-center justify-between shadow-sm">
         <div className="flex items-start gap-3 min-w-0 pr-2">
           <div className="w-10 h-10 rounded-xl bg-[var(--forge-surface-high)] flex items-center justify-center text-[var(--forge-primary)] shrink-0 mt-0.5">
             <Volume2 className="w-5 h-5" />
           </div>
           <div className="flex flex-col min-w-0">
             <h4 className="text-sm font-bold text-[var(--forge-text-primary)]">
-              Web Audio & Haptic Feedback
+              Audio & Chimes
             </h4>
             <p className="text-xs text-[var(--forge-text-secondary)] line-clamp-1">
-              Micro-clicks, fanfare cues, and cadence chimes
+              Cadence sounds, gateway fanfare, and cues.
             </p>
           </div>
         </div>
@@ -269,7 +273,7 @@ export function AccountView({
         <div className="flex items-center gap-2">
           <button
             onClick={handleTestChime}
-            className="px-2.5 py-1 rounded-lg bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-xs font-mono-forge text-white transition-all active:scale-95"
+            className="px-2.5 py-1 rounded-lg bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-xs font-mono-forge text-[var(--forge-text-primary)] transition-all active:scale-95 border border-[var(--forge-border)]"
           >
             Test
           </button>
@@ -292,7 +296,7 @@ export function AccountView({
       {/* ─────────────────────────────────────────────────────────────
           4. NOTIFICATIONS PERMISSION MODULE
       ───────────────────────────────────────────────────────────── */}
-      <section className="bg-[#1b1b22]/90 border border-[rgba(255,255,255,0.08)] rounded-2xl p-4 flex items-center justify-between shadow-lg">
+      <section className="bg-[var(--forge-surface-low)] border border-[var(--forge-border)] rounded-2xl p-4 flex items-center justify-between shadow-sm">
         <div className="flex items-start gap-3 min-w-0 pr-2">
           <div className="w-10 h-10 rounded-xl bg-[var(--forge-surface-high)] flex items-center justify-center text-[var(--forge-secondary)] shrink-0 mt-0.5">
             {notifPermission === 'granted' ? (
@@ -303,12 +307,12 @@ export function AccountView({
           </div>
           <div className="flex flex-col min-w-0">
             <h4 className="text-sm font-bold text-[var(--forge-text-primary)]">
-              Daily Habit Reminders
+              Daily Reminders
             </h4>
             <p className="text-xs text-[var(--forge-text-secondary)]">
               {notifPermission === 'granted'
-                ? 'Browser notifications active for daily cues'
-                : 'Receive scheduled time alerts for habits'}
+                ? 'Active for daily habit schedules'
+                : 'Scheduled time alerts for habits'}
             </p>
           </div>
         </div>
@@ -329,7 +333,7 @@ export function AccountView({
           5. PWA INSTALLATION BANNER
       ───────────────────────────────────────────────────────────── */}
       {installPromptEvent && (
-        <section className="bg-gradient-to-r from-[#8083ff]/15 via-[#6f00be]/15 to-transparent border border-[rgba(192,193,255,0.25)] rounded-2xl p-4 flex items-center justify-between shadow-lg">
+        <section className="bg-gradient-to-r from-[#8083ff]/15 via-[#6f00be]/15 to-transparent border border-[var(--forge-border-mid)] rounded-2xl p-4 flex items-center justify-between shadow-lg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[var(--forge-primary-btn)] flex items-center justify-center text-white">
               <Download className="w-5 h-5" />
@@ -356,34 +360,34 @@ export function AccountView({
       {/* ─────────────────────────────────────────────────────────────
           6. MAINTENANCE & DATA ENGINE
       ───────────────────────────────────────────────────────────── */}
-      <section className="bg-[#1b1b22]/90 border border-[rgba(255,255,255,0.08)] rounded-2xl p-5 shadow-lg space-y-4">
+      <section className="bg-[var(--forge-surface-low)] border border-[var(--forge-border)] rounded-2xl p-5 shadow-sm space-y-4">
         <h3 className="text-sm font-bold text-[var(--forge-text-primary)] font-mono-forge uppercase tracking-wider">
-          Engine Diagnostics & Data Tools
+          System Diagnostics
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             onClick={handleAudit}
             disabled={isAuditing}
-            className="py-3 px-4 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-left flex items-center justify-between border border-white/5 transition-all text-xs font-mono-forge text-white"
+            className="py-3 px-4 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-left flex items-center justify-between border border-[var(--forge-border)] transition-all text-xs font-mono-forge text-[var(--forge-text-primary)]"
           >
-            <span>Run Midnight Guardrail Audit</span>
+            <span>Run Guardrail Audit</span>
             <RefreshCw className={`w-4 h-4 text-[var(--forge-primary)] ${isAuditing ? 'animate-spin' : ''}`} />
           </button>
 
           <button
             onClick={handleSeed}
             disabled={isSeeding}
-            className="py-3 px-4 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-left flex items-center justify-between border border-white/5 transition-all text-xs font-mono-forge text-white"
+            className="py-3 px-4 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-left flex items-center justify-between border border-[var(--forge-border)] transition-all text-xs font-mono-forge text-[var(--forge-text-primary)]"
           >
-            <span>Seed 84-Day Master History</span>
+            <span>Seed Sample History</span>
             <Sparkles className={`w-4 h-4 text-[var(--forge-secondary)] ${isSeeding ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
         {/* Auth Row */}
         {googleAuthEnabled && (
-          <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+          <div className="pt-2 border-t border-[var(--forge-border)] flex items-center justify-between">
             <span className="text-xs text-[var(--forge-text-secondary)] font-mono-forge">
               {currentUser ? `Signed in as ${currentUser.email}` : 'Sign in to sync across devices'}
             </span>
@@ -398,7 +402,7 @@ export function AccountView({
             ) : (
               <button
                 onClick={onSignInWithGoogle}
-                className="px-4 py-2 rounded-xl bg-white text-zinc-900 font-bold text-xs shadow-md hover:bg-zinc-100 transition-all"
+                className="px-4 py-2 rounded-xl bg-[var(--forge-primary-btn)] text-white font-bold text-xs shadow-md hover:brightness-110 transition-all"
               >
                 Sign In with Google
               </button>
@@ -407,9 +411,9 @@ export function AccountView({
         )}
 
         {/* Danger Zone: Wipe Account */}
-        <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+        <div className="pt-2 border-t border-[var(--forge-border)] flex items-center justify-between">
           <span className="text-xs text-[var(--forge-text-muted)]">
-            Reset all user identities, chains, and logs
+            Reset all identities, chains, and logs
           </span>
           {showConfirmDelete ? (
             <div className="flex items-center gap-2">
@@ -421,7 +425,7 @@ export function AccountView({
               </button>
               <button
                 onClick={() => setShowConfirmDelete(false)}
-                className="px-2.5 py-1.5 rounded-xl bg-[var(--forge-surface-high)] text-xs font-mono-forge text-white"
+                className="px-2.5 py-1.5 rounded-xl bg-[var(--forge-surface-high)] text-xs font-mono-forge text-[var(--forge-text-primary)]"
               >
                 Cancel
               </button>
@@ -432,7 +436,7 @@ export function AccountView({
               className="text-xs font-mono-forge text-[var(--forge-error)] hover:underline flex items-center gap-1"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Delete Workspace</span>
+              <span>Delete All Data</span>
             </button>
           )}
         </div>
