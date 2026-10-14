@@ -355,3 +355,174 @@ export function calculateMasteryHorizonAnalytics(params: any) {
     apprenticeModeRatio: { passivePct: 20, practicePct: 50, activePct: 30 },
   };
 }
+
+export interface HabitTemplateExample {
+  title: string;
+  gatewayVersion: string;
+  stage: SkillStage;
+}
+
+export interface IdentityPreset {
+  key: string;
+  category: string;
+  title: string;
+  lifesTaskStatement: string;
+  defaultPhase: 'OBSERVATION' | 'PRACTICE' | 'EXPERIMENTATION';
+  examples: HabitTemplateExample[];
+}
+
+export const IDENTITY_PRESETS: IdentityPreset[] = [
+  {
+    key: 'deep-worker',
+    category: 'Focus & Productivity',
+    title: 'Focused Deep Worker',
+    lifesTaskStatement: 'Protect cognitive focus and execute high-leverage work without distraction.',
+    defaultPhase: 'PRACTICE',
+    examples: [
+      {
+        title: 'Complete 1 Uninterrupted 45-Min Deep Work Block',
+        gatewayVersion: 'Put phone in another room and open primary task tab (2 mins)',
+        stage: 'ACTIVE',
+      },
+      {
+        title: 'Plan Top 3 Daily Priorities & Timeblocks',
+        gatewayVersion: 'Write down the single most important task for today (2 mins)',
+        stage: 'PRACTICE',
+      },
+    ],
+  },
+  {
+    key: 'vitality-athlete',
+    category: 'Health & Fitness',
+    title: 'Strength & Vitality Athlete',
+    lifesTaskStatement: 'Build sustainable physical strength, cardiovascular endurance, and daily energy.',
+    defaultPhase: 'PRACTICE',
+    examples: [
+      {
+        title: 'Complete 25-Min Strength / Bodyweight Workout',
+        gatewayVersion: 'Put on workout clothes and do 5 warmup pushups or squats (2 mins)',
+        stage: 'PRACTICE',
+      },
+      {
+        title: '15-Min Mobility, Stretching & Posture Reset',
+        gatewayVersion: 'Roll out mat and hold 1 deep stretch for 60 seconds (2 mins)',
+        stage: 'PRACTICE',
+      },
+    ],
+  },
+  {
+    key: 'software-craftsman',
+    category: 'Engineering & Tech',
+    title: 'Systems & Software Craftsman',
+    lifesTaskStatement: 'Master problem-solving, clean system architecture, and modern engineering.',
+    defaultPhase: 'EXPERIMENTATION',
+    examples: [
+      {
+        title: 'Solve 1 Algorithm / Coding Challenge',
+        gatewayVersion: 'Open code editor and read the problem constraints (2 mins)',
+        stage: 'PRACTICE',
+      },
+      {
+        title: 'Ship 1 Feature or Refactor 1 Module in Side Project',
+        gatewayVersion: 'Run local dev server and write the function stub (2 mins)',
+        stage: 'ACTIVE',
+      },
+    ],
+  },
+  {
+    key: 'lifelong-scholar',
+    category: 'Reading & Learning',
+    title: 'Lifelong Scholar & Reader',
+    lifesTaskStatement: 'Continuously compound knowledge through active reading and spaced repetition.',
+    defaultPhase: 'OBSERVATION',
+    examples: [
+      {
+        title: 'Read 15 Pages of a Non-Fiction / Technical Book',
+        gatewayVersion: 'Open the book and read just 1 page (2 mins)',
+        stage: 'PASSIVE',
+      },
+      {
+        title: 'Review 20 Spaced-Repetition Flashcards',
+        gatewayVersion: 'Open flashcard app and review 5 cards (2 mins)',
+        stage: 'PRACTICE',
+      },
+    ],
+  },
+  {
+    key: 'creative-artist',
+    category: 'Music, Writing & Art',
+    title: 'Creative & Musical Practitioner',
+    lifesTaskStatement: 'Develop fluid creative expression through daily deliberate practice.',
+    defaultPhase: 'PRACTICE',
+    examples: [
+      {
+        title: '20-Min Instrument / Chord & Rhythm Practice',
+        gatewayVersion: 'Pick up instrument and play 1 chord progression slowly (2 mins)',
+        stage: 'PRACTICE',
+      },
+      {
+        title: 'Write 300 Words of Original Notes, Essays, or Ideas',
+        gatewayVersion: 'Open blank document and write 1 rough sentence (2 mins)',
+        stage: 'ACTIVE',
+      },
+    ],
+  },
+  {
+    key: 'mindful-stoic',
+    category: 'Mindfulness & Clarity',
+    title: 'Calm & Resilient Mind',
+    lifesTaskStatement: 'Cultivate emotional regulation, mental clarity, and intentional presence.',
+    defaultPhase: 'PRACTICE',
+    examples: [
+      {
+        title: '10-Min Mindfulness & Breathwork Session',
+        gatewayVersion: 'Sit upright, close eyes, and take 10 slow breaths (2 mins)',
+        stage: 'PRACTICE',
+      },
+      {
+        title: 'Evening Shutdown & Gratitude Reflection Journal',
+        gatewayVersion: 'Write 1 win from today and 1 focus for tomorrow (2 mins)',
+        stage: 'PASSIVE',
+      },
+    ],
+  },
+  {
+    key: 'wealth-architect',
+    category: 'Career & Finance',
+    title: 'Career & Financial Strategist',
+    lifesTaskStatement: 'Build long-term financial independence and high-value career leverage.',
+    defaultPhase: 'OBSERVATION',
+    examples: [
+      {
+        title: 'Audit Daily Expenses & Investment Allocation',
+        gatewayVersion: 'Open finance tracker and log today’s transactions (2 mins)',
+        stage: 'PRACTICE',
+      },
+      {
+        title: 'Study 1 Industry Case Study or System Design Doc',
+        gatewayVersion: 'Open article and summarize the core architecture diagram (2 mins)',
+        stage: 'PASSIVE',
+      },
+    ],
+  },
+  {
+    key: 'articulate-communicator',
+    category: 'Languages & Speaking',
+    title: 'Articulate Communicator',
+    lifesTaskStatement: 'Speak and write with clarity, persuasion, and confidence.',
+    defaultPhase: 'PRACTICE',
+    examples: [
+      {
+        title: '15-Min Language / Vocabulary & Speaking Drill',
+        gatewayVersion: 'Complete 1 quick pronunciation or flashcard drill (2 mins)',
+        stage: 'PRACTICE',
+      },
+      {
+        title: 'Record or Practice 1 Concise Technical Explanation',
+        gatewayVersion: 'Outline 3 bullet points for the topic you want to explain (2 mins)',
+        stage: 'ACTIVE',
+      },
+    ],
+  },
+];
+

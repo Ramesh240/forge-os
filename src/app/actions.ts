@@ -3,7 +3,11 @@
 
 import { prisma } from '@/lib/prisma';
 import { auth, signIn, signOut } from '@/auth';
-import { calculateSessionScore, SkillStage } from '@/lib/forge-engine';
+import {
+  calculateSessionScore,
+  IDENTITY_PRESETS,
+  SkillStage,
+} from '@/lib/forge-engine';
 import { revalidatePath } from 'next/cache';
 
 export async function getActiveUserId(): Promise<string> {
@@ -28,50 +32,71 @@ export async function signOutAction() {
  * if their workspace is completely empty.
  */
 export async function ensureUserWorkspaceSeeded(userId: string) {
-  const count = await prisma.identityVector.count({
-    where: { userId },
-  });
-
+  const count = await prisma.identityVector.count({ where: { userId } });
   if (count > 0) return;
 
-  const algo = await prisma.identityVector.create({
-    data: {
-      userId,
-      title: 'Algorithms Specialist',
-      lifesTaskStatement: 'Master algorithmic problem-solving and data structures.',
-      currentPhase: 'PRACTICE',
-    },
-  });
+  // Seed 4 universal, relatable identities so any user can start immediately
+  const starterKeys = [
+    'deep-worker',
+    'vitality-athlete',
+    'software-craftsman',
+    'lifelong-scholar',
+  ];
 
-  const arch = await prisma.identityVector.create({
-    data: {
-      userId,
-      title: 'Systems Architect',
-      lifesTaskStatement: 'Design resilient, high-throughput full-stack systems.',
-      currentPhase: 'EXPERIMENTATION',
-    },
-  });
+  const createdMap = new Map<string, string>();
 
-  const h1 = await prisma.habit.create({
-    data: {
-      identityId: algo.id,
-      title: 'Review 15 Technical Flashcards',
-      gatewayVersion: 'Review just 5 cards (2 mins)',
-      defaultPhase: 'PASSIVE',
-      currentStreak: 1,
-    },
-  });
+  for (const key of starterKeys) {
+    const preset = IDENTITY_PRESETS.find((p) => p.key === key);
+    if (!preset) continue;
 
-  await prisma.habit.create({
-    data: {
-      identityId: arch.id,
-      title: 'Build or Optimize 1 Backend Endpoint / Query',
-      gatewayVersion: 'Open IDE and write function signature (2 mins)',
-      defaultPhase: 'ACTIVE',
-      anchorHabitId: h1.id,
-      currentStreak: 1,
-    },
-  });
+    const created = await prisma.identityVector.create({
+      data: {
+        userId,
+        title: preset.title,
+        lifesTaskStatement: preset.lifesTaskStatement,
+        currentPhase: preset.defaultPhase,
+      },
+    });
+    createdMap.set(key, created.id);
+  }
+
+  // Seed 3 starter habits across these generalized identities
+  const deepWorkId = createdMap.get('deep-worker');
+  const vitalityId = createdMap.get('vitality-athlete');
+  const scholarId = createdMap.get('lifelong-scholar');
+
+  if (scholarId && deepWorkId && vitalityId) {
+    const h1 = await prisma.habit.create({
+      data: {
+        identityId: scholarId,
+        title: 'Read 10 Pages or Review 15 Flashcards',
+        gatewayVersion: 'Open book/app and complete just 1 page or 5 cards (2 mins)',
+        defaultPhase: 'PASSIVE',
+        currentStreak: 1,
+      },
+    });
+
+    await prisma.habit.create({
+      data: {
+        identityId: deepWorkId,
+        title: 'Complete 1 Uninterrupted 45-Min Deep Work Block',
+        gatewayVersion: 'Silence phone and write down your single target outcome (2 mins)',
+        defaultPhase: 'ACTIVE',
+        anchorHabitId: h1.id,
+        currentStreak: 1,
+      },
+    });
+
+    await prisma.habit.create({
+      data: {
+        identityId: vitalityId,
+        title: '25-Min Strength & Mobility Workout',
+        gatewayVersion: 'Put on workout shoes and do 5 warmup reps (2 mins)',
+        defaultPhase: 'PRACTICE',
+        currentStreak: 1,
+      },
+    });
+  }
 }
 
 export async function logForgeSession(data: {
@@ -192,7 +217,7 @@ export async function deleteIdentityVector(id: string) {
 }
 
 export async function createStackedHabit(data: {
-  identityId: string;
+  identityId: string; // Can be a DB id OR "preset:<key>"
   title: string;
   gatewayVersion: string;
   defaultPhase: SkillStage;
@@ -200,7 +225,37 @@ export async function createStackedHabit(data: {
   temptationLabel?: string | null;
   temptationBundleUrl?: string | null;
 }) {
-  const anchorId = data.anchorHabitId && data.anchorHabitId !== 'NONE' ? data.anchorHabitId : null;
+  const userId = await getActiveUserId();
+  let targetIdentityId = data.identityId;
+
+  // If the user selected a built-in template from the dropdown ("preset:vitality-athlete"),
+  // find or create that Identity Vector automatically!
+  if (targetIdentityId.startsWith('preset:')) {
+    const presetKey = targetIdentityId.replace('preset:', '');
+    const preset = IDENTITY_PRESETS.find((p) => p.key === presetKey);
+    if (!preset) throw new Error('Identity template not found');
+
+    const existing = await prisma.identityVector.findFirst({
+      where: { userId, title: preset.title },
+    });
+
+    if (existing) {
+      targetIdentityId = existing.id;
+    } else {
+      const createdIdentity = await prisma.identityVector.create({
+        data: {
+          userId,
+          title: preset.title,
+          lifesTaskStatement: preset.lifesTaskStatement,
+          currentPhase: preset.defaultPhase,
+        },
+      });
+      targetIdentityId = createdIdentity.id;
+    }
+  }
+
+  const anchorId =
+    data.anchorHabitId && data.anchorHabitId !== 'NONE' ? data.anchorHabitId : null;
 
   await prisma.$transaction(async (tx) => {
     let displacedHabitId: string | null = null;
@@ -219,7 +274,7 @@ export async function createStackedHabit(data: {
 
     const created = await tx.habit.create({
       data: {
-        identityId: data.identityId,
+        identityId: targetIdentityId,
         title: data.title.trim(),
         gatewayVersion: data.gatewayVersion.trim(),
         defaultPhase: data.defaultPhase,

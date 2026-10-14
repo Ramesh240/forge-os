@@ -5,6 +5,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   buildSystemAnalytics,
   calculateSessionScore,
+  IDENTITY_PRESETS,
   SKILL_MILESTONES,
   STAGE_LABELS,
   SkillStage,
@@ -157,7 +158,9 @@ export default function ForgeAppShell({
   const [newIdMission, setNewIdMission] = useState('');
   const [newIdStage, setNewIdStage] = useState('OBSERVATION');
 
-  const [newHabitIdentityId, setNewHabitIdentityId] = useState(identities[0]?.id || '');
+  const [newHabitIdentityId, setNewHabitIdentityId] = useState(
+    identities[0]?.id || (IDENTITY_PRESETS[0] ? `preset:${IDENTITY_PRESETS[0].key}` : '')
+  );
   const [newHabitTitle, setNewHabitTitle] = useState('');
   const [newHabitMicro, setNewHabitMicro] = useState('');
   const [newHabitStage, setNewHabitStage] = useState<SkillStage>('PRACTICE');
@@ -239,6 +242,8 @@ export default function ForgeAppShell({
       setNewHabitIdentityId(selectedIdentityFilter);
     } else if (identities[0]?.id) {
       setNewHabitIdentityId(identities[0].id);
+    } else if (IDENTITY_PRESETS[0]?.key) {
+      setNewHabitIdentityId(`preset:${IDENTITY_PRESETS[0].key}`);
     }
     setIsCreatorOpen(true);
   };
@@ -416,7 +421,10 @@ export default function ForgeAppShell({
     setIsSubmitting(true);
     try {
       await createStackedHabit({
-        identityId: newHabitIdentityId || identities[0]?.id,
+        identityId:
+          newHabitIdentityId ||
+          identities[0]?.id ||
+          (IDENTITY_PRESETS[0] ? `preset:${IDENTITY_PRESETS[0].key}` : ''),
         title: newHabitTitle,
         gatewayVersion: newHabitMicro,
         defaultPhase: newHabitStage,
@@ -497,6 +505,23 @@ export default function ForgeAppShell({
     sepia: 'Sepia',
     light: 'Daylight',
   };
+
+  // Find matching 1-tap habit examples for whichever identity or preset is selected
+  const activeHabitExamples = useMemo(() => {
+    if (newHabitIdentityId.startsWith('preset:')) {
+      const key = newHabitIdentityId.replace('preset:', '');
+      return IDENTITY_PRESETS.find((p) => p.key === key)?.examples || [];
+    }
+    const existingObj = identities.find((i) => i.id === newHabitIdentityId);
+    if (existingObj) {
+      const matchedPreset = IDENTITY_PRESETS.find(
+        (p) => p.title.toLowerCase() === existingObj.title.toLowerCase()
+      );
+      if (matchedPreset) return matchedPreset.examples;
+    }
+    // Fallback general examples so the user always has 1-tap inspiration
+    return IDENTITY_PRESETS.slice(0, 3).flatMap((p) => p.examples.slice(0, 1));
+  }, [newHabitIdentityId, identities]);
 
   const visibleHabits = habits.filter(
     (h) => selectedIdentityFilter === 'ALL' || h.identityId === selectedIdentityFilter
@@ -1206,15 +1231,24 @@ export default function ForgeAppShell({
       </nav>
 
       {/* ========================================================= */}
-      {/* CENTERED CREATOR MODAL (HABIT OR IDENTITY)                */}
+      {/* CENTERED CREATOR MODAL (WITH PRESET IDENTITIES & EXAMPLES)*/}
       {/* ========================================================= */}
       {isCreatorOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
-          <div className="glass-nav rounded-3xl max-w-md w-full p-6 space-y-5">
+          <div className="glass-nav rounded-3xl max-w-lg w-full p-6 space-y-5 my-8">
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
-              <h3 className="text-base font-bold theme-text">
-                {creatorTab === 'HABIT' ? 'New Habit' : 'New Identity'}
-              </h3>
+              <div>
+                <h3 className="text-base font-bold theme-text">
+                  {creatorTab === 'HABIT'
+                    ? 'Add Habit (Pick Identity or Template)'
+                    : 'Choose or Create an Identity'}
+                </h3>
+                <p className="text-xs theme-subtext">
+                  {creatorTab === 'HABIT'
+                    ? 'Select any common identity below—no need to create one first.'
+                    : 'Pick a ready-made identity template or write your own.'}
+                </p>
+              </div>
               <button
                 onClick={() => setIsCreatorOpen(false)}
                 className="theme-muted hover:opacity-80 cursor-pointer"
@@ -1231,7 +1265,7 @@ export default function ForgeAppShell({
                   creatorTab === 'HABIT' ? 'glass-tab-active' : 'theme-subtext'
                 }`}
               >
-                Habit
+                + New Habit
               </button>
               <button
                 type="button"
@@ -1240,33 +1274,86 @@ export default function ForgeAppShell({
                   creatorTab === 'IDENTITY' ? 'glass-tab-active' : 'theme-subtext'
                 }`}
               >
-                Identity
+                + Identity Library
               </button>
             </div>
 
             {creatorTab === 'HABIT' ? (
-              <form onSubmit={handleCreateHabitSubmit} className="space-y-3.5">
+              <form onSubmit={handleCreateHabitSubmit} className="space-y-4">
+                {/* 1. Unified Identity Selector (Active + Built-In Templates) */}
                 <div>
-                  <label className="text-xs theme-subtext block mb-1">Identity</label>
+                  <label className="text-xs font-semibold theme-subtext block mb-1">
+                    1. Choose Identity (Auto-created if you pick a Template)
+                  </label>
                   <select
                     value={newHabitIdentityId}
                     onChange={(e) => setNewHabitIdentityId(e.target.value)}
-                    className="w-full theme-input rounded-xl p-2.5 text-sm"
+                    className="w-full theme-input rounded-xl p-2.5 text-sm font-medium"
                   >
-                    {identities.map((i) => (
-                      <option key={i.id} value={i.id}>
-                        {i.title}
-                      </option>
-                    ))}
+                    {identities.length > 0 && (
+                      <optgroup label="Your Active Identities">
+                        {identities.map((i) => (
+                          <option key={i.id} value={i.id}>
+                            ✓ {i.title}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+
+                    <optgroup label="✨ Common Identity Templates (Instant Setup)">
+                      {IDENTITY_PRESETS.filter(
+                        (preset) =>
+                          !identities.some(
+                            (existing) =>
+                              existing.title.toLowerCase() === preset.title.toLowerCase()
+                          )
+                      ).map((preset) => (
+                        <option key={preset.key} value={`preset:${preset.key}`}>
+                          + {preset.title} ({preset.category})
+                        </option>
+                      ))}
+                    </optgroup>
                   </select>
                 </div>
 
+                {/* 2. 1-Tap Habit Examples for Selected Identity */}
+                {activeHabitExamples.length > 0 && (
+                  <div className="p-3 rounded-2xl glass-panel space-y-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider theme-muted flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-amber-500" />
+                      1-Tap Habit Examples (Click to Auto-Fill):
+                    </span>
+                    <div className="flex flex-col gap-1.5">
+                      {activeHabitExamples.map((ex, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setNewHabitTitle(ex.title);
+                            setNewHabitMicro(ex.gatewayVersion);
+                            setNewHabitStage(ex.stage);
+                          }}
+                          className="text-left p-2 rounded-xl border border-[var(--border-subtle)] hover:border-[var(--border-strong)] transition text-xs cursor-pointer"
+                        >
+                          <div className="font-semibold theme-text">{ex.title}</div>
+                          <div className="text-[11px] theme-subtext truncate">
+                            2m Start: {ex.gatewayVersion}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Habit Title & 2-Min Micro-Start */}
                 <div>
-                  <label className="text-xs theme-subtext block mb-1">Habit Title</label>
+                  <label className="text-xs font-semibold theme-subtext block mb-1">
+                    2. Full Habit Action
+                  </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g., Solve 1 Algorithm Problem"
+                    placeholder="e.g., Complete 25-Min Strength Workout"
                     value={newHabitTitle}
                     onChange={(e) => setNewHabitTitle(e.target.value)}
                     className="w-full theme-input rounded-xl p-2.5 text-sm"
@@ -1274,13 +1361,13 @@ export default function ForgeAppShell({
                 </div>
 
                 <div>
-                  <label className="text-xs theme-subtext block mb-1">
-                    2-Minute Micro-Start Step
+                  <label className="text-xs font-semibold theme-subtext block mb-1">
+                    3. 2-Minute Micro-Start Step (Frictionless Entry)
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g., Open IDE and read problem statement"
+                    placeholder="e.g., Put on workout shoes and do 5 pushups"
                     value={newHabitMicro}
                     onChange={(e) => setNewHabitMicro(e.target.value)}
                     className="w-full theme-input rounded-xl p-2.5 text-sm"
@@ -1321,45 +1408,75 @@ export default function ForgeAppShell({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3 rounded-xl text-white font-bold text-xs cursor-pointer"
+                  className="w-full py-3 rounded-xl text-white font-bold text-xs cursor-pointer shadow-sm"
                   style={{ background: 'var(--accent-primary)' }}
                 >
-                  Create Habit
+                  {isSubmitting ? 'Adding Habit...' : 'Save Habit & Start Tracking'}
                 </button>
               </form>
             ) : (
-              <form onSubmit={handleCreateIdentitySubmit} className="space-y-3.5">
-                <div>
-                  <label className="text-xs theme-subtext block mb-1">Identity Title</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g., Systems Architect"
-                    value={newIdTitle}
-                    onChange={(e) => setNewIdTitle(e.target.value)}
-                    className="w-full theme-input rounded-xl p-2.5 text-sm"
-                  />
+              /* TAB 2: 1-TAP IDENTITY TEMPLATE GALLERY + CUSTOM FORM */
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider theme-muted block">
+                    Popular Identity Templates (Tap to Fill):
+                  </span>
+                  <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+                    {IDENTITY_PRESETS.map((preset) => (
+                      <button
+                        key={preset.key}
+                        type="button"
+                        onClick={() => {
+                          setNewIdTitle(preset.title);
+                          setNewIdMission(preset.lifesTaskStatement);
+                          setNewIdStage(preset.defaultPhase);
+                        }}
+                        className="p-2.5 rounded-xl glass-panel text-left hover:border-[var(--border-strong)] transition cursor-pointer"
+                      >
+                        <span className="text-[10px] font-mono text-amber-500 block">
+                          {preset.category}
+                        </span>
+                        <span className="text-xs font-bold theme-text block truncate">
+                          {preset.title}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs theme-subtext block mb-1">Core Objective</label>
-                  <textarea
-                    rows={3}
-                    required
-                    placeholder="e.g., Build scalable backend systems."
-                    value={newIdMission}
-                    onChange={(e) => setNewIdMission(e.target.value)}
-                    className="w-full theme-input rounded-xl p-2.5 text-sm"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-3 rounded-xl text-white font-bold text-xs cursor-pointer"
-                  style={{ background: 'var(--accent-primary)' }}
-                >
-                  Create Identity
-                </button>
-              </form>
+
+                <form onSubmit={handleCreateIdentitySubmit} className="space-y-3.5 pt-2 border-t border-[var(--border-subtle)]">
+                  <div>
+                    <label className="text-xs theme-subtext block mb-1">Identity Title</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Select a template above or type your own..."
+                      value={newIdTitle}
+                      onChange={(e) => setNewIdTitle(e.target.value)}
+                      className="w-full theme-input rounded-xl p-2.5 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs theme-subtext block mb-1">Core Objective</label>
+                    <textarea
+                      rows={2}
+                      required
+                      placeholder="What does this identity build or master?"
+                      value={newIdMission}
+                      onChange={(e) => setNewIdMission(e.target.value)}
+                      className="w-full theme-input rounded-xl p-2.5 text-sm"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-3 rounded-xl text-white font-bold text-xs cursor-pointer"
+                    style={{ background: 'var(--accent-primary)' }}
+                  >
+                    Create Identity &amp; Add Habits
+                  </button>
+                </form>
+              </div>
             )}
           </div>
         </div>
