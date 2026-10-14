@@ -11,6 +11,7 @@ datasource db {
 
 model IdentityVector {
   id                   String       @id @default(cuid())
+  userId               String       @default("demo-user") // Scopes workspace to Google user email
   lifesTaskStatement   String
   title                String       // e.g., "Algorithms Specialist"
   totalVotes           Int          @default(0)
@@ -20,6 +21,8 @@ model IdentityVector {
   habits               Habit[]
   sessions             SessionLog[]
   createdAt            DateTime     @default(now())
+
+  @@index([userId])
 }
 
 model Habit {
