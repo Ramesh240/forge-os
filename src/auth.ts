@@ -7,6 +7,7 @@ export const isGoogleAuthConfigured = Boolean(
 );
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.AUTH_SECRET || 'forge-os-dev-auth-secret-change-in-prod-32c',
   trustHost: true,
   providers: isGoogleAuthConfigured
     ? [
