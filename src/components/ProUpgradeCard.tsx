@@ -72,8 +72,10 @@ export default function ProUpgradeCard({
         return;
       }
 
-      const res = await fetch('/api/razorpay/order', {
+      const res = await fetch('/api/create-order', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: 15000, currency: 'INR' }),
       });
       const data = await res.json();
 
@@ -92,15 +94,15 @@ export default function ProUpgradeCard({
       }
 
       const options = {
-        key: data.keyId,
+        key: data.key_id || data.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: data.amount,
-        currency: data.currency,
+        currency: data.currency || 'INR',
         name: 'ForgeOS',
         description: 'ForgeOS Pro — ₹150 One-Time Lifetime Pass',
-        order_id: data.orderId,
+        order_id: data.order_id || data.orderId,
         handler: async function (response: RazorpayVerifyResponse) {
           try {
-            const verifyRes = await fetch('/api/razorpay/verify', {
+            const verifyRes = await fetch('/api/verify-payment', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(response),
@@ -142,11 +144,23 @@ export default function ProUpgradeCard({
 
       const RazorpayConstructor = (
         window as unknown as {
-          Razorpay: new (opts: typeof options) => { open: () => void };
+          Razorpay: new (opts: typeof options) => {
+            open: () => void;
+            on: (event: string, handler: (resp: unknown) => void) => void;
+          };
         }
       ).Razorpay;
 
       const rzpInstance = new RazorpayConstructor(options);
+
+      rzpInstance.on('payment.failed', function (resp: unknown) {
+        const failure = resp as { error?: { description?: string; reason?: string } };
+        setErrorMessage(
+          failure.error?.description || 'Payment was unsuccessful or declined. Please try another method.'
+        );
+        setIsProcessingCheckout(false);
+      });
+
       rzpInstance.open();
     } catch (err) {
       console.error('Razorpay checkout error:', err);

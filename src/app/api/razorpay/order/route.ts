@@ -1,51 +1,58 @@
 // src/app/api/razorpay/order/route.ts
 import { NextResponse } from 'next/server';
-import Razorpay from 'razorpay';
+import { createOrder, getRazorpayCredentials } from '@/lib/razorpay';
 import { getActiveUserId } from '@/app/actions';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const keyId =
-      process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    const { keyId, keySecret } = getRazorpayCredentials();
 
     if (!keyId || !keySecret) {
       return NextResponse.json(
         {
           error:
-            'Razorpay credentials not configured. Please add NEXT_PUBLIC_RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to .env.local or Vercel Environment Variables.',
+            'Razorpay credentials not configured. Please add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to .env.local or Vercel Environment Variables.',
         },
         { status: 500 }
       );
     }
 
+    let body: { amount?: number; currency?: string; receipt?: string } = {};
+    const text = await req.text();
+    if (text && text.trim()) {
+      try {
+        body = JSON.parse(text);
+      } catch {
+        return NextResponse.json(
+          { error: 'Invalid JSON request body.' },
+          { status: 400 }
+        );
+      }
+    }
+
+    const amount = body.amount !== undefined ? Number(body.amount) : 15000;
+    if (isNaN(amount) || amount < 100) {
+      return NextResponse.json(
+        { error: 'Amount must be at least 100 paise (₹1.00).' },
+        { status: 400 }
+      );
+    }
+
     const userId = await getActiveUserId();
 
-    const razorpay = new Razorpay({
-      key_id: keyId,
-      key_secret: keySecret,
-    });
-
-    const options = {
-      amount: 15000, // 15000 paise = ₹150.00 INR
-      currency: 'INR',
-      receipt: `rcpt_forge_${Date.now().toString().slice(-8)}`,
+    const orderData = await createOrder({
+      amount,
+      currency: body.currency || 'INR',
+      receipt: body.receipt,
       notes: {
         userId,
         product: 'ForgeOS Pro Lifetime Pass',
       },
-    };
-
-    const order = await razorpay.orders.create(options);
-
-    return NextResponse.json({
-      orderId: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      keyId,
     });
+
+    return NextResponse.json(orderData);
   } catch (error) {
     console.error('Error creating Razorpay order:', error);
     return NextResponse.json(

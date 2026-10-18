@@ -1,6 +1,6 @@
 // src/app/api/razorpay/verify/route.ts
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
+import { verifySignature } from '@/lib/razorpay';
 import { prisma } from '@/lib/prisma';
 import { getActiveUserId, ensureUserWorkspaceSeeded } from '@/app/actions';
 import { revalidatePath } from 'next/cache';
@@ -10,35 +10,23 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = body;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    const orderId = body.razorpay_order_id || body.order_id;
+    const paymentId = body.razorpay_payment_id || body.payment_id;
+    const signature = body.razorpay_signature || body.signature;
+
+    if (!orderId || !paymentId || !signature) {
       return NextResponse.json(
         { error: 'Missing required Razorpay payment verification parameters.' },
         { status: 400 }
       );
     }
 
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
-    if (!keySecret) {
-      return NextResponse.json(
-        { error: 'RAZORPAY_KEY_SECRET is not configured on the server.' },
-        { status: 500 }
-      );
-    }
-
-    const payload = `${razorpay_order_id}|${razorpay_payment_id}`;
-    const generatedSignature = crypto
-      .createHmac('sha256', keySecret)
-      .update(payload)
-      .digest('hex');
-
-    const expectedBuffer = Buffer.from(generatedSignature, 'utf-8');
-    const receivedBuffer = Buffer.from(razorpay_signature, 'utf-8');
-
-    const isAuthentic =
-      expectedBuffer.length === receivedBuffer.length &&
-      crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+    const isAuthentic = verifySignature({
+      orderId,
+      paymentId,
+      signature,
+    });
 
     if (!isAuthentic) {
       return NextResponse.json(
@@ -68,7 +56,11 @@ export async function POST(req: Request) {
       });
     }
 
-    revalidatePath('/');
+    try {
+      revalidatePath('/');
+    } catch {
+      // safe fallback
+    }
 
     return NextResponse.json({
       success: true,
