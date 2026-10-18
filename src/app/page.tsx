@@ -113,7 +113,7 @@ export default async function ForgeOSPage() {
         <div className="bg-rose-950/90 border-b border-rose-500/50 px-4 py-3 text-xs text-rose-200">
           <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span>
-              <strong>Database Notice:</strong> Ensure PostgreSQL <code>DATABASE_URL</code> is configured.
+              <strong>Database Notice:</strong> Ensure Supabase <code>DATABASE_URL</code> is configured in <code>.env.local</code>.
             </span>
             <code className="text-[11px] bg-black/40 px-2 py-1 rounded text-rose-300 truncate max-w-md">
               {dbError}

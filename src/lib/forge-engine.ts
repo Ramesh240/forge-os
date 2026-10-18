@@ -309,7 +309,7 @@ export function evaluateHabitGuardrailState(params: {
   };
 }
 
-export function analyzeApprenticeshipDistribution(sessions: any[], totalHours: number) {
+export function analyzeApprenticeshipDistribution(sessions: { phase: string }[], totalHours: number) {
   const total = sessions.length;
   if (!total) return { passivePct: 33, practicePct: 34, activePct: 33, observationTrapWarning: false };
   const passive = sessions.filter((s) => s.phase === 'PASSIVE').length;
@@ -326,18 +326,34 @@ export function analyzeApprenticeshipDistribution(sessions: any[], totalHours: n
   };
 }
 
-export function buildVisualChainLedger(sessions: any[], daysCount = 84) {
+export interface VisualChainSessionInput {
+  loggedAt?: string | Date;
+  durationMinutes?: number;
+  votesEarned?: number;
+  completedGatewayOnly?: boolean;
+  isResistancePractice?: boolean;
+  frictionRating?: number;
+  phase?: string;
+  [key: string]: unknown;
+}
+
+export function buildVisualChainLedger(sessions: VisualChainSessionInput[], daysCount = 84) {
   return buildSystemAnalytics(
     sessions.map((s) => ({
-      ...s,
       loggedAt: typeof s.loggedAt === 'string' ? s.loggedAt : s.loggedAt?.toISOString() || new Date().toISOString(),
+      durationMinutes: s.durationMinutes ?? 0,
+      votesEarned: s.votesEarned ?? 0,
+      completedGatewayOnly: s.completedGatewayOnly ?? false,
+      isResistancePractice: s.isResistancePractice ?? false,
+      frictionRating: s.frictionRating ?? 3,
+      phase: s.phase ?? 'PRACTICE',
     })),
     0,
     daysCount
   ).daysGrid;
 }
 
-export function calculateMasteryHorizonAnalytics(params: any) {
+export function calculateMasteryHorizonAnalytics(params: { totalHoursLogged?: number; [key: string]: unknown }) {
   const effectiveHours = params.totalHoursLogged || 0;
   const currentMilestone = SKILL_MILESTONES[0];
   const nextMilestone = SKILL_MILESTONES[1];

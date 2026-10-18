@@ -1,7 +1,7 @@
 // src/components/ForgeAppShell.tsx
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   buildSystemAnalytics,
   calculateSessionScore,
@@ -42,7 +42,6 @@ import {
   Lock,
   ArrowRight,
   X,
-  RefreshCw,
   Pencil,
   Trash2,
   Volume2,
@@ -147,14 +146,31 @@ export default function ForgeAppShell({
 }) {
   const [activeTab, setActiveTab] = useState<TabType>('WORKSPACE');
   const [selectedIdentityFilter, setSelectedIdentityFilter] = useState<string>('ALL');
-  const [theme, setTheme] = useState<ThemeMode>('obsidian');
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('forge_theme') as ThemeMode;
+      if (saved) return saved;
+    }
+    return 'obsidian';
+  });
 
   // Quick Widget Drawer State
   const [isWidgetDrawerOpen, setIsWidgetDrawerOpen] = useState(false);
 
   // Sound, Notifications & PWA Install State
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
-  const [notifPermission, setNotifPermission] = useState<string>('default');
+  const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('forge_sound_enabled');
+      if (saved !== null) return saved === 'true';
+    }
+    return true;
+  });
+  const [notifPermission, setNotifPermission] = useState<string>(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      return Notification.permission;
+    }
+    return 'default';
+  });
   const [installPromptEvent, setInstallPromptEvent] =
     useState<BeforeInstallPromptEvent | null>(null);
   const chimePlayedRef = useRef<boolean>(false);
@@ -253,6 +269,24 @@ export default function ForgeAppShell({
 
   const [inspectedDay, setInspectedDay] = useState<ContinuityDay | null>(null);
 
+  const startFocusSession = useCallback((habit: SerializedHabit) => {
+    soundEngine.playTactileClick(soundEnabled);
+    chimePlayedRef.current = false;
+    setIsWidgetDrawerOpen(false);
+    setActiveHabit(habit);
+    setStage((habit.defaultPhase as SkillStage) || 'PRACTICE');
+    setSecondsElapsed(0);
+    setTimerMode('FLOW');
+    setPomoPhase('WORK');
+    setPomoCyclesCompleted(0);
+    setIsChallenge(false);
+    setDifficulty(3);
+    setShowDebrief(false);
+    setBottleneckNote('');
+    setInsightNote('');
+    setIsRunning(true);
+  }, [soundEnabled]);
+
   const MICRO_THRESHOLD = 120;
   const microCleared = secondsElapsed >= MICRO_THRESHOLD;
   const sessionMins = Math.max(2, Math.round(secondsElapsed / 60));
@@ -260,16 +294,8 @@ export default function ForgeAppShell({
 
   // Initialize Theme, Sound, Notification Permission, and Deep-Link Auto-Start (?startHabit=<id>)
   useEffect(() => {
-    const savedTheme = (localStorage.getItem('forge_theme') as ThemeMode) || 'obsidian';
-    setTheme(savedTheme);
+    const savedTheme = (localStorage.getItem('forge_theme') as ThemeMode) || theme;
     document.documentElement.setAttribute('data-theme', savedTheme);
-
-    const savedSound = localStorage.getItem('forge_sound_enabled');
-    if (savedSound !== null) setSoundEnabled(savedSound === 'true');
-
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      setNotifPermission(Notification.permission);
-    }
 
     // Check if launched from /widget or notification with ?startHabit=<id>
     if (typeof window !== 'undefined') {
@@ -278,11 +304,10 @@ export default function ForgeAppShell({
       if (startHabitId) {
         const target = habits.find((h) => h.id === startHabitId);
         if (target) {
-          setActiveHabit(target);
-          setStage((target.defaultPhase as SkillStage) || 'PRACTICE');
-          setSecondsElapsed(0);
-          setIsRunning(true);
           window.history.replaceState({}, '', '/');
+          setTimeout(() => {
+            startFocusSession(target);
+          }, 0);
         }
       }
     }
@@ -295,7 +320,7 @@ export default function ForgeAppShell({
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () =>
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, [habits]);
+  }, [habits, theme, startFocusSession]);
 
   // Background Habit Reminder Scheduler (Checks every 20 seconds against HH:MM)
   useEffect(() => {
@@ -337,7 +362,7 @@ export default function ForgeAppShell({
 
     const interval = setInterval(checkReminders, 20000);
     return () => clearInterval(interval);
-  }, [habits, soundEnabled]);
+  }, [habits, soundEnabled, startFocusSession]);
 
   const requestNotificationAccess = async () => {
     if (typeof window === 'undefined' || !('Notification' in window)) {
@@ -471,24 +496,6 @@ export default function ForgeAppShell({
     }
     return IDENTITY_PRESETS.slice(0, 3).flatMap((p) => p.examples.slice(0, 1));
   }, [newHabitIdentityId, identities]);
-
-  const startFocusSession = (habit: SerializedHabit) => {
-    soundEngine.playTactileClick(soundEnabled);
-    chimePlayedRef.current = false;
-    setIsWidgetDrawerOpen(false);
-    setActiveHabit(habit);
-    setStage((habit.defaultPhase as SkillStage) || 'PRACTICE');
-    setSecondsElapsed(0);
-    setTimerMode('FLOW');
-    setPomoPhase('WORK');
-    setPomoCyclesCompleted(0);
-    setIsChallenge(false);
-    setDifficulty(3);
-    setShowDebrief(false);
-    setBottleneckNote('');
-    setInsightNote('');
-    setIsRunning(true);
-  };
 
   const openEditIdentityModal = (idVec: SerializedIdentity) => {
     setEditingIdentity(idVec);
