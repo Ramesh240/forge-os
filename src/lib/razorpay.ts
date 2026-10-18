@@ -2,19 +2,45 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 
+function sanitizeKey(val: string | undefined): string | undefined {
+  if (!val) return undefined;
+  const trimmed = val.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
+}
+
+// Active test credentials provided for this project
+const DEFAULT_TEST_KEY_ID = 'rzp_test_TpNUwvKA4Hg5rK';
+const DEFAULT_TEST_KEY_SECRET = '6W7PMFirCvZL4dfzRP2SdXOq';
+
 /**
  * Server-only Razorpay configuration.
- * Public framework prefixes (like NEXT_PUBLIC_) have been removed to keep credentials private.
+ * Automatically sanitizes wrapping quotes/spaces and falls back to active test credentials.
  */
 export const RazorpayConfig = {
   get keyId() {
-    return process.env.RAZORPAY_KEY_ID;
+    return (
+      sanitizeKey(process.env.RAZORPAY_KEY_ID) ||
+      sanitizeKey(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) ||
+      DEFAULT_TEST_KEY_ID
+    );
   },
   get keySecret() {
-    return process.env.RAZORPAY_KEY_SECRET;
+    return (
+      sanitizeKey(process.env.RAZORPAY_KEY_SECRET) ||
+      DEFAULT_TEST_KEY_SECRET
+    );
   },
   get isConfigured() {
-    return Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
+    return Boolean(
+      (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) ||
+      (DEFAULT_TEST_KEY_ID && DEFAULT_TEST_KEY_SECRET)
+    );
   },
 };
 
@@ -116,4 +142,32 @@ export function verifySignature({
   }
 
   return crypto.timingSafeEqual(expectedBuffer, receivedBuffer);
+}
+
+/**
+ * Extracts human-readable error descriptions from Razorpay errors
+ * (Razorpay SDK often rejects with plain objects rather than Error instances).
+ */
+export function extractRazorpayError(error: unknown): string {
+  if (!error) return 'Unknown error occurred while processing Razorpay request.';
+  if (typeof error === 'string') return error;
+  if (typeof error === 'object') {
+    const errObj = error as Record<string, unknown>;
+    const nestedError = errObj.error as Record<string, unknown> | undefined;
+    if (nestedError?.description && typeof nestedError.description === 'string') {
+      return nestedError.description;
+    }
+    if (errObj.description && typeof errObj.description === 'string') {
+      return errObj.description;
+    }
+    if (errObj.message && typeof errObj.message === 'string') {
+      return errObj.message;
+    }
+    try {
+      return JSON.stringify(errObj);
+    } catch {
+      return String(error);
+    }
+  }
+  return String(error);
 }

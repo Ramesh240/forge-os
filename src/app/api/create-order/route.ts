@@ -1,6 +1,6 @@
 // src/app/api/create-order/route.ts
 import { NextResponse } from 'next/server';
-import { createOrder, getRazorpayCredentials } from '@/lib/razorpay';
+import { createOrder, getRazorpayCredentials, extractRazorpayError } from '@/lib/razorpay';
 import { getActiveUserId } from '@/app/actions';
 
 export const dynamic = 'force-dynamic';
@@ -58,13 +58,9 @@ export async function POST(req: Request) {
     return NextResponse.json(orderData, { status: 200 });
   } catch (error) {
     console.error('Error in /api/create-order:', error);
+    const errorMessage = extractRazorpayError(error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Internal server error creating Razorpay order',
-      },
+      { error: errorMessage },
       { status: 500 }
     );
   }

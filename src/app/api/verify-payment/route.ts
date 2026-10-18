@@ -1,6 +1,6 @@
 // src/app/api/verify-payment/route.ts
 import { NextResponse } from 'next/server';
-import { verifySignature } from '@/lib/razorpay';
+import { verifySignature, extractRazorpayError } from '@/lib/razorpay';
 import { prisma } from '@/lib/prisma';
 import { getActiveUserId, ensureUserWorkspaceSeeded } from '@/app/actions';
 import { revalidatePath } from 'next/cache';
@@ -78,13 +78,9 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('Error in /api/verify-payment:', error);
+    const errorMessage = extractRazorpayError(error);
     return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Internal server error verifying Razorpay payment',
-      },
+      { error: errorMessage },
       { status: 500 }
     );
   }
