@@ -30,25 +30,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                var theme = localStorage.getItem('forge_theme') || 'obsidian';
-                document.documentElement.setAttribute('data-theme', theme);
-                if (theme === 'obsidian') {
-                  document.documentElement.classList.add('dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
-                }
-              } catch (e) {}
-            `,
-          }}
-        />
-      </head>
-      <body className="min-h-screen forge-surface forge-text antialiased overscroll-none">
+    <html lang="en" className="dark">
+      <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased selection:bg-indigo-500 selection:text-white overscroll-none">
         {children}
       </body>
     </html>

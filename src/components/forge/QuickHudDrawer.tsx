@@ -31,19 +31,19 @@ export function QuickHudDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-xl overflow-y-auto">
-      <div className="relative z-10 w-full max-w-lg bg-[var(--forge-surface-low)] border border-[var(--forge-border)] rounded-3xl p-5 sm:p-6 shadow-[0_20px_80px_rgba(0,0,0,0.5)] my-auto flex flex-col space-y-4">
+      <div className="relative z-10 w-full max-w-lg bg-[#131317]/98 border border-[rgba(255,255,255,0.12)] rounded-3xl p-5 sm:p-6 shadow-[0_20px_80px_rgba(0,0,0,0.9)] my-auto flex flex-col space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-[var(--forge-border)]">
+        <div className="flex items-center justify-between pb-2 border-b border-white/5">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[var(--forge-tertiary)] shadow-[0_0_8px_#4cd7f6] animate-ping" />
             <span className="font-mono-forge text-xs uppercase tracking-wider font-bold text-[var(--forge-tertiary)]">
-              Quick Starts
+              Up Next: 1-Tap Atomic Starts
             </span>
           </div>
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)] flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-text-muted)] hover:text-white flex items-center justify-center transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -56,7 +56,7 @@ export function QuickHudDrawer({
             return (
               <div
                 key={habit.id}
-                className="relative bg-[var(--forge-surface-mid)] border border-[var(--forge-border)] rounded-2xl p-4 shadow-lg overflow-hidden flex flex-col space-y-2.5"
+                className="relative bg-[#1b1b24] border border-[rgba(255,255,255,0.08)] rounded-2xl p-4 shadow-lg overflow-hidden flex flex-col space-y-2.5"
               >
                 {/* Badges row */}
                 <div className="flex items-center justify-between">
@@ -79,7 +79,7 @@ export function QuickHudDrawer({
 
                 {/* Habit details */}
                 <div>
-                  <h4 className="text-base font-bold text-[var(--forge-text-primary)] tracking-tight">
+                  <h4 className="text-base font-bold text-white tracking-tight">
                     {habit.title}
                   </h4>
                   <p className="text-xs text-[var(--forge-text-secondary)] mt-0.5 truncate">
@@ -96,7 +96,7 @@ export function QuickHudDrawer({
                   className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#8083ff] to-[#6f00be] hover:brightness-110 text-white font-mono-forge text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(128,131,255,0.4)] active:scale-[0.98] transition-all"
                 >
                   <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>START 2-MIN</span>
+                  <span>START 2-MIN GATEWAY</span>
                 </button>
 
                 {/* Footer telemetry */}

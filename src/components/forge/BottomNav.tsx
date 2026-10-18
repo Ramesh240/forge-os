@@ -22,7 +22,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
 
   return (
     <nav className="fixed bottom-3 inset-x-0 z-40 px-3 sm:px-6 pointer-events-none">
-      <div className="max-w-md mx-auto pointer-events-auto bg-[var(--forge-glass-nav)] backdrop-blur-2xl border border-[var(--forge-border-mid)] rounded-2xl p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.25)] flex items-center justify-between gap-1">
+      <div className="max-w-md mx-auto pointer-events-auto bg-[#0e0e12]/88 backdrop-blur-2xl border border-[rgba(255,255,255,0.12)] rounded-2xl p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex items-center justify-between gap-1">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;

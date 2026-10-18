@@ -46,14 +46,14 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
         <div className="flex items-center gap-2 mb-1">
           <span className="w-2 h-2 rounded-full bg-[var(--forge-tertiary)] shadow-[0_0_8px_#4cd7f6]" />
           <span className="font-mono-forge text-[11px] font-bold text-[var(--forge-tertiary)] uppercase tracking-wider">
-            Telemetry
+            Operational Telemetry
           </span>
         </div>
         <h2 className="text-2xl font-bold text-[var(--forge-text-primary)] tracking-tight">
-          Analytics
+          Mastery Analytics Matrix
         </h2>
         <p className="text-xs text-[var(--forge-text-secondary)]">
-          Deliberate practice tracking, phases, and velocity.
+          Empirical deliberate practice tracking, phase splits, and velocity vectors.
         </p>
       </div>
 
@@ -62,7 +62,7 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
       ───────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {/* Card 1: Total Hours */}
-        <div className="bg-[var(--forge-surface-low)]/90 backdrop-blur-xl border border-[var(--forge-border)] rounded-2xl p-4 flex flex-col justify-between shadow-lg relative overflow-hidden group">
+        <div className="bg-[#1b1b22]/90 backdrop-blur-xl border border-[rgba(255,255,255,0.08)] rounded-2xl p-4 flex flex-col justify-between shadow-lg relative overflow-hidden group">
           <div className="flex items-center justify-between text-[var(--forge-text-muted)] mb-2">
             <span className="font-mono-forge text-[10px] uppercase font-bold tracking-wider">
               Total Hours
@@ -83,7 +83,7 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
         </div>
 
         {/* Card 2: Total Sessions */}
-        <div className="bg-[var(--forge-surface-low)]/90 backdrop-blur-xl border border-[var(--forge-border)] rounded-2xl p-4 flex flex-col justify-between shadow-lg relative overflow-hidden group">
+        <div className="bg-[#1b1b22]/90 backdrop-blur-xl border border-[rgba(255,255,255,0.08)] rounded-2xl p-4 flex flex-col justify-between shadow-lg relative overflow-hidden group">
           <div className="flex items-center justify-between text-[var(--forge-text-muted)] mb-2">
             <span className="font-mono-forge text-[10px] uppercase font-bold tracking-wider">
               Sessions
@@ -103,7 +103,7 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
         </div>
 
         {/* Card 3: Avg Session */}
-        <div className="bg-[var(--forge-surface-low)]/90 backdrop-blur-xl border border-[var(--forge-border)] rounded-2xl p-4 flex flex-col justify-between shadow-lg relative overflow-hidden group">
+        <div className="bg-[#1b1b22]/90 backdrop-blur-xl border border-[rgba(255,255,255,0.08)] rounded-2xl p-4 flex flex-col justify-between shadow-lg relative overflow-hidden group">
           <div className="flex items-center justify-between text-[var(--forge-text-muted)] mb-2">
             <span className="font-mono-forge text-[10px] uppercase font-bold tracking-wider">
               Avg Session
@@ -124,7 +124,7 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
         </div>
 
         {/* Card 4: Velocity Peak */}
-        <div className="bg-[var(--forge-surface-low)]/90 backdrop-blur-xl border border-[var(--forge-border)] rounded-2xl p-4 flex flex-col justify-between shadow-lg relative overflow-hidden group">
+        <div className="bg-[#1b1b22]/90 backdrop-blur-xl border border-[rgba(255,255,255,0.08)] rounded-2xl p-4 flex flex-col justify-between shadow-lg relative overflow-hidden group">
           <div className="flex items-center justify-between text-[var(--forge-text-muted)] mb-2">
             <span className="font-mono-forge text-[10px] uppercase font-bold tracking-wider">
               Velocity Peak
@@ -147,22 +147,22 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
       {/* ─────────────────────────────────────────────────────────────
           3. 7-DAY VELOCITY INTERACTIVE BAR CHART
       ───────────────────────────────────────────────────────────── */}
-      <section className="bg-[var(--forge-surface-low)]/90 backdrop-blur-xl border border-[var(--forge-border)] rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col space-y-3 relative">
+      <section className="bg-[#1b1b22]/90 backdrop-blur-xl border border-[rgba(255,255,255,0.08)] rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col space-y-3 relative">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-[var(--forge-primary)]" />
             <h3 className="text-base font-bold text-[var(--forge-text-primary)] tracking-tight">
-              7-Day Velocity
+              7-Day Velocity Matrix
             </h3>
           </div>
           <span className="font-mono-forge text-[11px] font-bold text-[var(--forge-tertiary)] px-2.5 py-0.5 rounded-full bg-[var(--forge-surface-high)]">
-            {totalWeekMinutes}m total
+            {totalWeekMinutes} MINS TTL
           </span>
         </div>
 
         {/* Active Tooltip HUD Display */}
         {activeChartItem && (
-          <div className="bg-[var(--forge-surface-mid)] border border-[var(--forge-border)] px-3.5 py-2 rounded-xl flex items-center justify-between text-[var(--forge-text-primary)]">
+          <div className="bg-[#242430] border border-[rgba(255,255,255,0.08)] px-3.5 py-2 rounded-xl flex items-center justify-between text-[var(--forge-text-primary)]">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[var(--forge-primary)] shadow-[0_0_8px_#c0c1ff]" />
               <span className="font-mono-forge text-xs font-bold text-[var(--forge-primary)] uppercase">
@@ -181,9 +181,9 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
         {/* SVG/HTML Velocity Bar Chart */}
         <div className="relative w-full h-48 flex items-end justify-between px-2 pt-6">
           {/* Subtle Grid Guides */}
-          <div className="absolute inset-x-0 top-6 h-[1px] bg-[var(--forge-border)]" />
-          <div className="absolute inset-x-0 top-1/2 h-[1px] bg-[var(--forge-border)]" />
-          <div className="absolute inset-x-0 bottom-7 h-[1px] bg-[var(--forge-border-mid)]" />
+          <div className="absolute inset-x-0 top-6 h-[1px] bg-white/[0.04]" />
+          <div className="absolute inset-x-0 top-1/2 h-[1px] bg-white/[0.03]" />
+          <div className="absolute inset-x-0 bottom-7 h-[1px] bg-white/[0.06]" />
 
           {analytics.last7DaysChart.map((d, idx) => {
             const isSelected = selectedDayIndex === idx;
@@ -219,7 +219,7 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
                   className={`font-mono-forge text-[10px] uppercase font-bold transition-colors ${
                     isSelected
                       ? 'text-[var(--forge-primary)]'
-                      : 'text-[var(--forge-text-muted)] group-hover:text-[var(--forge-text-primary)]'
+                      : 'text-[var(--forge-text-muted)] group-hover:text-white'
                   }`}
                 >
                   {d.shortLabel}
@@ -233,14 +233,14 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
       {/* ─────────────────────────────────────────────────────────────
           4. MASTERY PHASE SPLIT (Robert Greene Apprenticeship)
       ───────────────────────────────────────────────────────────── */}
-      <section className="bg-[var(--forge-surface-low)]/90 backdrop-blur-xl border border-[var(--forge-border)] rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col space-y-4">
+      <section className="bg-[#1b1b22]/90 backdrop-blur-xl border border-[rgba(255,255,255,0.08)] rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-[var(--forge-text-primary)] tracking-tight">
-              Mastery Phases
+              Apprenticeship Phase Allocation
             </h3>
             <p className="text-xs text-[var(--forge-text-secondary)]">
-              Three-stage deliberate practice model
+              Robert Greene's three-stage mastery distribution model
             </p>
           </div>
           <span className="font-mono-forge text-[11px] text-[var(--forge-primary)] font-bold">
@@ -262,12 +262,12 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {/* Phase 1: Passive Observation */}
-          <div className="bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] rounded-xl p-3.5 space-y-2">
+          <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3.5 space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-mono-forge text-[10px] font-bold text-[#60a5fa] uppercase tracking-wider">
                 STAGE I: OBSERVE
               </span>
-              <span className="font-mono-forge text-sm font-bold text-[var(--forge-text-primary)]">
+              <span className="font-mono-forge text-sm font-bold text-white">
                 {analytics.stageSplit.absorbPct}%
               </span>
             </div>
@@ -278,17 +278,17 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
               />
             </div>
             <p className="text-[11px] text-[var(--forge-text-secondary)]">
-              Reading, theory intake, observation
+              Reading, theory intake, master observation
             </p>
           </div>
 
           {/* Phase 2: Directed Practice */}
-          <div className="bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] rounded-xl p-3.5 space-y-2 shadow-[0_0_12px_rgba(192,193,255,0.08)]">
+          <div className="bg-[#141418] border border-[rgba(192,193,255,0.15)] rounded-xl p-3.5 space-y-2 shadow-[0_0_12px_rgba(192,193,255,0.08)]">
             <div className="flex items-center justify-between">
               <span className="font-mono-forge text-[10px] font-bold text-[var(--forge-primary)] uppercase tracking-wider">
                 STAGE II: DRILL
               </span>
-              <span className="font-mono-forge text-sm font-bold text-[var(--forge-text-primary)]">
+              <span className="font-mono-forge text-sm font-bold text-white">
                 {analytics.stageSplit.drillPct}%
               </span>
             </div>
@@ -299,17 +299,17 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
               />
             </div>
             <p className="text-[11px] text-[var(--forge-text-secondary)]">
-              Deliberate katas, constraints, feedback
+              Deliberate katas, constraints, instant feedback
             </p>
           </div>
 
           {/* Phase 3: Active Synthesis */}
-          <div className="bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] rounded-xl p-3.5 space-y-2">
+          <div className="bg-[#141418] border border-[rgba(255,255,255,0.06)] rounded-xl p-3.5 space-y-2">
             <div className="flex items-center justify-between">
               <span className="font-mono-forge text-[10px] font-bold text-[var(--forge-emerald)] uppercase tracking-wider">
                 STAGE III: SYNTHESIS
               </span>
-              <span className="font-mono-forge text-sm font-bold text-[var(--forge-text-primary)]">
+              <span className="font-mono-forge text-sm font-bold text-white">
                 {analytics.stageSplit.buildPct}%
               </span>
             </div>
@@ -320,7 +320,7 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
               />
             </div>
             <p className="text-[11px] text-[var(--forge-text-secondary)]">
-              Novel execution, autonomous build
+              Novel execution, domain frontier, autonomous build
             </p>
           </div>
         </div>
@@ -329,16 +329,16 @@ export function AnalyticsView({ analytics }: AnalyticsViewProps) {
       {/* ─────────────────────────────────────────────────────────────
           5. FRICTION RATING DISTRIBUTION
       ───────────────────────────────────────────────────────────── */}
-      <section className="bg-[var(--forge-surface-low)]/90 backdrop-blur-xl border border-[var(--forge-border)] rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col space-y-3">
+      <section className="bg-[#1b1b22]/90 backdrop-blur-xl border border-[rgba(255,255,255,0.08)] rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-[var(--forge-secondary)]" />
             <h3 className="text-base font-bold text-[var(--forge-text-primary)] tracking-tight">
-              Friction Distribution
+              Cognitive Friction Distribution
             </h3>
           </div>
           <span className="font-mono-forge text-[11px] text-[var(--forge-text-muted)]">
-            Avg: {analytics.avgDifficulty.toFixed(1)}/5
+            Avg Strain: {analytics.avgDifficulty.toFixed(1)} / 5.0
           </span>
         </div>
 

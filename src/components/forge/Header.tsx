@@ -29,7 +29,7 @@ export function Header({
   const isNotifGranted = notifPermission === 'granted';
 
   return (
-    <header className="fixed top-0 inset-x-0 z-40 pt-safe bg-[var(--forge-glass-nav)] backdrop-blur-2xl border-b border-[var(--forge-border)] shadow-[0_4px_24px_rgba(0,0,0,0.2)]">
+    <header className="fixed top-0 inset-x-0 z-40 pt-safe bg-[#0e0e12]/85 backdrop-blur-2xl border-b border-[var(--forge-border)] shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Top brand and quick controls row */}
         <div className="h-16 flex items-center justify-between">

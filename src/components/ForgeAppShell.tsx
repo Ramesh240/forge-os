@@ -231,11 +231,6 @@ export default function ForgeAppShell({
     const savedTheme = (localStorage.getItem('forge_theme') as ThemeMode) || 'obsidian';
     setTheme(savedTheme);
     document.documentElement.setAttribute('data-theme', savedTheme);
-    if (savedTheme === 'obsidian') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
 
     const savedSound = localStorage.getItem('forge_sound_enabled');
     if (savedSound !== null) setSoundEnabled(savedSound === 'true');
@@ -331,11 +326,6 @@ export default function ForgeAppShell({
     setTheme(nextTheme);
     localStorage.setItem('forge_theme', nextTheme);
     document.documentElement.setAttribute('data-theme', nextTheme);
-    if (nextTheme === 'obsidian') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
     soundEngine.playTactileClick(soundEnabled);
   };
 

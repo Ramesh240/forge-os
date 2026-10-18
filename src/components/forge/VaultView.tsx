@@ -55,41 +55,41 @@ export function VaultView({ sessions }: VaultViewProps) {
         <div className="flex items-center gap-2 mb-1">
           <span className="w-2 h-2 rounded-full bg-[var(--forge-tertiary)] shadow-[0_0_8px_#4cd7f6]" />
           <span className="font-mono-forge text-[11px] font-bold text-[var(--forge-tertiary)] uppercase tracking-wider">
-            Knowledge
+            Tacit Knowledge Stream
           </span>
         </div>
         <h2 className="text-2xl font-bold text-[var(--forge-text-primary)] tracking-tight">
-          Insights Vault
+          Insights Vault & Session Logs
         </h2>
         <p className="text-xs text-[var(--forge-text-secondary)]">
-          Mental models, bottleneck notes, and breakthroughs.
+          Crystallized mental models, bottleneck autopsies, and tacit breakthroughs.
         </p>
       </div>
 
       {/* Summary KPI Badges */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-[var(--forge-surface-low)]/90 border border-[var(--forge-border)] rounded-2xl p-3.5 flex flex-col justify-between shadow-sm">
+        <div className="bg-[#1b1b22]/90 border border-[rgba(255,255,255,0.08)] rounded-2xl p-3.5 flex flex-col justify-between">
           <span className="font-mono-forge text-[10px] text-[var(--forge-tertiary)] uppercase font-bold tracking-wider">
-            Insights
+            Tacit Insights
           </span>
           <div className="font-mono-forge text-2xl font-bold text-[var(--forge-tertiary)] mt-1">
             {tacitInsightsCount}
             <span className="text-xs text-[var(--forge-text-muted)] font-normal ml-1">
-              total
+              unlocked
             </span>
           </div>
         </div>
 
-        <div className="bg-[var(--forge-surface-low)]/90 border border-[var(--forge-border)] rounded-2xl p-3.5 flex flex-col justify-between shadow-sm">
+        <div className="bg-[#1b1b22]/90 border border-[rgba(255,255,255,0.08)] rounded-2xl p-3.5 flex flex-col justify-between">
           <span className="font-mono-forge text-[10px] text-[var(--forge-primary)] uppercase font-bold tracking-wider">
-            Sessions
+            Total Sessions
           </span>
           <div className="font-mono-forge text-2xl font-bold text-[var(--forge-primary)] mt-1">
             {sessions.length}
           </div>
         </div>
 
-        <div className="bg-[var(--forge-surface-low)]/90 border border-[var(--forge-border)] rounded-2xl p-3.5 flex flex-col justify-between shadow-sm">
+        <div className="bg-[#1b1b22]/90 border border-[rgba(255,255,255,0.08)] rounded-2xl p-3.5 flex flex-col justify-between">
           <span className="font-mono-forge text-[10px] text-[var(--forge-secondary)] uppercase font-bold tracking-wider">
             Avg Strain
           </span>
@@ -111,11 +111,11 @@ export function VaultView({ sessions }: VaultViewProps) {
           className={`whitespace-nowrap px-3.5 py-1.5 rounded-full font-mono-forge text-[11px] font-bold tracking-wider transition-all flex items-center gap-1.5 ${
             vaultFilter === 'ALL'
               ? 'bg-[var(--forge-primary-btn)] text-white shadow-[0_0_12px_rgba(128,131,255,0.4)]'
-              : 'bg-[var(--forge-surface-low)] text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)] border border-[var(--forge-border)]'
+              : 'bg-[#1b1b22] text-[var(--forge-text-muted)] hover:text-white border border-[var(--forge-border)]'
           }`}
         >
-          <span>ALL</span>
-          <span className="px-1.5 py-0.2 rounded-full bg-black/20 dark:bg-white/20 text-[10px]">
+          <span>ALL ENTRIES</span>
+          <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-white text-[10px]">
             {sessions.length}
           </span>
         </button>
@@ -125,11 +125,11 @@ export function VaultView({ sessions }: VaultViewProps) {
           className={`whitespace-nowrap px-3.5 py-1.5 rounded-full font-mono-forge text-[11px] font-bold tracking-wider transition-all flex items-center gap-1.5 ${
             vaultFilter === 'BREAKTHROUGHS'
               ? 'bg-[var(--forge-tertiary-tint)] border border-[rgba(76,215,246,0.5)] text-[var(--forge-tertiary)] shadow-sm'
-              : 'bg-[var(--forge-surface-low)] text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)] border border-[var(--forge-border)]'
+              : 'bg-[#1b1b22] text-[var(--forge-text-muted)] hover:text-white border border-[var(--forge-border)]'
           }`}
         >
           <Lightbulb className="w-3.5 h-3.5" />
-          <span>INSIGHTS</span>
+          <span>BREAKTHROUGHS</span>
         </button>
 
         <button
@@ -137,11 +137,11 @@ export function VaultView({ sessions }: VaultViewProps) {
           className={`whitespace-nowrap px-3.5 py-1.5 rounded-full font-mono-forge text-[11px] font-bold tracking-wider transition-all flex items-center gap-1.5 ${
             vaultFilter === 'RESISTANCE'
               ? 'bg-[var(--forge-secondary-tint)] border border-[rgba(221,183,255,0.5)] text-[var(--forge-secondary)] shadow-sm'
-              : 'bg-[var(--forge-surface-low)] text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)] border border-[var(--forge-border)]'
+              : 'bg-[#1b1b22] text-[var(--forge-text-muted)] hover:text-white border border-[var(--forge-border)]'
           }`}
         >
           <Swords className="w-3.5 h-3.5" />
-          <span>RESISTANCE</span>
+          <span>RESISTANCE (⚔)</span>
         </button>
 
         <button
@@ -149,7 +149,7 @@ export function VaultView({ sessions }: VaultViewProps) {
           className={`whitespace-nowrap px-3.5 py-1.5 rounded-full font-mono-forge text-[11px] font-bold tracking-wider transition-all flex items-center gap-1.5 ${
             vaultFilter === 'SYNTHESIS'
               ? 'bg-[var(--forge-emerald-tint)] border border-[rgba(16,185,129,0.5)] text-[var(--forge-emerald)] shadow-sm'
-              : 'bg-[var(--forge-surface-low)] text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)] border border-[var(--forge-border)]'
+              : 'bg-[#1b1b22] text-[var(--forge-text-muted)] hover:text-white border border-[var(--forge-border)]'
           }`}
         >
           <Award className="w-3.5 h-3.5" />
@@ -161,16 +161,16 @@ export function VaultView({ sessions }: VaultViewProps) {
           3. PINNED INSIGHT OF THE WEEK / TACIT LAW
       ───────────────────────────────────────────────────────────── */}
       {pinnedSession && (
-        <section className="relative overflow-hidden rounded-2xl bg-[var(--forge-surface-low)] p-4 sm:p-5 border border-[var(--forge-border)] shadow-xl">
+        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#242430] via-[#1b1b24] to-[#14141a] p-4 sm:p-5 border border-[rgba(192,193,255,0.2)] shadow-xl">
           <div className="flex items-center justify-between pb-2">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[var(--forge-primary)]" />
               <span className="font-mono-forge text-[11px] uppercase text-[var(--forge-primary)] tracking-widest font-bold">
-                Key Law
+                Tacit Law of Practice
               </span>
             </div>
             <span className="font-mono-forge text-[10px] text-[var(--forge-text-muted)] bg-[var(--forge-surface-highest)] px-2.5 py-0.5 rounded-full">
-              PINNED
+              PINNED INSIGHT
             </span>
           </div>
 
@@ -178,10 +178,10 @@ export function VaultView({ sessions }: VaultViewProps) {
             "{pinnedSession.tacitInsight}"
           </p>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-[var(--forge-border)] font-mono-forge text-xs text-[var(--forge-text-secondary)]">
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-4 pt-3 border-t border-white/5 font-mono-forge text-xs text-[var(--forge-text-secondary)]">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[var(--forge-tertiary)]" />
-              <span className="text-[var(--forge-text-primary)] font-semibold">
+              <span className="text-white font-semibold">
                 {pinnedSession.identityTitle}
               </span>
               <span className="text-[var(--forge-text-muted)]">•</span>
@@ -206,30 +206,30 @@ export function VaultView({ sessions }: VaultViewProps) {
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
             <span className="font-mono-forge text-xs text-[var(--forge-text-secondary)] uppercase tracking-wider font-bold">
-              Session Logs
+              Session Telemetry Stream
             </span>
             <span className="w-1.5 h-1.5 rounded-full bg-[var(--forge-tertiary)] animate-pulse" />
           </div>
           <span className="font-mono-forge text-[11px] text-[var(--forge-text-muted)]">
-            {filteredSessions.length} sessions
+            {filteredSessions.length} sessions logged
           </span>
         </div>
 
         {filteredSessions.length === 0 ? (
-          <div className="bg-[var(--forge-surface-low)]/70 border border-[var(--forge-border)] rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-2">
+          <div className="bg-[#1b1b22]/70 border border-white/5 rounded-2xl p-8 text-center flex flex-col items-center justify-center space-y-2">
             <BookOpen className="w-8 h-8 text-[var(--forge-text-muted)]" />
             <h4 className="text-sm font-bold text-[var(--forge-text-primary)]">
-              No sessions found
+              No recorded sessions in this filter
             </h4>
             <p className="text-xs text-[var(--forge-text-muted)]">
-              Complete focus sessions to record debrief notes and tacit insights.
+              Complete focus timer sessions and log reflection debriefs to populate your vault.
             </p>
           </div>
         ) : (
           filteredSessions.map((s) => (
             <article
               key={s.id}
-              className="flex flex-col rounded-2xl bg-[var(--forge-surface-low)] border border-[var(--forge-border)] shadow-lg overflow-hidden relative group hover:border-[var(--forge-border-mid)] transition-all"
+              className="flex flex-col rounded-2xl bg-[#1b1b24]/90 border border-[rgba(255,255,255,0.07)] shadow-lg overflow-hidden relative group hover:border-[rgba(192,193,255,0.2)] transition-all"
             >
               {/* Top Accent Gradient Bar */}
               <div
@@ -276,13 +276,13 @@ export function VaultView({ sessions }: VaultViewProps) {
 
                 {/* Bottleneck Attacked note */}
                 {s.bottleneckAttacked && (
-                  <div className="bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] rounded-xl p-3 flex items-start gap-2.5">
+                  <div className="bg-[#141418] border border-white/5 rounded-xl p-3 flex items-start gap-2.5">
                     <div className="w-6 h-6 rounded-lg bg-[var(--forge-tertiary-tint)] flex items-center justify-center text-[var(--forge-tertiary)] shrink-0 mt-0.5">
                       <Clock className="w-3.5 h-3.5" />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="font-mono-forge text-[10px] text-[var(--forge-tertiary)] uppercase font-bold tracking-wider">
-                        Bottleneck
+                        Bottleneck Attacked
                       </span>
                       <p className="text-xs text-[var(--forge-text-primary)] mt-0.5 leading-relaxed">
                         {s.bottleneckAttacked}
@@ -293,13 +293,13 @@ export function VaultView({ sessions }: VaultViewProps) {
 
                 {/* Tacit Insight note */}
                 {s.tacitInsight && (
-                  <div className="bg-[var(--forge-surface-lowest)] border border-[var(--forge-border-mid)] rounded-xl p-3 flex items-start gap-2.5 shadow-sm">
+                  <div className="bg-[#181822] border border-[rgba(192,193,255,0.15)] rounded-xl p-3 flex items-start gap-2.5 shadow-[0_0_12px_rgba(192,193,255,0.05)]">
                     <div className="w-6 h-6 rounded-lg bg-[var(--forge-primary-tint)] flex items-center justify-center text-[var(--forge-primary)] shrink-0 mt-0.5">
                       <Lightbulb className="w-3.5 h-3.5" />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="font-mono-forge text-[10px] text-[var(--forge-primary)] uppercase font-bold tracking-wider">
-                        Insight
+                        Tacit Insight Crystallized
                       </span>
                       <p className="text-xs text-[var(--forge-text-primary)] italic mt-0.5 leading-relaxed">
                         "{s.tacitInsight}"

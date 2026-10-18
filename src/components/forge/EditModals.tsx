@@ -57,17 +57,17 @@ export function EditHabitModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-xl overflow-y-auto">
-      <div className="relative z-10 w-full max-w-lg bg-[var(--forge-surface-low)] border border-[var(--forge-border)] rounded-3xl p-5 sm:p-6 shadow-[0_16px_64px_rgba(0,0,0,0.5)] my-auto flex flex-col space-y-4">
-        <div className="flex items-center justify-between pb-2 border-b border-[var(--forge-border)]">
+      <div className="relative z-10 w-full max-w-lg bg-[#131317]/95 border border-[rgba(255,255,255,0.12)] rounded-3xl p-5 sm:p-6 shadow-[0_16px_64px_rgba(0,0,0,0.8)] my-auto flex flex-col space-y-4">
+        <div className="flex items-center justify-between pb-2 border-b border-white/5">
           <div className="flex items-center gap-2">
             <Pencil className="w-4 h-4 text-[var(--forge-primary)]" />
-            <h3 className="text-base font-bold text-[var(--forge-text-primary)] tracking-tight">
-              Edit Habit
+            <h3 className="text-base font-bold text-white tracking-tight">
+              Edit Habit Protocol
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)] flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-text-muted)] hover:text-white flex items-center justify-center transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -77,12 +77,12 @@ export function EditHabitModal({
           {/* Target Identity */}
           <div className="space-y-1.5">
             <label className="font-mono-forge text-[11px] uppercase tracking-wider text-[var(--forge-text-secondary)] font-bold">
-              Archetype
+              Identity Archetype
             </label>
             <select
               value={editHabitIdentityId}
               onChange={(e) => onSetEditHabitIdentityId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] text-[var(--forge-text-primary)] text-xs font-mono-forge focus:outline-none"
+              className="w-full px-3 py-2.5 rounded-xl bg-[#0e0e12] border border-white/10 text-white text-xs font-mono-forge focus:outline-none"
             >
               {identities.map((idVec) => (
                 <option key={idVec.id} value={idVec.id}>
@@ -95,7 +95,7 @@ export function EditHabitModal({
           {/* Habit Title */}
           <div className="space-y-1.5">
             <label className="font-mono-forge text-[11px] uppercase tracking-wider text-[var(--forge-text-secondary)] font-bold">
-              Habit Title
+              Habit Protocol Title
             </label>
             <input
               required
@@ -103,7 +103,7 @@ export function EditHabitModal({
               type="text"
               value={editHabitTitle}
               onChange={(e) => onSetEditHabitTitle(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] text-[var(--forge-text-primary)] placeholder-[var(--forge-text-faint)] text-xs sm:text-sm focus:outline-none focus:border-[var(--forge-primary)]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0e0e12] border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-[var(--forge-primary)]"
             />
           </div>
 
@@ -111,14 +111,14 @@ export function EditHabitModal({
           <div className="space-y-1.5">
             <label className="font-mono-forge text-[11px] uppercase tracking-wider text-[var(--forge-secondary)] font-bold flex items-center gap-1">
               <DoorOpen className="w-3.5 h-3.5" />
-              <span>2-Minute Gateway</span>
+              <span>2-Minute Atomic Gateway</span>
             </label>
             <input
               required
               type="text"
               value={editHabitMicro}
               onChange={(e) => onSetEditHabitMicro(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] text-[var(--forge-text-primary)] placeholder-[var(--forge-text-faint)] text-xs sm:text-sm focus:outline-none focus:border-[var(--forge-secondary)]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0e0e12] border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-[var(--forge-secondary)]"
             />
           </div>
 
@@ -131,7 +131,7 @@ export function EditHabitModal({
               <select
                 value={editHabitStage}
                 onChange={(e) => onSetEditHabitStage(e.target.value as SkillStage)}
-                className="w-full px-3 py-2.5 rounded-xl bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] text-[var(--forge-text-primary)] text-xs font-mono-forge focus:outline-none"
+                className="w-full px-3 py-2.5 rounded-xl bg-[#0e0e12] border border-white/10 text-white text-xs font-mono-forge focus:outline-none"
               >
                 <option value="PASSIVE">Passive (x0.8)</option>
                 <option value="PRACTICE">Practice (x1.2)</option>
@@ -148,7 +148,7 @@ export function EditHabitModal({
                 placeholder="e.g. 20:30"
                 value={editHabitReminder}
                 onChange={(e) => onSetEditHabitReminder(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] text-[var(--forge-text-primary)] placeholder-[var(--forge-text-faint)] text-xs font-mono-forge focus:outline-none"
+                className="w-full px-3 py-2.5 rounded-xl bg-[#0e0e12] border border-white/10 text-white text-xs font-mono-forge focus:outline-none"
               />
             </div>
           </div>
@@ -162,7 +162,7 @@ export function EditHabitModal({
             <select
               value={editHabitAnchorId}
               onChange={(e) => onSetEditHabitAnchorId(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] text-[var(--forge-text-primary)] text-xs font-mono-forge focus:outline-none"
+              className="w-full px-3 py-2.5 rounded-xl bg-[#0e0e12] border border-white/10 text-white text-xs font-mono-forge focus:outline-none"
             >
               <option value="NONE">None</option>
               {allHabits
@@ -190,7 +190,7 @@ export function EditHabitModal({
                 <button
                   type="button"
                   onClick={() => onSetConfirmDelete(false)}
-                  className="px-2.5 py-2 rounded-xl bg-[var(--forge-surface-high)] text-[var(--forge-text-primary)] font-mono-forge text-xs"
+                  className="px-2.5 py-2 rounded-xl bg-[var(--forge-surface-high)] text-white font-mono-forge text-xs"
                 >
                   Cancel
                 </button>
@@ -202,7 +202,7 @@ export function EditHabitModal({
                 className="text-xs font-mono-forge text-[var(--forge-error)] hover:underline flex items-center gap-1"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete</span>
+                <span>Delete Habit</span>
               </button>
             )}
 
@@ -211,7 +211,7 @@ export function EditHabitModal({
               type="submit"
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#8083ff] to-[#6f00be] text-white font-mono-forge text-xs font-bold shadow-md hover:brightness-110 active:scale-95"
             >
-              {isSubmitting ? 'Saving...' : 'Save'}
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>
@@ -255,17 +255,17 @@ export function EditIdentityModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-xl overflow-y-auto">
-      <div className="relative z-10 w-full max-w-lg bg-[var(--forge-surface-low)] border border-[var(--forge-border)] rounded-3xl p-5 sm:p-6 shadow-[0_16px_64px_rgba(0,0,0,0.5)] my-auto flex flex-col space-y-4">
-        <div className="flex items-center justify-between pb-2 border-b border-[var(--forge-border)]">
+      <div className="relative z-10 w-full max-w-lg bg-[#131317]/95 border border-[rgba(255,255,255,0.12)] rounded-3xl p-5 sm:p-6 shadow-[0_16px_64px_rgba(0,0,0,0.8)] my-auto flex flex-col space-y-4">
+        <div className="flex items-center justify-between pb-2 border-b border-white/5">
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-[var(--forge-secondary)]" />
-            <h3 className="text-base font-bold text-[var(--forge-text-primary)] tracking-tight">
-              Edit Archetype
+            <h3 className="text-base font-bold text-white tracking-tight">
+              Edit Master Archetype
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)] flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-xl bg-[var(--forge-surface-high)] hover:bg-[var(--forge-surface-highest)] text-[var(--forge-text-muted)] hover:text-white flex items-center justify-center transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -282,13 +282,13 @@ export function EditIdentityModal({
               type="text"
               value={editIdTitle}
               onChange={(e) => onSetEditIdTitle(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] text-[var(--forge-text-primary)] placeholder-[var(--forge-text-faint)] text-xs sm:text-sm focus:outline-none focus:border-[var(--forge-secondary)]"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0e0e12] border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-[var(--forge-secondary)]"
             />
           </div>
 
           <div className="space-y-1.5">
             <label className="font-mono-forge text-[11px] uppercase tracking-wider text-[var(--forge-primary)] font-bold">
-              Life's Task / Mission
+              Life's Task Statement (Greene's Mastery)
             </label>
             <textarea
               required
@@ -296,7 +296,7 @@ export function EditIdentityModal({
               maxLength={200}
               value={editIdMission}
               onChange={(e) => onSetEditIdMission(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] text-[var(--forge-text-primary)] placeholder-[var(--forge-text-faint)] text-xs sm:text-sm focus:outline-none focus:border-[var(--forge-primary)] resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0e0e12] border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-[var(--forge-primary)] resize-none"
             />
           </div>
 
@@ -312,8 +312,8 @@ export function EditIdentityModal({
                   onClick={() => onSetEditIdStage(p)}
                   className={`p-2 rounded-xl text-center font-mono-forge text-xs font-bold border transition-all ${
                     editIdStage === p
-                      ? 'bg-[var(--forge-surface-high)] border-[var(--forge-secondary)] text-[var(--forge-text-primary)] shadow-sm'
-                      : 'bg-[var(--forge-surface-lowest)] border border-[var(--forge-border)] text-[var(--forge-text-muted)] hover:text-[var(--forge-text-primary)]'
+                      ? 'bg-[var(--forge-surface-high)] border-[var(--forge-secondary)] text-white shadow-sm'
+                      : 'bg-[#0e0e12] border-white/5 text-[var(--forge-text-muted)] hover:text-white'
                   }`}
                 >
                   {p}
@@ -337,7 +337,7 @@ export function EditIdentityModal({
                 <button
                   type="button"
                   onClick={() => onSetConfirmDelete(false)}
-                  className="px-2.5 py-2 rounded-xl bg-[var(--forge-surface-high)] text-[var(--forge-text-primary)] font-mono-forge text-xs"
+                  className="px-2.5 py-2 rounded-xl bg-[var(--forge-surface-high)] text-white font-mono-forge text-xs"
                 >
                   Cancel
                 </button>
@@ -349,7 +349,7 @@ export function EditIdentityModal({
                 className="text-xs font-mono-forge text-[var(--forge-error)] hover:underline flex items-center gap-1"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Delete</span>
+                <span>Delete Archetype</span>
               </button>
             )}
 
@@ -358,7 +358,7 @@ export function EditIdentityModal({
               type="submit"
               className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#6f00be] to-[#ddb7ff] text-white font-mono-forge text-xs font-bold shadow-md hover:brightness-110 active:scale-95"
             >
-              {isSubmitting ? 'Saving...' : 'Save'}
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>
