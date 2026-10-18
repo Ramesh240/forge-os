@@ -25,9 +25,8 @@ import {
   signInWithGoogleAction,
   signOutAction,
   deleteUserAccountAndData,
-  redeemProAccessAction,
 } from '@/app/actions';
-import { useRouter } from 'next/navigation';
+import ProUpgradeCard from '@/components/ProUpgradeCard';
 import {
   Zap,
   BarChart3,
@@ -148,16 +147,11 @@ export default function ForgeAppShell({
   googleAuthEnabled?: boolean;
   isPro?: boolean;
 }) {
-  const router = useRouter();
   const [userUnlockedPro, setUserUnlockedPro] = useState(false);
   const userIsPro = isPro || userUnlockedPro;
 
-  // Pro Modal & Code Redemption State
+  // Pro Modal Trigger State
   const [showProModal, setShowProModal] = useState(false);
-  const [proCodeInput, setProCodeInput] = useState('');
-  const [isRedeemingCode, setIsRedeemingCode] = useState(false);
-  const [proRedeemError, setProRedeemError] = useState<string | null>(null);
-  const [proRedeemSuccess, setProRedeemSuccess] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<TabType>('WORKSPACE');
   const [selectedIdentityFilter, setSelectedIdentityFilter] = useState<string>('ALL');
@@ -214,160 +208,6 @@ export default function ForgeAppShell({
   const [pomoPhase, setPomoPhase] = useState<'WORK' | 'BREAK'>('WORK');
   const [pomoSecondsLeft, setPomoSecondsLeft] = useState<number>(23 * 60);
   const [pomoCyclesCompleted, setPomoCyclesCompleted] = useState<number>(0);
-
-  const handleRedeemCode = async (codeToRedeem?: string) => {
-    const code = (codeToRedeem || proCodeInput).trim();
-    if (!code) {
-      setProRedeemError('Please enter a valid beta tester code.');
-      return;
-    }
-    setIsRedeemingCode(true);
-    setProRedeemError(null);
-    setProRedeemSuccess(null);
-    try {
-      const res = await redeemProAccessAction(code);
-      if (res.success) {
-        setUserUnlockedPro(true);
-        setProRedeemSuccess('🎉 ForgeOS Pro Unlocked! Free lifetime access granted.');
-        soundEngine.playSessionCompleteFanfare(soundEnabled);
-        setToastMessage('ForgeOS Pro Lifetime Pass Activated!');
-        router.refresh();
-      } else {
-        setProRedeemError(res.error || 'Invalid tester code. Please try again.');
-      }
-    } catch {
-      setProRedeemError('Failed to verify code. Please check your network connection.');
-    } finally {
-      setIsRedeemingCode(false);
-    }
-  };
-
-  const renderProCard = (onClose?: () => void) => (
-    <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 glass-nav border border-amber-500/30 shadow-2xl backdrop-blur-2xl space-y-6">
-      {/* Ambient background glow */}
-      <div className="absolute -top-24 -right-24 w-60 h-60 bg-gradient-to-br from-amber-500/25 via-indigo-500/20 to-rose-500/15 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold tracking-wide">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>ONE-TIME LIFETIME PASS</span>
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight theme-text">
-            Unlock ForgeOS Pro
-          </h2>
-          <p className="text-xs sm:text-sm theme-subtext max-w-xl">
-            Empower your deliberate practice with neuro-behavioral analytics, warm studio themes, and interval sprint engines.
-          </p>
-        </div>
-
-        <div className="flex items-start gap-2">
-          <div className="text-right shrink-0">
-            <div className="text-2xl sm:text-3xl font-black text-amber-400">₹150</div>
-            <div className="text-[10px] theme-muted font-mono">One-time purchase • Lifetime pass</div>
-          </div>
-          {onClose && (
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1.5 rounded-xl glass-panel theme-subtext hover:opacity-80 cursor-pointer shrink-0 ml-1"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Feature Breakdown */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <div className="p-4 rounded-2xl glass-panel space-y-1.5 border border-white/5">
-          <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-            <BarChart3 className="w-4 h-4" />
-          </div>
-          <h4 className="text-sm font-bold theme-text">Analytics Hub</h4>
-          <p className="text-xs theme-subtext">
-            7-day focus velocity bar charts, 10,000-hour mastery milestones, and cognitive friction split.
-          </p>
-        </div>
-
-        <div className="p-4 rounded-2xl glass-panel space-y-1.5 border border-white/5">
-          <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
-            <Palette className="w-4 h-4" />
-          </div>
-          <h4 className="text-sm font-bold theme-text">Sepia &amp; Daylight Themes</h4>
-          <p className="text-xs theme-subtext">
-            Warm parchment &amp; espresso ink for late night flow, plus high-contrast daylight minimalism.
-          </p>
-        </div>
-
-        <div className="p-4 rounded-2xl glass-panel space-y-1.5 border border-white/5">
-          <div className="w-8 h-8 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-400">
-            <FastForward className="w-4 h-4" />
-          </div>
-          <h4 className="text-sm font-bold theme-text">Pomodoro Extensions</h4>
-          <p className="text-xs theme-subtext">
-            25m/5m Classic Pomodoro &amp; 50m/10m Deep Sprint countdown engines with automatic audio chime transitions.
-          </p>
-        </div>
-      </div>
-
-      {/* Play Store Beta Tester Free Access & Redemption Box */}
-      <div className="p-5 rounded-2xl glass-panel border border-indigo-500/30 bg-indigo-950/20 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-          <span className="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            Play Store Beta Tester Free Access
-          </span>
-          <span className="text-[11px] font-mono text-emerald-400 font-semibold">
-            100% Free For Beta Testers
-          </span>
-        </div>
-
-        <p className="text-xs theme-subtext">
-          Have you installed ForgeOS via Google Play Beta testing? Redeem tester key <code className="px-1.5 py-0.5 rounded bg-black/40 text-amber-300 font-mono font-bold">FORGEBETA</code> below to unlock Pro access immediately.
-        </p>
-
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleRedeemCode();
-          }}
-          className="flex flex-col sm:flex-row gap-2 pt-1"
-        >
-          <input
-            type="text"
-            placeholder="Redeem Play Store Tester Code (FORGEBETA)"
-            value={proCodeInput}
-            onChange={(e) => setProCodeInput(e.target.value.toUpperCase())}
-            className="flex-1 theme-input rounded-xl px-3.5 py-2.5 text-xs font-mono uppercase tracking-wider"
-          />
-          <button
-            type="submit"
-            disabled={isRedeemingCode || !proCodeInput.trim()}
-            className="px-5 py-2.5 rounded-xl text-white font-bold text-xs shrink-0 cursor-pointer disabled:opacity-50 transition"
-            style={{ background: 'var(--accent-primary)' }}
-          >
-            {isRedeemingCode ? 'Verifying Code...' : 'Unlock ForgeOS Pro'}
-          </button>
-        </form>
-
-        {proRedeemSuccess && (
-          <div className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5 pt-1">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>{proRedeemSuccess}</span>
-          </div>
-        )}
-        {proRedeemError && (
-          <div className="text-xs text-rose-400 font-semibold flex items-center gap-1.5 pt-1">
-            <X className="w-4 h-4" />
-            <span>{proRedeemError}</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
   // Switch from 2-Min Micro-Start / Open Flow into a Pomodoro preset
   const activatePomodoroMode = (mode: 'FLOW' | 'POMO_25_5' | 'POMO_50_10') => {
     soundEngine.playTactileClick(soundEnabled);
@@ -1410,7 +1250,10 @@ export default function ForgeAppShell({
           </div>
         ) : (
           <div className="space-y-6">
-            {renderProCard()}
+            <ProUpgradeCard
+              onUnlocked={() => setUserUnlockedPro(true)}
+              currentUser={currentUser}
+            />
           </div>
         )
       )}
@@ -1582,7 +1425,10 @@ export default function ForgeAppShell({
                 </div>
               </div>
             ) : (
-              renderProCard()
+              <ProUpgradeCard
+                onUnlocked={() => setUserUnlockedPro(true)}
+                currentUser={currentUser}
+              />
             )}
 
             {/* 1. Profile & Google Cloud Sync */}
@@ -2907,7 +2753,14 @@ export default function ForgeAppShell({
       {showProModal && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
           <div className="max-w-2xl w-full my-8">
-            {renderProCard(() => setShowProModal(false))}
+            <ProUpgradeCard
+              onClose={() => setShowProModal(false)}
+              onUnlocked={() => {
+                setUserUnlockedPro(true);
+                setShowProModal(false);
+              }}
+              currentUser={currentUser}
+            />
           </div>
         </div>
       )}
