@@ -1545,9 +1545,24 @@ export default function ForgeAppShell({
                       </button>
                     </form>
                   ) : (
-                    <span className="text-xs font-mono px-3 py-2 rounded-xl glass-panel theme-muted">
-                      Add AUTH_GOOGLE_ID in .env to enable
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <form action={deleteUserAccountAndData}>
+                        <button
+                          type="submit"
+                          onClick={(e) => {
+                            if (!confirm('Permanently wipe all guest habit records and reset workspace?')) {
+                              e.preventDefault();
+                            }
+                          }}
+                          className="text-[11px] px-3 py-2 rounded-xl border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 cursor-pointer transition font-medium"
+                        >
+                          Wipe Workspace Data
+                        </button>
+                      </form>
+                      <span className="text-[11px] font-mono px-2.5 py-1.5 rounded-xl glass-panel theme-muted hidden sm:inline">
+                        Guest Workspace
+                      </span>
+                    </div>
                   )}
                 </div>
               )}

@@ -3,13 +3,14 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'ForgeOS — Identity & Skill Progression',
+    name: 'ForgeOS: Identity & Habit Flow',
     short_name: 'ForgeOS',
+    id: 'com.forgeos.mastery',
     description: 'Identity-driven habit chains, 2-minute micro-timers, and skill telemetry.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#09090b',
-    theme_color: '#09090b',
+    background_color: '#060609',
+    theme_color: '#060609',
     orientation: 'portrait',
     icons: [
       {
