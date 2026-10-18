@@ -1,7 +1,7 @@
 // src/app/page.tsx
 import { prisma } from '@/lib/prisma';
 import { auth, isGoogleAuthConfigured } from '@/auth';
-import { ensureUserWorkspaceSeeded } from '@/app/actions';
+import { ensureUserWorkspaceSeeded, checkUserProStatus } from '@/app/actions';
 import ForgeAppShell, {
   SerializedIdentity,
   SerializedHabit,
@@ -17,6 +17,7 @@ export default async function ForgeOSPage() {
   let sessions: SerializedSession[] = [];
   let dbError: string | null = null;
   let currentUser: UserProfile | null = null;
+  let isPro = false;
 
   try {
     const session = await auth();
@@ -29,6 +30,9 @@ export default async function ForgeOSPage() {
     }
 
     const activeUserId = currentUser?.email || 'demo-user';
+
+    // Check Pro / Beta Tester access status
+    isPro = await checkUserProStatus(activeUserId);
 
     // Ensure starter identities/habits exist for this user
     await ensureUserWorkspaceSeeded(activeUserId);
@@ -127,6 +131,7 @@ export default async function ForgeOSPage() {
         sessions={sessions}
         currentUser={currentUser}
         googleAuthEnabled={isGoogleAuthConfigured}
+        isPro={isPro}
       />
     </>
   );

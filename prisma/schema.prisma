@@ -18,6 +18,7 @@ model IdentityVector {
   weightedScore        Float        @default(0.0)
   totalHoursLogged     Float        @default(0.0)
   currentPhase         String       @default("OBSERVATION") // OBSERVATION | PRACTICE | EXPERIMENTATION
+  isPro                Boolean      @default(false)
   habits               Habit[]
   sessions             SessionLog[]
   createdAt            DateTime     @default(now())

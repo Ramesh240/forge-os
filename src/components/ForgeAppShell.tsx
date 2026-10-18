@@ -25,7 +25,9 @@ import {
   signInWithGoogleAction,
   signOutAction,
   deleteUserAccountAndData,
+  redeemProAccessAction,
 } from '@/app/actions';
+import { useRouter } from 'next/navigation';
 import {
   Zap,
   BarChart3,
@@ -137,19 +139,37 @@ export default function ForgeAppShell({
   sessions,
   currentUser = null,
   googleAuthEnabled = false,
+  isPro = false,
 }: {
   identities: SerializedIdentity[];
   habits: SerializedHabit[];
   sessions: SerializedSession[];
   currentUser?: UserProfile | null;
   googleAuthEnabled?: boolean;
+  isPro?: boolean;
 }) {
+  const router = useRouter();
+  const [userUnlockedPro, setUserUnlockedPro] = useState(false);
+  const userIsPro = isPro || userUnlockedPro;
+
+  // Pro Modal & Code Redemption State
+  const [showProModal, setShowProModal] = useState(false);
+  const [proCodeInput, setProCodeInput] = useState('');
+  const [isRedeemingCode, setIsRedeemingCode] = useState(false);
+  const [proRedeemError, setProRedeemError] = useState<string | null>(null);
+  const [proRedeemSuccess, setProRedeemSuccess] = useState<string | null>(null);
+
   const [activeTab, setActiveTab] = useState<TabType>('WORKSPACE');
   const [selectedIdentityFilter, setSelectedIdentityFilter] = useState<string>('ALL');
   const [theme, setTheme] = useState<ThemeMode>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('forge_theme') as ThemeMode;
-      if (saved) return saved;
+      if (saved) {
+        if (!isPro && (saved === 'sepia' || saved === 'light')) {
+          return 'obsidian';
+        }
+        return saved;
+      }
     }
     return 'obsidian';
   });
@@ -195,9 +215,166 @@ export default function ForgeAppShell({
   const [pomoSecondsLeft, setPomoSecondsLeft] = useState<number>(23 * 60);
   const [pomoCyclesCompleted, setPomoCyclesCompleted] = useState<number>(0);
 
+  const handleRedeemCode = async (codeToRedeem?: string) => {
+    const code = (codeToRedeem || proCodeInput).trim();
+    if (!code) {
+      setProRedeemError('Please enter a valid beta tester code.');
+      return;
+    }
+    setIsRedeemingCode(true);
+    setProRedeemError(null);
+    setProRedeemSuccess(null);
+    try {
+      const res = await redeemProAccessAction(code);
+      if (res.success) {
+        setUserUnlockedPro(true);
+        setProRedeemSuccess('🎉 ForgeOS Pro Unlocked! Free lifetime access granted.');
+        soundEngine.playSessionCompleteFanfare(soundEnabled);
+        setToastMessage('ForgeOS Pro Lifetime Pass Activated!');
+        router.refresh();
+      } else {
+        setProRedeemError(res.error || 'Invalid tester code. Please try again.');
+      }
+    } catch {
+      setProRedeemError('Failed to verify code. Please check your network connection.');
+    } finally {
+      setIsRedeemingCode(false);
+    }
+  };
+
+  const renderProCard = (onClose?: () => void) => (
+    <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 glass-nav border border-amber-500/30 shadow-2xl backdrop-blur-2xl space-y-6">
+      {/* Ambient background glow */}
+      <div className="absolute -top-24 -right-24 w-60 h-60 bg-gradient-to-br from-amber-500/25 via-indigo-500/20 to-rose-500/15 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold tracking-wide">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>ONE-TIME LIFETIME PASS</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight theme-text">
+            Unlock ForgeOS Pro
+          </h2>
+          <p className="text-xs sm:text-sm theme-subtext max-w-xl">
+            Empower your deliberate practice with neuro-behavioral analytics, warm studio themes, and interval sprint engines.
+          </p>
+        </div>
+
+        <div className="flex items-start gap-2">
+          <div className="text-right shrink-0">
+            <div className="text-2xl sm:text-3xl font-black text-amber-400">₹150</div>
+            <div className="text-[10px] theme-muted font-mono">One-time purchase • Lifetime pass</div>
+          </div>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-xl glass-panel theme-subtext hover:opacity-80 cursor-pointer shrink-0 ml-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Feature Breakdown */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="p-4 rounded-2xl glass-panel space-y-1.5 border border-white/5">
+          <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <BarChart3 className="w-4 h-4" />
+          </div>
+          <h4 className="text-sm font-bold theme-text">Analytics Hub</h4>
+          <p className="text-xs theme-subtext">
+            7-day focus velocity bar charts, 10,000-hour mastery milestones, and cognitive friction split.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl glass-panel space-y-1.5 border border-white/5">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
+            <Palette className="w-4 h-4" />
+          </div>
+          <h4 className="text-sm font-bold theme-text">Sepia &amp; Daylight Themes</h4>
+          <p className="text-xs theme-subtext">
+            Warm parchment &amp; espresso ink for late night flow, plus high-contrast daylight minimalism.
+          </p>
+        </div>
+
+        <div className="p-4 rounded-2xl glass-panel space-y-1.5 border border-white/5">
+          <div className="w-8 h-8 rounded-xl bg-rose-500/20 flex items-center justify-center text-rose-400">
+            <FastForward className="w-4 h-4" />
+          </div>
+          <h4 className="text-sm font-bold theme-text">Pomodoro Extensions</h4>
+          <p className="text-xs theme-subtext">
+            25m/5m Classic Pomodoro &amp; 50m/10m Deep Sprint countdown engines with automatic audio chime transitions.
+          </p>
+        </div>
+      </div>
+
+      {/* Play Store Beta Tester Free Access & Redemption Box */}
+      <div className="p-5 rounded-2xl glass-panel border border-indigo-500/30 bg-indigo-950/20 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+          <span className="text-xs font-bold uppercase tracking-wider text-indigo-300 flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            Play Store Beta Tester Free Access
+          </span>
+          <span className="text-[11px] font-mono text-emerald-400 font-semibold">
+            100% Free For Beta Testers
+          </span>
+        </div>
+
+        <p className="text-xs theme-subtext">
+          Have you installed ForgeOS via Google Play Beta testing? Redeem tester key <code className="px-1.5 py-0.5 rounded bg-black/40 text-amber-300 font-mono font-bold">FORGEBETA</code> below to unlock Pro access immediately.
+        </p>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleRedeemCode();
+          }}
+          className="flex flex-col sm:flex-row gap-2 pt-1"
+        >
+          <input
+            type="text"
+            placeholder="Redeem Play Store Tester Code (FORGEBETA)"
+            value={proCodeInput}
+            onChange={(e) => setProCodeInput(e.target.value.toUpperCase())}
+            className="flex-1 theme-input rounded-xl px-3.5 py-2.5 text-xs font-mono uppercase tracking-wider"
+          />
+          <button
+            type="submit"
+            disabled={isRedeemingCode || !proCodeInput.trim()}
+            className="px-5 py-2.5 rounded-xl text-white font-bold text-xs shrink-0 cursor-pointer disabled:opacity-50 transition"
+            style={{ background: 'var(--accent-primary)' }}
+          >
+            {isRedeemingCode ? 'Verifying Code...' : 'Unlock ForgeOS Pro'}
+          </button>
+        </form>
+
+        {proRedeemSuccess && (
+          <div className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5 pt-1">
+            <CheckCircle2 className="w-4 h-4" />
+            <span>{proRedeemSuccess}</span>
+          </div>
+        )}
+        {proRedeemError && (
+          <div className="text-xs text-rose-400 font-semibold flex items-center gap-1.5 pt-1">
+            <X className="w-4 h-4" />
+            <span>{proRedeemError}</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   // Switch from 2-Min Micro-Start / Open Flow into a Pomodoro preset
   const activatePomodoroMode = (mode: 'FLOW' | 'POMO_25_5' | 'POMO_50_10') => {
     soundEngine.playTactileClick(soundEnabled);
+    if ((mode === 'POMO_25_5' || mode === 'POMO_50_10') && !userIsPro) {
+      setShowProModal(true);
+      return;
+    }
     setTimerMode(mode);
     setPomoPhase('WORK');
 
@@ -213,7 +390,7 @@ export default function ForgeAppShell({
   };
 
   // Skip current Work or Break phase (or transition when countdown hits 0)
-  const transitionPomodoroPhase = () => {
+  const transitionPomodoroPhase = useCallback(() => {
     const breakMins = timerMode === 'POMO_50_10' ? 10 : 5;
     const workMins = timerMode === 'POMO_50_10' ? 50 : 25;
 
@@ -227,7 +404,7 @@ export default function ForgeAppShell({
       setPomoPhase('WORK');
       setPomoSecondsLeft(workMins * 60);
     }
-  };
+  }, [timerMode, pomoPhase, soundEnabled]);
 
   // Create Modal State + Custom Popover States
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
@@ -381,6 +558,11 @@ export default function ForgeAppShell({
   };
 
   const selectTheme = (nextTheme: ThemeMode) => {
+    if ((nextTheme === 'sepia' || nextTheme === 'light') && !userIsPro) {
+      soundEngine.playTactileClick(soundEnabled);
+      setShowProModal(true);
+      return;
+    }
     setTheme(nextTheme);
     localStorage.setItem('forge_theme', nextTheme);
     document.documentElement.setAttribute('data-theme', nextTheme);
@@ -439,7 +621,7 @@ export default function ForgeAppShell({
       }, 1000);
     }
     return () => clearInterval(timer);
-  }, [isRunning, activeHabit, timerMode, pomoPhase]);
+  }, [isRunning, activeHabit, timerMode, pomoPhase, transitionPomodoroPhase]);
 
   useEffect(() => {
     if (
@@ -733,11 +915,15 @@ export default function ForgeAppShell({
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = activeTab === item.id;
+              const isLocked = item.id === 'ANALYTICS' && !userIsPro;
               return (
                 <button
                   key={item.id}
                   onClick={() => {
                     soundEngine.playTactileClick(soundEnabled);
+                    if (isLocked) {
+                      setShowProModal(true);
+                    }
                     setActiveTab(item.id);
                   }}
                   className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
@@ -746,6 +932,7 @@ export default function ForgeAppShell({
                 >
                   <Icon className="w-3.5 h-3.5" />
                   <span>{item.label}</span>
+                  {isLocked && <Lock className="w-3 h-3 text-amber-400" />}
                 </button>
               );
             })}
@@ -1048,9 +1235,9 @@ export default function ForgeAppShell({
 
         {/* ========================================================= */}
         {/* TAB 2: ANALYTICS HUB                                      */}
-        {/* ========================================================= */}
         {activeTab === 'ANALYTICS' && (
-          <div className="space-y-6">
+          userIsPro ? (
+            <div className="space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
               <div className="glass-panel p-5 rounded-2xl">
                 <span className="text-xs theme-subtext block">Effective Hours</span>
@@ -1221,7 +1408,12 @@ export default function ForgeAppShell({
               </div>
             </div>
           </div>
-        )}
+        ) : (
+          <div className="space-y-6">
+            {renderProCard()}
+          </div>
+        )
+      )}
 
         {/* ========================================================= */}
         {/* TAB 3: CONTINUITY HEATMAP                                 */}
@@ -1354,6 +1546,44 @@ export default function ForgeAppShell({
                 Manage cloud sync, visual themes, reminder notifications, and widget tools.
               </p>
             </div>
+
+            {/* ForgeOS Pro & Beta Tester Access Section */}
+            {userIsPro ? (
+              <div className="glass-panel p-6 rounded-2xl space-y-4 border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-transparent to-indigo-500/10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-400 border border-amber-500/30 shrink-0">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold theme-text flex items-center gap-2">
+                        ForgeOS Pro Activated
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30">
+                          LIFETIME PASS
+                        </span>
+                      </h3>
+                      <p className="text-xs theme-subtext">
+                        Play Store Beta Tester / Full Pro tier unlocked for this account.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-[var(--border-subtle)] text-xs theme-subtext">
+                  <span className="flex items-center gap-1.5 text-emerald-500">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Analytics Hub Unlocked
+                  </span>
+                  <span className="flex items-center gap-1.5 text-emerald-500">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Sepia &amp; Daylight Themes Active
+                  </span>
+                  <span className="flex items-center gap-1.5 text-emerald-500">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Pomodoro Extensions Enabled
+                  </span>
+                </div>
+              </div>
+            ) : (
+              renderProCard()
+            )}
 
             {/* 1. Profile & Google Cloud Sync */}
             <div className="glass-panel p-6 rounded-2xl space-y-4">
@@ -1551,20 +1781,23 @@ export default function ForgeAppShell({
                     desc: 'Deep dark mode with indigo glow',
                     swatchBg: '#060609',
                     swatchAccent: '#6366f1',
+                    locked: false,
                   },
                   {
                     id: 'sepia' as ThemeMode,
                     name: 'Sepia Studio',
-                    desc: 'Warm parchment & espresso ink',
+                    desc: 'Warm parchment & espresso ink (Pro)',
                     swatchBg: '#f4ecd8',
                     swatchAccent: '#b45309',
+                    locked: !userIsPro,
                   },
                   {
                     id: 'light' as ThemeMode,
                     name: 'Daylight Minimal',
-                    desc: 'Crisp alabaster & high contrast',
+                    desc: 'Crisp alabaster & high contrast (Pro)',
                     swatchBg: '#f8fafc',
                     swatchAccent: '#4f46e5',
+                    locked: !userIsPro,
                   },
                 ].map((t) => {
                   const active = theme === t.id;
@@ -1589,12 +1822,21 @@ export default function ForgeAppShell({
                             style={{ backgroundColor: t.swatchAccent }}
                           />
                         </div>
-                        {active && (
+                        {active ? (
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                        )}
+                        ) : t.locked ? (
+                          <Lock className="w-3.5 h-3.5 text-amber-400" />
+                        ) : null}
                       </div>
                       <div>
-                        <div className="text-sm font-bold theme-text">{t.name}</div>
+                        <div className="text-sm font-bold theme-text flex items-center gap-1.5">
+                          <span>{t.name}</span>
+                          {t.locked && (
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 font-bold">
+                              PRO
+                            </span>
+                          )}
+                        </div>
                         <div className="text-[11px] theme-subtext">{t.desc}</div>
                       </div>
                     </button>
@@ -1682,18 +1924,27 @@ export default function ForgeAppShell({
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = activeTab === item.id;
+          const isLocked = item.id === 'ANALYTICS' && !userIsPro;
           return (
             <button
               key={item.id}
               onClick={() => {
                 soundEngine.playTactileClick(soundEnabled);
+                if (isLocked) {
+                  setShowProModal(true);
+                }
                 setActiveTab(item.id);
               }}
               className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[11px] font-semibold transition-all cursor-pointer ${
                 active ? 'glass-tab-active' : 'theme-subtext'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <div className="relative">
+                <Icon className="w-4 h-4" />
+                {isLocked && (
+                  <Lock className="w-2.5 h-2.5 text-amber-400 absolute -top-1 -right-2" />
+                )}
+              </div>
               <span>{item.label}</span>
             </button>
           );
@@ -2461,25 +2712,30 @@ export default function ForgeAppShell({
               {microCleared && (
                 <div className="p-1.5 rounded-2xl glass-nav inline-flex flex-wrap items-center justify-center gap-1.5">
                   {[
-                    { id: 'FLOW', label: '∞ Open Flow' },
-                    { id: 'POMO_25_5', label: '🍅 Pomodoro 25m / 5m' },
-                    { id: 'POMO_50_10', label: '⚡ Deep 50m / 10m' },
+                    { id: 'FLOW', label: '∞ Open Flow', locked: false },
+                    { id: 'POMO_25_5', label: '🍅 Pomodoro 25m / 5m', locked: !userIsPro },
+                    { id: 'POMO_50_10', label: '⚡ Deep 50m / 10m', locked: !userIsPro },
                   ].map((m) => {
                     const active = timerMode === m.id;
                     return (
                       <button
                         key={m.id}
                         type="button"
-                        onClick={() =>
+                        onClick={() => {
+                          if (m.locked) {
+                            setShowProModal(true);
+                            return;
+                          }
                           activatePomodoroMode(
                             m.id as 'FLOW' | 'POMO_25_5' | 'POMO_50_10'
-                          )
-                        }
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                          );
+                        }}
+                        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                           active ? 'glass-tab-active' : 'theme-subtext hover:opacity-80'
                         }`}
                       >
-                        {m.label}
+                        <span>{m.label}</span>
+                        {m.locked && <Lock className="w-3 h-3 text-amber-400 shrink-0" />}
                       </button>
                     );
                   })}
@@ -2642,6 +2898,17 @@ export default function ForgeAppShell({
             </div>
           )}
           <div />
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* FORGEOS PRO UNLOCK MODAL OVERLAY                          */}
+      {/* ========================================================= */}
+      {showProModal && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
+          <div className="max-w-2xl w-full my-8">
+            {renderProCard(() => setShowProModal(false))}
+          </div>
         </div>
       )}
     </div>

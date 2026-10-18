@@ -19,6 +19,92 @@ export async function getActiveUserId(): Promise<string> {
   }
 }
 
+/**
+ * Checks whether a user has ForgeOS Pro unlocked:
+ * - Free lifetime access if their email/userId is in process.env.BETA_TESTER_EMAILS
+ * - Pro unlocked if any IdentityVector for that user has isPro: true
+ */
+export async function checkUserProStatus(userId: string): Promise<boolean> {
+  try {
+    if (!userId) return false;
+
+    // Check environment variable beta tester list
+    const betaTestersRaw = process.env.BETA_TESTER_EMAILS || '';
+    const betaTesterEmails = betaTestersRaw
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (betaTesterEmails.includes(userId.toLowerCase())) {
+      return true;
+    }
+
+    // Check if any IdentityVector for this user has isPro: true
+    const proVector = await prisma.identityVector.findFirst({
+      where: {
+        userId,
+        isPro: true,
+      },
+      select: { id: true },
+    });
+
+    return !!proVector;
+  } catch (error) {
+    console.error('Error checking user pro status:', error);
+    return false;
+  }
+}
+
+/**
+ * Redeems ForgeOS Pro lifetime access using a Play Store Beta Tester code
+ * (e.g. "FORGEBETA" or configured in process.env.BETA_ACCESS_CODE).
+ */
+export async function redeemProAccessAction(
+  code: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const userId = await getActiveUserId();
+    const cleanCode = (code || '').trim().toUpperCase();
+    const validCode = (process.env.BETA_ACCESS_CODE || 'FORGEBETA').trim().toUpperCase();
+
+    if (cleanCode !== 'FORGEBETA' && cleanCode !== validCode) {
+      return {
+        success: false,
+        error: 'Invalid tester code. Please enter FORGEBETA or contact support.',
+      };
+    }
+
+    // Ensure user has at least one IdentityVector seeded
+    await ensureUserWorkspaceSeeded(userId);
+
+    const updateResult = await prisma.identityVector.updateMany({
+      where: { userId },
+      data: { isPro: true },
+    });
+
+    if (updateResult.count === 0) {
+      await prisma.identityVector.create({
+        data: {
+          userId,
+          title: 'Algorithms Specialist',
+          lifesTaskStatement: 'Master algorithmic problem solving and system architecture.',
+          currentPhase: 'OBSERVATION',
+          isPro: true,
+        },
+      });
+    }
+
+    revalidatePath('/');
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to redeem pro access:', error);
+    return {
+      success: false,
+      error: 'An unexpected error occurred while redeeming your code. Please try again.',
+    };
+  }
+}
+
 export async function signInWithGoogleAction() {
   await signIn('google', { redirectTo: '/' });
 }
@@ -84,6 +170,7 @@ export async function ensureUserWorkspaceSeeded(userId: string) {
   ];
 
   const createdMap = new Map<string, string>();
+  const isPro = await checkUserProStatus(userId);
 
   for (const key of starterKeys) {
     const preset = IDENTITY_PRESETS.find((p) => p.key === key);
@@ -95,6 +182,7 @@ export async function ensureUserWorkspaceSeeded(userId: string) {
         title: preset.title,
         lifesTaskStatement: preset.lifesTaskStatement,
         currentPhase: preset.defaultPhase,
+        isPro,
       },
     });
     createdMap.set(key, created.id);
