@@ -108,11 +108,10 @@ export default function CheckoutPage() {
       addLog(`✓ Order created: ID=${orderData.order_id || orderData.orderId}, Amount=${orderData.amount} ${orderData.currency}`);
 
       // 3. Configure Razorpay modal options
-      const keyId =
-        orderData.key_id ||
-        orderData.keyId ||
-        process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
-        'rzp_test_TpNUwvKA4Hg5rK';
+      const keyId = orderData.key_id || orderData.keyId;
+      if (!keyId) {
+        throw new Error('Key ID not returned by order creation endpoint.');
+      }
 
       const options: RazorpayOptions = {
         key: keyId,

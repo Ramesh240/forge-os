@@ -2,12 +2,29 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 
-export function getRazorpayCredentials() {
-  const keyId =
-    process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+/**
+ * Server-only Razorpay configuration.
+ * Public framework prefixes (like NEXT_PUBLIC_) have been removed to keep credentials private.
+ */
+export const RazorpayConfig = {
+  get keyId() {
+    return process.env.RAZORPAY_KEY_ID;
+  },
+  get keySecret() {
+    return process.env.RAZORPAY_KEY_SECRET;
+  },
+  get isConfigured() {
+    return Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
+  },
+};
 
-  return { keyId, keySecret };
+export const Config = RazorpayConfig;
+
+export function getRazorpayCredentials() {
+  return {
+    keyId: RazorpayConfig.keyId,
+    keySecret: RazorpayConfig.keySecret,
+  };
 }
 
 export function getRazorpayClient(): Razorpay {
