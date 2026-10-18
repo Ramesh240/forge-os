@@ -25,6 +25,7 @@ import {
   signInWithGoogleAction,
   signOutAction,
   deleteUserAccountAndData,
+  resetProStatusAction,
 } from '@/app/actions';
 import ProUpgradeCard from '@/components/ProUpgradeCard';
 import {
@@ -1410,6 +1411,18 @@ export default function ForgeAppShell({
                       </p>
                     </div>
                   </div>
+                  <button
+                    onClick={async () => {
+                      if (confirm('Reset account to Free Tier to test upgrade experience?')) {
+                        await resetProStatusAction();
+                        setUserUnlockedPro(false);
+                        window.location.reload();
+                      }
+                    }}
+                    className="text-[11px] px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-300 hover:bg-rose-500/10 cursor-pointer self-start sm:self-auto transition-colors"
+                  >
+                    Reset to Free Tier (Test)
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-[var(--border-subtle)] text-xs theme-subtext">

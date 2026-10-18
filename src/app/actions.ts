@@ -94,13 +94,42 @@ export async function redeemProAccessAction(
       });
     }
 
-    revalidatePath('/');
+    try {
+      revalidatePath('/');
+    } catch {
+      // safe fallback outside request context
+    }
     return { success: true };
   } catch (error) {
     console.error('Failed to redeem pro access:', error);
     return {
       success: false,
       error: 'An unexpected error occurred while redeeming your code. Please try again.',
+    };
+  }
+}
+
+/**
+ * Resets the Pro status back to false for the active user (convenient for testing paywalls).
+ */
+export async function resetProStatusAction(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const userId = await getActiveUserId();
+    await prisma.identityVector.updateMany({
+      where: { userId },
+      data: { isPro: false },
+    });
+    try {
+      revalidatePath('/');
+    } catch {
+      // safe fallback outside request context
+    }
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to reset pro access:', error);
+    return {
+      success: false,
+      error: 'An unexpected error occurred while resetting status.',
     };
   }
 }
