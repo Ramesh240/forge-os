@@ -40,3 +40,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# android build artifacts & keystores
+*.zip
+*.keystore
+*.aab
+*.apk
+android-bundle/
+android-package/
+

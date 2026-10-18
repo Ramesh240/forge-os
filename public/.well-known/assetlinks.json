@@ -5,8 +5,7 @@
       "namespace": "android_app",
       "package_name": "com.forgeos.mastery",
       "sha256_cert_fingerprints": [
-        "PASTE_YOUR_UPLOAD_KEY_SHA256_HERE",
-        "PASTE_YOUR_GOOGLE_PLAY_APP_SIGNING_SHA256_HERE"
+        "C9:8D:26:24:06:07:F7:2F:5A:06:FA:BA:AE:81:5D:79:5A:42:20:B1:52:4F:7A:52:E5:43:64:FC:2E:5C:FB:D8"
       ]
     }
   }
