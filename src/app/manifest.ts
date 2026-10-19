@@ -24,6 +24,7 @@ export default function manifest(): MetadataRoute.Manifest {
     related_applications: [
       {
         platform: 'play',
+        url: 'https://play.google.com/store/apps/details?id=com.forgeos.mastery',
         id: 'com.forgeos.mastery',
       },
     ],

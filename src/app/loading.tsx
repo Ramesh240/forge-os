@@ -2,7 +2,7 @@
 export default function Loading() {
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden select-none"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 select-none overflow-hidden"
       style={{ backgroundColor: '#060609', color: '#f4f4f5' }}
     >
       {/* Ambient background glow */}

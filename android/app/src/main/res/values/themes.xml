@@ -29,7 +29,7 @@
       NoActionBar + dark backgrounds so the system UI matches the web app.
       Edge-to-edge is enabled in code via enableEdgeToEdge().
     -->
-    <style name="Theme.ForgeOS.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.ForgeOS.Base" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/forge_bg</item>
         <item name="android:statusBarColor">@color/forge_bg</item>
         <item name="android:navigationBarColor">@color/forge_bg</item>

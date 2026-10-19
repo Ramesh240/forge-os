@@ -28,7 +28,9 @@ import {
   resetProStatusAction,
 } from '@/app/actions';
 import ProUpgradeCard from '@/components/ProUpgradeCard';
+import FeatureWalkthrough from '@/components/FeatureWalkthrough';
 import {
+  HelpCircle,
   Zap,
   BarChart3,
   Calendar,
@@ -153,6 +155,8 @@ export default function ForgeAppShell({
 
   // Pro Modal Trigger State
   const [showProModal, setShowProModal] = useState(false);
+  // Feature Walkthrough Onboarding State
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
 
   const [activeTab, setActiveTab] = useState<TabType>('WORKSPACE');
   const [selectedIdentityFilter, setSelectedIdentityFilter] = useState<string>('ALL');
@@ -317,6 +321,13 @@ export default function ForgeAppShell({
 
     // Check if launched from /widget or notification with ?startHabit=<id>
     if (typeof window !== 'undefined') {
+      const seen = localStorage.getItem('forge_walkthrough_seen');
+      if (!seen) {
+        const timer = setTimeout(() => {
+          setShowWalkthrough(true);
+        }, 600);
+      }
+
       const params = new URLSearchParams(window.location.search);
       const startHabitId = params.get('startHabit');
       if (startHabitId) {
@@ -733,12 +744,12 @@ export default function ForgeAppShell({
       {/* ========================================================= */}
       {/* ULTRA-CLEAN FLOATING GLASS HEADER                         */}
       {/* ========================================================= */}
-      <header className="sticky top-3 z-30 px-4 sm:px-6">
-        <div className="max-w-5xl mx-auto glass-nav rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3">
+      <header className="sticky top-[max(0.75rem,env(safe-area-inset-top))] z-30 px-3 sm:px-6">
+        <div className="max-w-5xl mx-auto glass-nav rounded-2xl px-3.5 sm:px-4 py-2.5 flex items-center justify-between gap-2.5 sm:gap-3">
           {/* Brand */}
           <button
             onClick={() => setActiveTab('WORKSPACE')}
-            className="flex items-center gap-2.5 cursor-pointer"
+            className="flex items-center gap-2 sm:gap-2.5 cursor-pointer"
           >
             <div
               className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-white text-sm shadow-sm"
@@ -779,15 +790,27 @@ export default function ForgeAppShell({
             })}
           </nav>
 
-          {/* Right Status: Widget Launcher + Streak + Account Pill */}
-          <div className="flex items-center gap-2">
+          {/* Right Status: Guide + Widget Launcher + Streak + Account Pill */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button
+              onClick={() => {
+                soundEngine.playTactileClick(soundEnabled);
+                setShowWalkthrough(true);
+              }}
+              title="How ForgeOS Works (Walkthrough)"
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl glass-panel text-xs font-semibold text-indigo-400 hover:opacity-90 cursor-pointer"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Guide</span>
+            </button>
+
             <button
               onClick={() => {
                 soundEngine.playTactileClick(soundEnabled);
                 setIsWidgetDrawerOpen(true);
               }}
               title="Open Quick Habit Widget"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl glass-panel text-xs font-semibold theme-text hover:opacity-90 cursor-pointer"
+              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl glass-panel text-xs font-semibold theme-text hover:opacity-90 cursor-pointer"
             >
               <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
               <span className="hidden sm:inline">Widget</span>
@@ -1956,8 +1979,8 @@ export default function ForgeAppShell({
       {/* CUSTOM GLASS CREATOR MODAL (ZERO NATIVE <select> LISTS!)  */}
       {/* ========================================================= */}
       {isCreatorOpen && (
-        <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
-          <div className="glass-nav rounded-3xl max-w-lg w-full p-6 space-y-5 my-8 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md p-3 sm:p-4 flex items-end sm:items-center justify-center overflow-y-auto">
+          <div className="glass-nav rounded-t-3xl sm:rounded-3xl max-w-xl w-full p-5 sm:p-6 space-y-4 my-0 sm:my-auto max-h-[88vh] overflow-y-auto shadow-2xl border border-[var(--border-strong)]">
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <div>
                 <h3 className="text-base font-bold theme-text">
@@ -1967,13 +1990,13 @@ export default function ForgeAppShell({
                 </h3>
                 <p className="text-xs theme-subtext">
                   {creatorTab === 'HABIT'
-                    ? 'Tap any identity card below—no ugly dropdowns.'
+                    ? 'Tap any identity card below to attach your habit.'
                     : 'Pick a ready-made template or define your own.'}
                 </p>
               </div>
               <button
                 onClick={() => setIsCreatorOpen(false)}
-                className="theme-muted hover:opacity-80 cursor-pointer"
+                className="theme-muted hover:opacity-80 p-1.5 rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -2007,7 +2030,7 @@ export default function ForgeAppShell({
                   <label className="text-xs font-semibold theme-subtext block">
                     1. Choose Identity (Tap a Card)
                   </label>
-                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-60 sm:max-h-64 overflow-y-auto pr-1">
                     {identities.map((i) => {
                       const selected = newHabitIdentityId === i.id;
                       return (
@@ -2015,21 +2038,21 @@ export default function ForgeAppShell({
                           key={i.id}
                           type="button"
                           onClick={() => setNewHabitIdentityId(i.id)}
-                          className={`p-2.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
+                          className={`p-3 rounded-xl border text-left transition flex items-center justify-between gap-2.5 cursor-pointer ${
                             selected
                               ? 'glass-tab-active border-transparent'
                               : 'glass-panel hover:border-[var(--border-strong)]'
                           }`}
                         >
-                          <div className="min-w-0">
-                            <span className="text-[10px] font-mono uppercase opacity-75 block">
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] font-mono uppercase opacity-85 block text-indigo-400 font-bold">
                               Active Identity
                             </span>
-                            <span className="text-xs font-bold block truncate">
+                            <span className="text-xs font-bold block theme-text">
                               {i.title}
                             </span>
                           </div>
-                          {selected && <Check className="w-4 h-4 shrink-0" />}
+                          {selected && <Check className="w-4 h-4 shrink-0 text-emerald-400" />}
                         </button>
                       );
                     })}
@@ -2049,21 +2072,21 @@ export default function ForgeAppShell({
                           key={preset.key}
                           type="button"
                           onClick={() => setNewHabitIdentityId(val)}
-                          className={`p-2.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
+                          className={`p-3 rounded-xl border text-left transition flex items-center justify-between gap-2.5 cursor-pointer ${
                             selected
                               ? 'glass-tab-active border-transparent'
                               : 'glass-panel hover:border-[var(--border-strong)]'
                           }`}
                         >
-                          <div className="min-w-0">
-                            <span className="text-[10px] font-mono text-amber-500 block truncate">
+                          <div className="min-w-0 flex-1">
+                            <span className="text-[10px] font-mono text-amber-400 font-bold block">
                               ✨ {preset.category}
                             </span>
-                            <span className="text-xs font-bold block truncate">
+                            <span className="text-xs font-bold block theme-text">
                               {preset.title}
                             </span>
                           </div>
-                          {selected && <Check className="w-4 h-4 shrink-0" />}
+                          {selected && <Check className="w-4 h-4 shrink-0 text-amber-400" />}
                         </button>
                       );
                     })}
@@ -2263,7 +2286,7 @@ export default function ForgeAppShell({
                   <span className="text-[11px] font-bold uppercase tracking-wider theme-muted block">
                     Popular Identity Templates (Tap to Fill):
                   </span>
-                  <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-56 sm:max-h-60 overflow-y-auto pr-1">
                     {IDENTITY_PRESETS.map((preset) => (
                       <button
                         key={preset.key}
@@ -2273,14 +2296,17 @@ export default function ForgeAppShell({
                           setNewIdMission(preset.lifesTaskStatement);
                           setNewIdStage(preset.defaultPhase);
                         }}
-                        className="p-2.5 rounded-xl glass-panel text-left hover:border-[var(--border-strong)] transition cursor-pointer"
+                        className="p-3 rounded-xl glass-panel text-left hover:border-[var(--border-strong)] transition cursor-pointer"
                       >
-                        <span className="text-[10px] font-mono text-amber-500 block">
-                          {preset.category}
+                        <span className="text-[10px] font-mono text-amber-400 font-bold block">
+                          ✨ {preset.category}
                         </span>
-                        <span className="text-xs font-bold theme-text block truncate">
+                        <span className="text-xs font-bold theme-text block mt-0.5">
                           {preset.title}
                         </span>
+                        <p className="text-[10px] theme-subtext line-clamp-2 mt-1">
+                          {preset.lifesTaskStatement}
+                        </p>
                       </button>
                     ))}
                   </div>
@@ -2828,6 +2854,22 @@ export default function ForgeAppShell({
           </div>
         </div>
       )}
+
+      {/* ========================================================= */}
+      {/* FEATURE WALKTHROUGH & ONBOARDING GUIDE OVERLAY            */}
+      {/* ========================================================= */}
+      <FeatureWalkthrough
+        isOpen={showWalkthrough}
+        onClose={() => {
+          setShowWalkthrough(false);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('forge_walkthrough_seen', 'true');
+          }
+        }}
+        onStartCreating={() => {
+          setIsCreatorOpen(true);
+        }}
+      />
     </div>
   );
 }

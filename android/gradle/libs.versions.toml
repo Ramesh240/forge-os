@@ -1,14 +1,16 @@
 [versions]
 agp                 = "8.10.1"
 kotlin              = "2.1.21"
-compose-bom         = "2026.09.00"
+compose-bom         = "2025.02.00"
 core-ktx            = "1.16.0"
 lifecycle           = "2.9.1"
 activity-compose    = "1.10.1"
 splashscreen        = "1.0.1"
 webkit              = "1.13.0"
+junit               = "4.13.2"
 
 [libraries]
+junit                           = { group = "junit",                  name = "junit",                        version.ref = "junit" }
 androidx-core-ktx               = { group = "androidx.core",         name = "core-ktx",                     version.ref = "core-ktx" }
 androidx-lifecycle-runtime      = { group = "androidx.lifecycle",     name = "lifecycle-runtime-ktx",        version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel    = { group = "androidx.lifecycle",     name = "lifecycle-viewmodel-compose",  version.ref = "lifecycle" }

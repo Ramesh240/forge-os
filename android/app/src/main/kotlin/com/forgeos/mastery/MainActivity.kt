@@ -19,6 +19,8 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,8 +49,7 @@ class MainActivity : ComponentActivity() {
 
         super.onCreate(savedInstanceState)
 
-        // Edge-to-edge: content renders behind status bar and navigation bar.
-        // The WebView's viewport meta tag + CSS safe-area-inset-* handles insets.
+        // Edge-to-edge: content renders behind system bars with insets handled safely
         enableEdgeToEdge()
 
         setContent {
@@ -67,6 +68,10 @@ class MainActivity : ComponentActivity() {
                     // Dark bg fills any gap before WebView first paint.
                     // Must match @color/forge_bg (#060609) exactly.
                     .background(Color(0xFF060609))
+                    // Ensure top bar never overlaps front camera notch / punch hole
+                    .statusBarsPadding()
+                    // Ensure bottom navigation never overlaps Android gesture bar
+                    .navigationBarsPadding()
                     // Push content up when soft keyboard appears
                     .imePadding(),
             )
