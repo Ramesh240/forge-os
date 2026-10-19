@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const viewport: Viewport = {
-  themeColor: '#09090b',
+  themeColor: '#060609',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -38,8 +38,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased selection:bg-indigo-500 selection:text-white overscroll-none">
+    <html lang="en" className="dark" style={{ backgroundColor: '#060609', colorScheme: 'dark' }}>
+      <head>
+        <style
+          dangerouslySetInnerHTML={{
+            __html: 'html,body{background-color:#060609!important;color:#f4f4f5;color-scheme:dark;}',
+          }}
+        />
+      </head>
+      <body
+        style={{ backgroundColor: '#060609', margin: 0 }}
+        className="min-h-screen bg-[#060609] text-zinc-100 antialiased selection:bg-indigo-500 selection:text-white overscroll-none"
+      >
         {children}
         <script
           dangerouslySetInnerHTML={{
