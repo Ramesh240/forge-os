@@ -144,8 +144,8 @@ export default function FeatureWalkthrough({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md p-4 flex items-end sm:items-center justify-center overflow-y-auto animate-in fade-in duration-200">
-      <div className="glass-nav rounded-3xl max-w-md w-full p-6 space-y-5 my-auto max-h-[92vh] overflow-y-auto shadow-2xl border border-[var(--border-strong)] relative">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto animate-in fade-in duration-200">
+      <div className="glass-nav rounded-3xl max-w-md w-full p-6 space-y-5 my-auto max-h-[88vh] overflow-y-auto shadow-2xl border border-[var(--border-strong)] relative animate-in fade-in zoom-in-95 duration-150">
         {/* Top Header */}
         <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
           <div className="flex items-center gap-2">
