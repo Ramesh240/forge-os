@@ -1980,7 +1980,7 @@ export default function ForgeAppShell({
       {/* ========================================================= */}
       {isCreatorOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
-          <div className="glass-nav rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 my-auto max-h-[85vh] overflow-y-auto shadow-2xl border border-[var(--border-strong)] animate-in fade-in zoom-in-95 duration-150">
+          <div className="glass-nav rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-[var(--border-strong)] max-h-[85vh] overflow-y-auto shrink-0">
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <div>
                 <h3 className="text-base font-bold theme-text">
@@ -2362,7 +2362,7 @@ export default function ForgeAppShell({
       {/* ========================================================= */}
       {editingHabit && (
         <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
-          <div className="glass-nav rounded-3xl max-w-md w-full p-6 space-y-4 my-8 max-h-[90vh] overflow-y-auto">
+          <div className="glass-nav rounded-3xl max-w-md w-full p-6 space-y-4 max-h-[85vh] overflow-y-auto shrink-0 shadow-2xl border border-[var(--border-strong)]">
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <h3 className="text-base font-bold theme-text">Edit Habit</h3>
               <button
