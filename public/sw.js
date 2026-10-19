@@ -1,6 +1,6 @@
 // public/sw.js — ForgeOS TWA-optimised service worker
 // Version bump here forces reinstall when you change the SW logic.
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const SHELL_CACHE = `forgeos-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `forgeos-static-${CACHE_VERSION}`;
 
@@ -113,22 +113,23 @@ self.addEventListener('fetch', (event) => {
   //    wait) while a fresh copy is fetched in the background and stored for
   //    the next visit.  The user sees your dark UI immediately — no Chrome
   //    address-bar flash, no blank white screen.
+  // 4. Network-First with cache fallback for page navigation.
+  //    Ensures users immediately receive newly deployed versions when online,
+  //    while offline users still load instantly from cache.
   if (request.mode === 'navigate') {
     event.respondWith(
-      caches.open(SHELL_CACHE).then(async (cache) => {
-        const cached = await cache.match(request);
-        const networkFetch = fetch(request)
-          .then((res) => {
-            if (res && res.status === 200) {
-              cache.put(request, res.clone());
-            }
-            return res;
-          })
-          .catch(() => cached || caches.match('/'));
-
-        // Return cached version instantly; network runs in background.
-        return cached || networkFetch;
-      })
+      fetch(request)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(SHELL_CACHE).then((cache) => cache.put(request, clone));
+          }
+          return res;
+        })
+        .catch(async () => {
+          const cache = await caches.open(SHELL_CACHE);
+          return (await cache.match(request)) || (await cache.match('/'));
+        })
     );
     return;
   }

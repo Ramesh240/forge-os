@@ -66,6 +66,10 @@ fun ForgeWebView(
                 setBackgroundColor(Color.TRANSPARENT)
 
                 // ── WebView Settings ───────────────────────────────────────────
+                if (com.forgeos.mastery.BuildConfig.DEBUG) {
+                    clearCache(true)
+                }
+
                 settings.apply {
                     javaScriptEnabled   = true   // Required: Next.js is a React SPA
                     domStorageEnabled   = true   // Required: NextAuth session tokens
@@ -74,6 +78,11 @@ fun ForgeWebView(
                     displayZoomControls = false
                     useWideViewPort     = true
                     loadWithOverviewMode = true
+                    cacheMode           = if (com.forgeos.mastery.BuildConfig.DEBUG) {
+                        android.webkit.WebSettings.LOAD_NO_CACHE
+                    } else {
+                        android.webkit.WebSettings.LOAD_DEFAULT
+                    }
                     // Security: block mixed content (HTTPS page loading HTTP resources)
                     @Suppress("DEPRECATION")
                     mixedContentMode    = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
