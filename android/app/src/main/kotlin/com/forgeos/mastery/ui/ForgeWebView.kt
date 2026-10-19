@@ -95,7 +95,8 @@ fun ForgeWebView(
                         request: WebResourceRequest,
                     ): Boolean {
                         val host = request.url.host ?: return true // block if no host
-                        val isAllowed = host.endsWith("forge-os.vercel.app") ||
+                        val isAllowed = host.endsWith("forge-os-eta-five.vercel.app") ||
+                                        host.endsWith("forge-os.vercel.app") ||
                                         host.endsWith("forgeos.app") ||      // custom domain
                                         host.endsWith("razorpay.com") ||     // payment gateway
                                         host.endsWith("google.com")          // OAuth

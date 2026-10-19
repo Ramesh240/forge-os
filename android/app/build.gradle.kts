@@ -16,8 +16,8 @@ android {
         versionCode     = 3         // Must be > 2 (codes 1 & 2 already uploaded as TWA)
         versionName     = "1.0.3"
 
-        // Your deployed Vercel URL — change this if you add a custom domain
-        buildConfigField("String", "APP_URL", "\"https://forge-os.vercel.app\"")
+        // Your deployed Vercel URL
+        buildConfigField("String", "APP_URL", "\"https://forge-os-eta-five.vercel.app\"")
     }
 
     signingConfigs {
@@ -82,6 +82,8 @@ dependencies {
     implementation(libs.compose.animation)
     implementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
+
+    testImplementation(libs.junit)
 }
 
 // Source: https://developer.android.com/develop/ui/views/launch/splash-screen

@@ -43,7 +43,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
-                    android:host="forge-os.vercel.app" />
+                    android:host="forge-os-eta-five.vercel.app" />
             </intent-filter>
 
         </activity>
