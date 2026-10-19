@@ -7,11 +7,26 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'ForgeOS',
     id: 'com.forgeos.mastery',
     description: 'Identity-driven habit chains, 2-minute micro-timers, and skill telemetry.',
-    start_url: '/',
+    start_url: '/?source=twa',
+    scope: '/',
+    // display_override: Android TWA reads this list in order.
+    // 'fullscreen' = true native-app experience (no status bar chrome).
+    // 'standalone'  = PWA fallback if fullscreen is not supported.
     display: 'standalone',
+    display_override: ['fullscreen', 'standalone', 'minimal-ui'],
     background_color: '#060609',
     theme_color: '#060609',
     orientation: 'portrait',
+    // prefer_related_applications: hints to Chrome/Play that a signed TWA
+    // relationship exists, which accelerates assetlinks.json trust caching
+    // and suppresses the Add-to-Homescreen banner in browser mode.
+    prefer_related_applications: true,
+    related_applications: [
+      {
+        platform: 'play',
+        id: 'com.forgeos.mastery',
+      },
+    ],
     icons: [
       {
         src: '/icons/icon-192.png',

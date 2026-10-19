@@ -52,12 +52,26 @@ export default function RootLayout({
       >
         {children}
         <script
-          dangerouslySetInnerHTML={{
+            dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js').catch(() => {});
-                });
+                // Register immediately (not on load) so the SW activates and
+                // claims this page on the very first TWA cold-launch.
+                navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                  .then(reg => {
+                    // Force the waiting SW to activate right away so
+                    // the NEXT navigation is already served from cache.
+                    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                    reg.addEventListener('updatefound', () => {
+                      const newSW = reg.installing;
+                      if (newSW) newSW.addEventListener('statechange', () => {
+                        if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                          newSW.postMessage({ type: 'SKIP_WAITING' });
+                        }
+                      });
+                    });
+                  })
+                  .catch(() => {});
               }
             `,
           }}
