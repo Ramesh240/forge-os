@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Theme.ForgeOS — Splash Screen theme (set in AndroidManifest.xml)
+      ══════════════════════════════════════════════════════════════════
+      The SplashScreen API (androidx.core:core-splashscreen) uses these
+      attributes to draw the NATIVE Android splash screen.
+
+      Key attribute: postSplashScreenTheme
+        After installSplashScreen() is called in onCreate(), Android
+        transitions to this theme once the splash is dismissed.
+
+      Source: https://developer.android.com/develop/ui/views/launch/splash-screen
+    -->
+    <style name="Theme.ForgeOS" parent="Theme.SplashScreen">
+        <!-- Dark background — matches app exactly, no colour flash -->
+        <item name="windowSplashScreenBackground">@color/forge_bg</item>
+        <!-- Your app icon as the splash centre icon -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_icon</item>
+        <!-- Fade-out duration once setKeepOnScreenCondition returns false -->
+        <item name="windowSplashScreenAnimationDuration">300</item>
+        <!-- Theme applied after splash dismisses -->
+        <item name="postSplashScreenTheme">@style/Theme.ForgeOS.Base</item>
+    </style>
+
+    <!--
+      Theme.ForgeOS.Base — Active app theme
+      ══════════════════════════════════════
+      NoActionBar + dark backgrounds so the system UI matches the web app.
+      Edge-to-edge is enabled in code via enableEdgeToEdge().
+    -->
+    <style name="Theme.ForgeOS.Base" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/forge_bg</item>
+        <item name="android:statusBarColor">@color/forge_bg</item>
+        <item name="android:navigationBarColor">@color/forge_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <!-- Display cutout: render behind notch/punch-hole -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+</resources>

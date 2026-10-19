@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ForgeOS dark background — matches Next.js app bg exactly -->
+    <color name="forge_bg">#060609</color>
+    <!-- Accent — matches Tailwind indigo-500 -->
+    <color name="forge_accent">#6366F1</color>
+</resources>

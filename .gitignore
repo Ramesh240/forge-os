@@ -48,3 +48,13 @@ next-env.d.ts
 *.apk
 android-package*/
 
+# Android Studio / Gradle build outputs
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/**/*.iml
+android/captures/
+android/.cxx/
+
