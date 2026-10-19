@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "com.forgeos.mastery",
       "sha256_cert_fingerprints": [
-        "C9:8D:26:24:06:07:F7:2F:5A:06:FA:BA:AE:81:5D:79:5A:42:20:B1:52:4F:7A:52:E5:43:64:FC:2E:5C:FB:D8"
+        "C9:8D:26:24:06:07:F7:2F:5A:06:FA:BA:AE:81:5D:79:5A:42:20:B1:52:4F:7A:52:E5:43:64:FC:2E:5C:FB:D8",
+        "1B:98:99:AF:D5:85:49:C9:83:EE:F2:42:5A:77:E5:C6:EB:7F:EC:FF:5F:CA:0D:C2:3B:83:E3:BA:CB:00:E9:46"
       ]
     }
   }

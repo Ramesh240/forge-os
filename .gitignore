@@ -46,6 +46,5 @@ next-env.d.ts
 *.keystore
 *.aab
 *.apk
-android-bundle/
-android-package/
+android-package*/
 
