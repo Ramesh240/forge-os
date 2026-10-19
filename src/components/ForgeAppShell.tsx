@@ -1979,9 +1979,9 @@ export default function ForgeAppShell({
       {/* CUSTOM GLASS CREATOR MODAL (ZERO NATIVE <select> LISTS!)  */}
       {/* ========================================================= */}
       {isCreatorOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
-          <div className="glass-nav rounded-3xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl border border-[var(--border-strong)] max-h-[85vh] overflow-y-auto shrink-0">
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-4 flex items-center justify-center">
+          <div className="glass-nav rounded-3xl max-w-lg w-full flex flex-col h-[82vh] max-h-[640px] min-h-[440px] shadow-2xl border border-[var(--border-strong)] overflow-hidden">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3 shrink-0">
               <div>
                 <h3 className="text-base font-bold theme-text">
                   {creatorTab === 'HABIT'
@@ -2002,7 +2002,8 @@ export default function ForgeAppShell({
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl border border-[var(--border-subtle)]">
+            <div className="p-5 overflow-y-auto flex-1 space-y-4">
+              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl border border-[var(--border-subtle)]">
               <button
                 type="button"
                 onClick={() => setCreatorTab('HABIT')}
@@ -2353,6 +2354,7 @@ export default function ForgeAppShell({
                 </form>
               </div>
             )}
+            </div>
           </div>
         </div>
       )}
@@ -2361,9 +2363,9 @@ export default function ForgeAppShell({
       {/* EDIT HABIT MODAL (CUSTOM GLASS PICKERS — ZERO <select>!)  */}
       {/* ========================================================= */}
       {editingHabit && (
-        <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
-          <div className="glass-nav rounded-3xl max-w-md w-full p-6 space-y-4 max-h-[85vh] overflow-y-auto shrink-0 shadow-2xl border border-[var(--border-strong)]">
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-4 flex items-center justify-center">
+          <div className="glass-nav rounded-3xl max-w-md w-full flex flex-col h-[82vh] max-h-[620px] min-h-[440px] shadow-2xl border border-[var(--border-strong)] overflow-hidden">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3 shrink-0">
               <h3 className="text-base font-bold theme-text">Edit Habit</h3>
               <button
                 onClick={() => setEditingHabit(null)}
@@ -2372,6 +2374,8 @@ export default function ForgeAppShell({
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            <div className="p-5 overflow-y-auto flex-1 space-y-4">
 
             <form onSubmit={handleUpdateHabitSubmit} className="space-y-4">
               <div>
@@ -2534,6 +2538,7 @@ export default function ForgeAppShell({
                 </button>
               </div>
             </form>
+            </div>
           </div>
         </div>
       )}

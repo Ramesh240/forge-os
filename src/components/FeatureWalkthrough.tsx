@@ -144,10 +144,10 @@ export default function FeatureWalkthrough({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto animate-in fade-in duration-200">
-      <div className="glass-nav rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-[var(--border-strong)] relative max-h-[88vh] overflow-y-auto shrink-0">
-        {/* Top Header */}
-        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-4 flex items-center justify-center">
+      <div className="glass-nav rounded-3xl max-w-md w-full flex flex-col h-[82vh] max-h-[620px] min-h-[440px] shadow-2xl border border-[var(--border-strong)] overflow-hidden">
+        {/* Top Header (Fixed) */}
+        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-sm">
               <Sparkles className="w-4 h-4" />
@@ -170,58 +170,64 @@ export default function FeatureWalkthrough({
           </button>
         </div>
 
-        {/* Visual Mock Card */}
-        <div>{step.cardMock}</div>
+        {/* Scrollable Body */}
+        <div className="p-5 overflow-y-auto flex-1 space-y-4">
+          {/* Visual Mock Card */}
+          <div>{step.cardMock}</div>
 
-        {/* Step Explanation */}
-        <div className="space-y-2">
-          <h4 className="text-sm font-bold theme-text">{step.subtitle}</h4>
-          <p className="text-xs theme-subtext leading-relaxed">
-            {step.description}
-          </p>
-          <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-[11px] text-indigo-300 font-medium leading-relaxed">
-            {step.tip}
+          {/* Step Explanation */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-bold theme-text">{step.subtitle}</h4>
+            <p className="text-xs theme-subtext leading-relaxed">
+              {step.description}
+            </p>
+            <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-[11px] text-indigo-300 font-medium leading-relaxed">
+              {step.tip}
+            </div>
           </div>
         </div>
 
-        {/* Progress Dots */}
-        <div className="flex items-center justify-center gap-2 pt-2">
-          {STEPS.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentStep(idx)}
-              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                idx === currentStep
-                  ? 'w-7 bg-indigo-500'
-                  : 'w-2 bg-white/20 hover:bg-white/40'
-              }`}
-              aria-label={`Go to slide ${idx + 1}`}
-            />
-          ))}
-        </div>
+        {/* Fixed Footer (Dots + Navigation) */}
+        <div className="p-5 pt-3 border-t border-[var(--border-subtle)] shrink-0 space-y-3">
+          {/* Progress Dots */}
+          <div className="flex items-center justify-center gap-2">
+            {STEPS.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentStep(idx)}
+                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                  idx === currentStep
+                    ? 'w-7 bg-indigo-500'
+                    : 'w-2 bg-white/20 hover:bg-white/40'
+                }`}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
 
-        {/* Navigation Actions */}
-        <div className="flex items-center gap-3 pt-2">
-          {currentStep > 0 && (
+          {/* Navigation Actions */}
+          <div className="flex items-center gap-3">
+            {currentStep > 0 && (
+              <button
+                type="button"
+                onClick={handlePrev}
+                className="px-4 py-3 rounded-xl border border-[var(--border-subtle)] glass-panel text-xs font-bold theme-text hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back</span>
+              </button>
+            )}
+
             <button
               type="button"
-              onClick={handlePrev}
-              className="px-4 py-3 rounded-xl border border-[var(--border-subtle)] glass-panel text-xs font-bold theme-text hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer"
+              onClick={handleNext}
+              className="flex-1 py-3 px-4 rounded-xl text-white font-bold text-xs transition shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              style={{ background: 'var(--accent-primary)' }}
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
+              <span>{isLastStep ? 'Get Started — Create Habit' : 'Next Step'}</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
-          )}
-
-          <button
-            type="button"
-            onClick={handleNext}
-            className="flex-1 py-3 px-4 rounded-xl text-white font-bold text-xs transition shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-            style={{ background: 'var(--accent-primary)' }}
-          >
-            <span>{isLastStep ? 'Get Started — Create Habit' : 'Next Step'}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          </div>
         </div>
       </div>
     </div>

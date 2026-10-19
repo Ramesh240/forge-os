@@ -91,6 +91,9 @@ fun ForgeWebView(
                     allowContentAccess  = false
                 }
 
+                // ── WebChromeClient ───────────────────────────────────────────
+                webChromeClient = android.webkit.WebChromeClient()
+
                 // ── WebViewClient ──────────────────────────────────────────────
                 webViewClient = object : WebViewClient() {
 
