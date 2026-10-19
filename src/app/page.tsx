@@ -1,4 +1,6 @@
 // src/app/page.tsx
+import { Suspense } from 'react';
+import Loading from './loading';
 import { prisma } from '@/lib/prisma';
 import { auth, isGoogleAuthConfigured } from '@/auth';
 import { ensureUserWorkspaceSeeded } from '@/app/actions';
@@ -11,7 +13,15 @@ import ForgeAppShell, {
 
 export const dynamic = 'force-dynamic';
 
-export default async function ForgeOSPage() {
+export default function ForgeOSPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <ForgeOSDataLayer />
+    </Suspense>
+  );
+}
+
+async function ForgeOSDataLayer() {
   let identities: SerializedIdentity[] = [];
   let habits: SerializedHabit[] = [];
   let sessions: SerializedSession[] = [];
