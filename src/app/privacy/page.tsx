@@ -150,6 +150,15 @@ export default function PrivacyPolicyPage() {
                 </p>
               </div>
             </div>
+
+            <div className="pt-2 pl-4">
+              <Link
+                href="/delete-account"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600/20 text-rose-300 border border-rose-500/30 text-xs font-semibold hover:bg-rose-600/30 transition"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> View Dedicated Account &amp; Data Deletion Portal &rarr;
+              </Link>
+            </div>
           </div>
         </div>
 
