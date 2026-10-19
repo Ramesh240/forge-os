@@ -1,7 +1,7 @@
 // src/app/page.tsx
 import { prisma } from '@/lib/prisma';
 import { auth, isGoogleAuthConfigured } from '@/auth';
-import { ensureUserWorkspaceSeeded, checkUserProStatus } from '@/app/actions';
+import { ensureUserWorkspaceSeeded } from '@/app/actions';
 import ForgeAppShell, {
   SerializedIdentity,
   SerializedHabit,
@@ -20,7 +20,7 @@ export default async function ForgeOSPage() {
   let isPro = false;
 
   try {
-    const session = await auth();
+    const session = await auth().catch(() => null);
     if (session?.user?.email) {
       currentUser = {
         name: session.user.name || session.user.email.split('@')[0],
@@ -31,35 +31,67 @@ export default async function ForgeOSPage() {
 
     const activeUserId = currentUser?.email || 'demo-user';
 
-    // Check Pro / Beta Tester access status
-    isPro = await checkUserProStatus(activeUserId);
+    // Parallel fetch: get identities, habits, and sessions in ONE single concurrent roundtrip
+    let [rawIdentities, rawHabits, rawSessions] = await Promise.all([
+      prisma.identityVector.findMany({
+        where: { userId: activeUserId },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.habit.findMany({
+        where: { identity: { userId: activeUserId } },
+        include: {
+          identity: { select: { title: true } },
+          nextStackedHabit: { select: { id: true, title: true } },
+        },
+        // Rebound habits & newest created habits always show at the very top!
+        orderBy: [{ isReboundPriority: 'desc' }, { createdAt: 'desc' }],
+      }),
+      prisma.sessionLog.findMany({
+        where: { identity: { userId: activeUserId } },
+        include: {
+          habit: { select: { title: true } },
+          identity: { select: { title: true } },
+        },
+        orderBy: [{ loggedAt: 'asc' }],
+      }),
+    ]);
 
-    // Ensure starter identities/habits exist for this user
-    await ensureUserWorkspaceSeeded(activeUserId);
+    // If completely empty workspace, seed starter identities/habits and refetch once
+    if (rawIdentities.length === 0) {
+      await ensureUserWorkspaceSeeded(activeUserId);
+      [rawIdentities, rawHabits, rawSessions] = await Promise.all([
+        prisma.identityVector.findMany({
+          where: { userId: activeUserId },
+          orderBy: { createdAt: 'asc' },
+        }),
+        prisma.habit.findMany({
+          where: { identity: { userId: activeUserId } },
+          include: {
+            identity: { select: { title: true } },
+            nextStackedHabit: { select: { id: true, title: true } },
+          },
+          orderBy: [{ isReboundPriority: 'desc' }, { createdAt: 'desc' }],
+        }),
+        prisma.sessionLog.findMany({
+          where: { identity: { userId: activeUserId } },
+          include: {
+            habit: { select: { title: true } },
+            identity: { select: { title: true } },
+          },
+          orderBy: [{ loggedAt: 'asc' }],
+        }),
+      ]);
+    }
 
-    const rawIdentities = await prisma.identityVector.findMany({
-      where: { userId: activeUserId },
-      orderBy: { createdAt: 'asc' },
-    });
+    // Check Pro status directly from memory + env (Zero extra database roundtrips)
+    const betaTestersRaw = process.env.BETA_TESTER_EMAILS || '';
+    const isBetaTester = betaTestersRaw
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean)
+      .includes(activeUserId.toLowerCase());
 
-    const rawHabits = await prisma.habit.findMany({
-      where: { identity: { userId: activeUserId } },
-      include: {
-        identity: { select: { title: true } },
-        nextStackedHabit: { select: { id: true, title: true } },
-      },
-      // Rebound habits & newest created habits always show at the very top!
-      orderBy: [{ isReboundPriority: 'desc' }, { createdAt: 'desc' }],
-    });
-
-    const rawSessions = await prisma.sessionLog.findMany({
-      where: { identity: { userId: activeUserId } },
-      include: {
-        habit: { select: { title: true } },
-        identity: { select: { title: true } },
-      },
-      orderBy: { loggedAt: 'asc' },
-    });
+    isPro = isBetaTester || rawIdentities.some((i) => i.isPro);
 
     identities = rawIdentities.map((i) => ({
       id: i.id,
