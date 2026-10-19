@@ -717,7 +717,7 @@ export default function ForgeAppShell({
   );
 
   return (
-    <div className="relative min-h-screen theme-surface pb-28 md:pb-16">
+    <div className="relative min-h-screen theme-surface pb-36 md:pb-16">
       {/* Subtle Ambient Light Orbs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
         <div
@@ -1792,37 +1792,73 @@ export default function ForgeAppShell({
       </main>
 
       {/* ========================================================= */}
-      {/* FLOATING FROSTED-GLASS MOBILE DOCK                        */}
+      {/* MATERIAL 3 FLUID DOCKED MOBILE NAVIGATION BAR             */}
       {/* ========================================================= */}
-      <nav className="md:hidden fixed bottom-4 inset-x-4 z-40 glass-nav rounded-2xl p-1.5 flex items-center justify-around">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = activeTab === item.id;
-          const isLocked = item.id === 'ANALYTICS' && !userIsPro;
-          return (
-            <button
-              key={item.id}
-              onClick={() => {
-                soundEngine.playTactileClick(soundEnabled);
-                if (isLocked) {
-                  setShowProModal(true);
-                }
-                setActiveTab(item.id);
-              }}
-              className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl text-[11px] font-semibold transition-all cursor-pointer ${
-                active ? 'glass-tab-active' : 'theme-subtext'
-              }`}
-            >
-              <div className="relative">
-                <Icon className="w-4 h-4" />
-                {isLocked && (
-                  <Lock className="w-2.5 h-2.5 text-amber-400 absolute -top-1 -right-2" />
-                )}
-              </div>
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-[var(--border-subtle)] pt-1.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] px-3 shadow-[0_-8px_24px_rgba(0,0,0,0.35)] transition-all duration-300"
+        style={{
+          background: 'var(--bg-nav)',
+          backdropFilter: 'blur(28px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(28px) saturate(180%)',
+        }}
+      >
+        <div className="max-w-md mx-auto flex items-center justify-around">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = activeTab === item.id;
+            const isLocked = item.id === 'ANALYTICS' && !userIsPro;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  soundEngine.playTactileClick(soundEnabled);
+                  if (isLocked) {
+                    setShowProModal(true);
+                  }
+                  setActiveTab(item.id);
+                }}
+                className="group flex-1 flex flex-col items-center justify-center py-1 transition-transform active:scale-95 cursor-pointer select-none relative"
+              >
+                {/* Material 3 Fluid Indicator Pill */}
+                <div
+                  className={`w-14 h-8 rounded-full flex items-center justify-center transition-all duration-300 ease-out relative ${
+                    active
+                      ? 'shadow-[0_2px_12px_var(--accent-glow)] scale-100'
+                      : 'bg-transparent scale-95 group-hover:scale-100'
+                  }`}
+                  style={{
+                    backgroundColor: active ? 'var(--accent-glow)' : 'transparent',
+                    color: active ? 'var(--accent-primary)' : 'var(--text-muted)',
+                  }}
+                >
+                  <Icon
+                    className={`w-5 h-5 transition-transform duration-300 ${
+                      active ? 'scale-110 stroke-[2.25]' : 'scale-100 stroke-[1.75]'
+                    }`}
+                    style={{
+                      color: active ? 'var(--accent-primary)' : 'inherit',
+                    }}
+                  />
+                  {isLocked && (
+                    <Lock className="w-2.5 h-2.5 text-amber-400 absolute top-1 right-2.5" />
+                  )}
+                </div>
+
+                {/* Material 3 Navigation Label */}
+                <span
+                  className={`text-[11px] mt-1 tracking-tight transition-colors duration-200 ${
+                    active ? 'font-bold' : 'font-medium'
+                  }`}
+                  style={{
+                    color: active ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  }}
+                >
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
 
       {/* ========================================================= */}
