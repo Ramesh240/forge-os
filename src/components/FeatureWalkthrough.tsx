@@ -154,7 +154,7 @@ export default function FeatureWalkthrough({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'rgba(0,0,0,0.85)',
-        padding: '8px',
+        padding: '16px',
       }}
       onClick={onClose}
     >
@@ -162,67 +162,67 @@ export default function FeatureWalkthrough({
         className="modal-card modal-surface"
         style={{
           backgroundColor: '#0d0e15',
-          width: '98%',
-          maxWidth: '640px',
-          height: '94vh',
-          maxHeight: '860px',
-          minHeight: '520px',
+          width: '100%',
+          maxWidth: '480px',
+          height: 'auto',
+          maxHeight: 'calc(100dvh - 32px)',
           display: 'flex',
           flexDirection: 'column',
           borderRadius: '28px',
           overflow: 'hidden',
           border: '1px solid rgba(255, 255, 255, 0.18)',
           boxShadow: '0 24px 60px rgba(0,0,0,0.85)',
+          margin: 'auto',
         }}
         onClick={(e) => e.stopPropagation()}
       >
 
         {/* Top Header (Fixed) */}
-        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 sm:p-6 pb-4 sm:pb-4 shrink-0">
+        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3.5 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md">
+              <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-indigo-400 block">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-indigo-400 block">
                 {step.badge}
               </span>
-              <h3 className="text-lg sm:text-xl font-black tracking-tight theme-text">
+              <h3 className="text-base sm:text-lg font-bold tracking-tight theme-text">
                 {step.title}
               </h3>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl theme-muted hover:opacity-80 transition cursor-pointer"
+            className="p-1.5 rounded-lg theme-muted hover:opacity-80 transition cursor-pointer"
             aria-label="Close Walkthrough"
           >
-            <X className="w-5 h-5 sm:w-6 sm:h-6" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Scrollable Body */}
         <div
-          className="modal-body-scroll p-5 sm:p-6 space-y-5"
+          className="modal-body-scroll p-4 sm:p-5 space-y-3.5"
           style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}
         >
           {/* Visual Mock Card */}
           <div className="w-full">{step.cardMock}</div>
 
           {/* Step Explanation */}
-          <div className="space-y-3">
-            <h4 className="text-base sm:text-lg font-bold theme-text">{step.subtitle}</h4>
-            <p className="text-sm sm:text-base theme-subtext leading-relaxed">
+          <div className="space-y-2.5">
+            <h4 className="text-sm sm:text-base font-bold theme-text">{step.subtitle}</h4>
+            <p className="text-xs sm:text-sm theme-subtext leading-relaxed">
               {step.description}
             </p>
-            <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs sm:text-sm text-indigo-300 font-medium leading-relaxed">
+            <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 font-medium leading-relaxed">
               {step.tip}
             </div>
           </div>
         </div>
 
         {/* Fixed Footer (Dots + Navigation) */}
-        <div className="p-5 sm:p-6 pt-4 sm:pt-4 border-t border-[var(--border-subtle)] shrink-0 space-y-4">
+        <div className="p-4 sm:p-5 pt-3.5 border-t border-[var(--border-subtle)] shrink-0 space-y-3">
           {/* Progress Dots */}
           <div className="flex items-center justify-center gap-2">
             {STEPS.map((_, idx) => (

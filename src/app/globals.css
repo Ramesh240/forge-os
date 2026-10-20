@@ -142,32 +142,31 @@ body {
   inset: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.85);
+  background-color: rgba(0, 0, 0, 0.82);
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
+  padding: 16px;
   box-sizing: border-box;
-}
-
-@media (min-width: 640px) {
-  .modal-overlay {
-    padding: 20px;
-  }
 }
 
 .modal-card {
-  width: 98%;
-  max-width: 640px;
-  height: 94vh;
-  max-height: 860px;
-  min-height: 520px;
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  max-height: calc(100dvh - 32px);
+  background-color: #0d0e15 !important;
+  background-color: var(--bg-modal, #0d0e15) !important;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+  opacity: 1 !important;
+  border-radius: 28px;
   display: flex;
   flex-direction: column;
-  border-radius: 28px;
   overflow: hidden;
   box-sizing: border-box;
+  margin: auto;
 }
 
 .modal-body-scroll {

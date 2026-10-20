@@ -75,7 +75,8 @@ fun ForgeWebView(
                     setSupportZoom(false)        // Native feel — no pinch zoom
                     displayZoomControls = false
                     useWideViewPort     = true
-                    loadWithOverviewMode = true
+                    loadWithOverviewMode = false
+                    textZoom            = 100
                     cacheMode           = if (com.forgeos.mastery.BuildConfig.DEBUG) {
                         android.webkit.WebSettings.LOAD_NO_CACHE
                     } else {
