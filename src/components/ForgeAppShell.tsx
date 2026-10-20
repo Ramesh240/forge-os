@@ -20,8 +20,6 @@ import {
   createStackedHabit,
   updateStackedHabit,
   deleteStackedHabit,
-  seedSampleChainHistory,
-  runMidnightGuardrailAudit,
   signInWithGoogleAction,
   signOutAction,
   deleteUserAccountAndData,
@@ -45,6 +43,7 @@ import {
   Swords,
   Lock,
   ArrowRight,
+  ArrowLeft,
   X,
   Pencil,
   Trash2,
@@ -291,6 +290,96 @@ export default function ForgeAppShell({
 
   const [inspectedDay, setInspectedDay] = useState<ContinuityDay | null>(null);
 
+  // --- History & Android Back Gesture Navigation Management ---
+  const isHandlingPopStateRef = useRef(false);
+
+  const navigateToTab = useCallback((nextTab: TabType) => {
+    setActiveTab((prev) => {
+      if (prev !== nextTab) {
+        if (typeof window !== 'undefined' && !isHandlingPopStateRef.current) {
+          window.history.pushState({ forgeTab: nextTab }, '', '');
+        }
+      }
+      return nextTab;
+    });
+  }, []);
+
+  const openProModal = useCallback(() => {
+    setShowProModal(true);
+    if (typeof window !== 'undefined' && !isHandlingPopStateRef.current) {
+      window.history.pushState({ forgeModal: 'pro' }, '', '');
+    }
+  }, []);
+
+  const openCreator = useCallback(() => {
+    setIsCreatorOpen(true);
+    if (typeof window !== 'undefined' && !isHandlingPopStateRef.current) {
+      window.history.pushState({ forgeModal: 'creator' }, '', '');
+    }
+  }, []);
+
+  const openWalkthrough = useCallback(() => {
+    setShowWalkthrough(true);
+    if (typeof window !== 'undefined' && !isHandlingPopStateRef.current) {
+      window.history.pushState({ forgeModal: 'walkthrough' }, '', '');
+    }
+  }, []);
+
+  // Intercept Android Back Gesture & PopState
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const onPopState = () => {
+      isHandlingPopStateRef.current = true;
+      try {
+        if (showProModal) {
+          setShowProModal(false);
+          return;
+        }
+        if (isCreatorOpen) {
+          setIsCreatorOpen(false);
+          return;
+        }
+        if (showWalkthrough) {
+          setShowWalkthrough(false);
+          return;
+        }
+        if (editingHabit) {
+          setEditingHabit(null);
+          return;
+        }
+        if (editingIdentity) {
+          setEditingIdentity(null);
+          return;
+        }
+        if (activeHabit) {
+          setActiveHabit(null);
+          setIsRunning(false);
+          return;
+        }
+        if (activeTab !== 'WORKSPACE') {
+          setActiveTab('WORKSPACE');
+          return;
+        }
+      } finally {
+        setTimeout(() => {
+          isHandlingPopStateRef.current = false;
+        }, 60);
+      }
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [
+    showProModal,
+    isCreatorOpen,
+    showWalkthrough,
+    editingHabit,
+    editingIdentity,
+    activeHabit,
+    activeTab,
+  ]);
+
   const startFocusSession = useCallback((habit: SerializedHabit) => {
     soundEngine.playTactileClick(soundEnabled);
     chimePlayedRef.current = false;
@@ -393,9 +482,58 @@ export default function ForgeAppShell({
     return () => clearInterval(interval);
   }, [habits, soundEnabled, startFocusSession]);
 
+  // Sync habit reminders with native Android AlarmManager if available
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const bridge = (window as unknown as {
+      ForgeAndroidBridge?: {
+        scheduleHabitReminder: (id: string, title: string, hh: number, mm: number) => void;
+        cancelHabitReminder: (id: string) => void;
+      };
+    }).ForgeAndroidBridge;
+
+    if (!bridge) return;
+
+    habits.forEach((h) => {
+      if (h.reminderTime) {
+        const parts = h.reminderTime.split(':');
+        const hh = parseInt(parts[0], 10);
+        const mm = parseInt(parts[1], 10);
+        if (!isNaN(hh) && !isNaN(mm)) {
+          bridge.scheduleHabitReminder(h.id, h.title, hh, mm);
+        }
+      } else {
+        bridge.cancelHabitReminder(h.id);
+      }
+    });
+  }, [habits]);
+
   const requestNotificationAccess = async () => {
+    // 1. Check Native Android Bridge first
+    if (
+      typeof window !== 'undefined' &&
+      (window as unknown as {
+        ForgeAndroidBridge?: { requestNotificationPermission: () => void };
+      }).ForgeAndroidBridge
+    ) {
+      try {
+        (
+          window as unknown as {
+            ForgeAndroidBridge: { requestNotificationPermission: () => void };
+          }
+        ).ForgeAndroidBridge.requestNotificationPermission();
+        soundEngine.playMicroClearedChime(soundEnabled);
+        setToastMessage('Requested Android notification permission.');
+        setNotifPermission('granted');
+        return;
+      } catch (err) {
+        console.warn('Native Android notification request error:', err);
+      }
+    }
+
+    // 2. Fall back to standard Web Notification API
     if (typeof window === 'undefined' || !('Notification' in window)) {
-      setToastMessage('Notifications are not supported in this browser.');
+      setToastMessage('Notifications are not supported on this browser.');
       return;
     }
     const perm = await Notification.requestPermission();
@@ -773,10 +911,7 @@ export default function ForgeAppShell({
                   key={item.id}
                   onClick={() => {
                     soundEngine.playTactileClick(soundEnabled);
-                    if (isLocked) {
-                      setShowProModal(true);
-                    }
-                    setActiveTab(item.id);
+                    navigateToTab(item.id);
                   }}
                   className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     active ? 'glass-tab-active' : 'theme-subtext hover:opacity-80'
@@ -1276,6 +1411,7 @@ export default function ForgeAppShell({
           <div className="space-y-6">
             <ProUpgradeCard
               onUnlocked={() => setUserUnlockedPro(true)}
+              onBackToWorkspace={() => navigateToTab('WORKSPACE')}
               currentUser={currentUser}
             />
           </div>
@@ -1463,6 +1599,7 @@ export default function ForgeAppShell({
             ) : (
               <ProUpgradeCard
                 onUnlocked={() => setUserUnlockedPro(true)}
+                onBackToWorkspace={() => navigateToTab('WORKSPACE')}
                 currentUser={currentUser}
               />
             )}
@@ -1777,37 +1914,17 @@ export default function ForgeAppShell({
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {installPromptEvent && (
+                {installPromptEvent && (
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={handleInstallPWA}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold cursor-pointer"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold cursor-pointer hover:bg-emerald-500 transition"
                     >
-                      <Download className="w-3.5 h-3.5" /> Install App
+                      <Download className="w-3.5 h-3.5" /> Install Web App
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await seedSampleChainHistory();
-                      setToastMessage('21 days of sample analytics loaded!');
-                    }}
-                    className="px-3.5 py-2 rounded-xl glass-panel text-xs font-semibold theme-text cursor-pointer"
-                  >
-                    Load 21d Demo Data
-                  </button>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await runMidnightGuardrailAudit();
-                      setToastMessage('Simulated next-day rollover!');
-                    }}
-                    className="px-3.5 py-2 rounded-xl glass-panel text-xs font-semibold theme-text cursor-pointer"
-                  >
-                    Simulate Rollover
-                  </button>
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1835,10 +1952,7 @@ export default function ForgeAppShell({
                 key={item.id}
                 onClick={() => {
                   soundEngine.playTactileClick(soundEnabled);
-                  if (isLocked) {
-                    setShowProModal(true);
-                  }
-                  setActiveTab(item.id);
+                  navigateToTab(item.id);
                 }}
                 className="group flex-1 flex flex-col items-center justify-center py-1 transition-transform active:scale-95 cursor-pointer select-none relative"
               >
@@ -2846,10 +2960,14 @@ export default function ForgeAppShell({
       {/* FORGEOS PRO UNLOCK MODAL OVERLAY                          */}
       {/* ========================================================= */}
       {showProModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md p-4 flex items-center justify-center overflow-y-auto">
-          <div className="max-w-2xl w-full my-8">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-3 sm:p-4 flex items-center justify-center overflow-y-auto">
+          <div className="max-w-2xl w-full my-auto py-4">
             <ProUpgradeCard
               onClose={() => setShowProModal(false)}
+              onBackToWorkspace={() => {
+                setShowProModal(false);
+                navigateToTab('WORKSPACE');
+              }}
               onUnlocked={() => {
                 setUserUnlockedPro(true);
                 setShowProModal(false);

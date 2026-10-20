@@ -48,6 +48,7 @@ class MainActivity : ComponentActivity() {
         }
 
         super.onCreate(savedInstanceState)
+        com.forgeos.mastery.notifications.HabitReminderReceiver.createNotificationChannel(this)
 
         // Edge-to-edge: content renders behind system bars with insets handled safely
         enableEdgeToEdge()

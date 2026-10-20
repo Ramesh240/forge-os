@@ -5,12 +5,15 @@
 package com.forgeos.mastery.ui
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Intent
 import android.graphics.Color
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.BackHandler
+import com.forgeos.mastery.bridge.ForgeAndroidBridge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -91,6 +94,11 @@ fun ForgeWebView(
                     allowContentAccess  = false
                 }
 
+                // ── Native Bridge ─────────────────────────────────────────────
+                (context as? Activity)?.let { act ->
+                    addJavascriptInterface(ForgeAndroidBridge(act), "ForgeAndroidBridge")
+                }
+
                 // ── WebChromeClient ───────────────────────────────────────────
                 webChromeClient = android.webkit.WebChromeClient()
 
@@ -98,15 +106,28 @@ fun ForgeWebView(
                 webViewClient = object : WebViewClient() {
 
                     /**
-                     * Allow-list: only your Vercel deployment and any custom domain.
-                     * External links (e.g. Razorpay, Google OAuth redirect) would
-                     * normally open here — add trusted hosts below as needed.
+                     * Allow-list: only your Vercel deployment, custom domain, and payment gateway.
+                     * Supports native UPI intent resolution for apps like Google Pay, PhonePe, Paytm.
                      */
                     override fun shouldOverrideUrlLoading(
                         view: WebView,
                         request: WebResourceRequest,
                     ): Boolean {
-                        val host = request.url.host ?: return true // block if no host
+                        val uri = request.url
+                        val scheme = uri.scheme ?: return true
+
+                        // Catch UPI and intent schemes for Razorpay native payment apps
+                        if (scheme.equals("upi", ignoreCase = true) || scheme.equals("intent", ignoreCase = true)) {
+                            try {
+                                val intent = Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME)
+                                view.context.startActivity(intent)
+                            } catch (_: Exception) {
+                                // App not found or couldn't launch intent
+                            }
+                            return true
+                        }
+
+                        val host = uri.host ?: return true // block if no host
                         val isAllowed = host.endsWith("forge-os-eta-five.vercel.app") ||
                                         host.endsWith("forge-os.vercel.app") ||
                                         host.endsWith("forgeos.app") ||      // custom domain
