@@ -154,7 +154,7 @@ export default function FeatureWalkthrough({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'rgba(0,0,0,0.85)',
-        padding: '12px',
+        padding: '8px',
       }}
       onClick={onClose}
     >
@@ -162,14 +162,14 @@ export default function FeatureWalkthrough({
         className="modal-card modal-surface"
         style={{
           backgroundColor: '#0d0e15',
-          width: '100%',
-          maxWidth: '560px',
-          height: '84vh',
-          maxHeight: '740px',
-          minHeight: '440px',
+          width: '98%',
+          maxWidth: '640px',
+          height: '94vh',
+          maxHeight: '860px',
+          minHeight: '520px',
           display: 'flex',
           flexDirection: 'column',
-          borderRadius: '24px',
+          borderRadius: '28px',
           overflow: 'hidden',
           border: '1px solid rgba(255, 255, 255, 0.18)',
           boxShadow: '0 24px 60px rgba(0,0,0,0.85)',
@@ -178,61 +178,61 @@ export default function FeatureWalkthrough({
       >
 
         {/* Top Header (Fixed) */}
-        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3.5 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-sm">
-              <Sparkles className="w-4 h-4" />
+        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 sm:p-6 pb-4 sm:pb-4 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md">
+              <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-indigo-400 block">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-indigo-400 block">
                 {step.badge}
               </span>
-              <h3 className="text-base sm:text-lg font-black tracking-tight theme-text">
+              <h3 className="text-lg sm:text-xl font-black tracking-tight theme-text">
                 {step.title}
               </h3>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg theme-muted hover:opacity-80 transition cursor-pointer"
+            className="p-2 rounded-xl theme-muted hover:opacity-80 transition cursor-pointer"
             aria-label="Close Walkthrough"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
         {/* Scrollable Body */}
         <div
-          className="modal-body-scroll p-5 sm:p-6 space-y-4"
+          className="modal-body-scroll p-5 sm:p-6 space-y-5"
           style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}
         >
           {/* Visual Mock Card */}
           <div className="w-full">{step.cardMock}</div>
 
           {/* Step Explanation */}
-          <div className="space-y-2.5">
-            <h4 className="text-base font-bold theme-text">{step.subtitle}</h4>
-            <p className="text-sm theme-subtext leading-relaxed">
+          <div className="space-y-3">
+            <h4 className="text-base sm:text-lg font-bold theme-text">{step.subtitle}</h4>
+            <p className="text-sm sm:text-base theme-subtext leading-relaxed">
               {step.description}
             </p>
-            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 font-medium leading-relaxed">
+            <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs sm:text-sm text-indigo-300 font-medium leading-relaxed">
               {step.tip}
             </div>
           </div>
         </div>
 
         {/* Fixed Footer (Dots + Navigation) */}
-        <div className="p-5 pt-3.5 border-t border-[var(--border-subtle)] shrink-0 space-y-3.5">
+        <div className="p-5 sm:p-6 pt-4 sm:pt-4 border-t border-[var(--border-subtle)] shrink-0 space-y-4">
           {/* Progress Dots */}
           <div className="flex items-center justify-center gap-2">
             {STEPS.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentStep(idx)}
-                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
                   idx === currentStep
-                    ? 'w-7 bg-indigo-500'
-                    : 'w-2 bg-white/20 hover:bg-white/40'
+                    ? 'w-8 bg-indigo-500'
+                    : 'w-2.5 bg-white/20 hover:bg-white/40'
                 }`}
                 aria-label={`Go to slide ${idx + 1}`}
               />
@@ -245,7 +245,7 @@ export default function FeatureWalkthrough({
               <button
                 type="button"
                 onClick={handlePrev}
-                className="px-4 py-3 rounded-xl border border-[var(--border-subtle)] bg-white/[0.04] text-xs sm:text-sm font-bold theme-text hover:bg-white/10 transition flex items-center gap-1.5 cursor-pointer"
+                className="px-5 py-3.5 rounded-2xl border border-[var(--border-subtle)] bg-white/[0.04] text-xs sm:text-sm font-bold theme-text hover:bg-white/10 transition flex items-center gap-2 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back</span>
@@ -255,7 +255,7 @@ export default function FeatureWalkthrough({
             <button
               type="button"
               onClick={handleNext}
-              className="flex-1 py-3.5 px-4 rounded-xl text-white font-bold text-xs sm:text-sm transition shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              className="flex-1 py-4 px-5 rounded-2xl text-white font-bold text-sm sm:text-base transition shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-95"
               style={{ background: 'var(--accent-primary)' }}
             >
               <span>{isLastStep ? 'Get Started — Create Habit' : 'Next Step'}</span>

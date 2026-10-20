@@ -268,6 +268,8 @@ export default function ForgeAppShell({
   const [isChainPickerOpen, setIsChainPickerOpen] = useState(false);
   const [showAdvancedHabitOptions, setShowAdvancedHabitOptions] = useState(false);
   const [isIdentityPickerOpen, setIsIdentityPickerOpen] = useState(false);
+  const [isTemplatePickerOpen, setIsTemplatePickerOpen] = useState(false);
+  const [selectedTemplateKey, setSelectedTemplateKey] = useState<string | null>(null);
   const [showHabitSuggestions, setShowHabitSuggestions] = useState(false);
 
   // Edit Identity Modal State
@@ -2141,7 +2143,7 @@ export default function ForgeAppShell({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: 'rgba(0,0,0,0.85)',
-            padding: '12px',
+            padding: '8px',
           }}
           onClick={() => setIsCreatorOpen(false)}
         >
@@ -2149,14 +2151,14 @@ export default function ForgeAppShell({
             className="modal-card modal-surface"
             style={{
               backgroundColor: '#0d0e15',
-              width: '100%',
-              maxWidth: '580px',
-              height: '84vh',
-              maxHeight: '760px',
-              minHeight: '440px',
+              width: '98%',
+              maxWidth: '640px',
+              height: '94vh',
+              maxHeight: '860px',
+              minHeight: '520px',
               display: 'flex',
               flexDirection: 'column',
-              borderRadius: '24px',
+              borderRadius: '28px',
               overflow: 'hidden',
               border: '1px solid rgba(255, 255, 255, 0.18)',
               boxShadow: '0 24px 60px rgba(0,0,0,0.85)',
@@ -2164,14 +2166,14 @@ export default function ForgeAppShell({
             onClick={(e) => e.stopPropagation()}
           >
 
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3 shrink-0">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 sm:p-6 pb-4 sm:pb-4 shrink-0">
               <div>
-                <h3 className="text-base font-bold theme-text">
+                <h3 className="text-lg sm:text-xl font-black tracking-tight theme-text">
                   {creatorTab === 'HABIT'
                     ? 'Create New Habit'
                     : 'Choose or Create an Identity'}
                 </h3>
-                <p className="text-xs theme-subtext">
+                <p className="text-xs sm:text-sm theme-subtext mt-0.5">
                   {creatorTab === 'HABIT'
                     ? 'Attach a simple habit and micro-start to an identity.'
                     : 'Pick a ready-made template or define your own.'}
@@ -2179,22 +2181,23 @@ export default function ForgeAppShell({
               </div>
               <button
                 onClick={() => setIsCreatorOpen(false)}
-                className="theme-muted hover:opacity-80 p-1.5 rounded-lg cursor-pointer"
+                className="theme-muted hover:opacity-80 p-2 rounded-xl cursor-pointer"
+                aria-label="Close Creator"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
             <div
-              className="modal-body-scroll p-5 space-y-4"
+              className="modal-body-scroll p-5 sm:p-6 space-y-5"
               style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}
             >
-              <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl border border-[var(--border-subtle)]">
+              <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl border border-[var(--border-subtle)] bg-black/20">
                 <button
                   type="button"
                   onClick={() => setCreatorTab('HABIT')}
-                  className={`py-2 rounded-lg text-xs font-bold cursor-pointer ${
-                    creatorTab === 'HABIT' ? 'glass-tab-active' : 'theme-subtext'
+                  className={`py-3 rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition ${
+                    creatorTab === 'HABIT' ? 'glass-tab-active' : 'theme-subtext hover:text-white'
                   }`}
                 >
                   + New Habit
@@ -2202,8 +2205,8 @@ export default function ForgeAppShell({
                 <button
                   type="button"
                   onClick={() => setCreatorTab('IDENTITY')}
-                  className={`py-2 rounded-lg text-xs font-bold cursor-pointer ${
-                    creatorTab === 'IDENTITY' ? 'glass-tab-active' : 'theme-subtext'
+                  className={`py-3 rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition ${
+                    creatorTab === 'IDENTITY' ? 'glass-tab-active' : 'theme-subtext hover:text-white'
                   }`}
                 >
                   + Identity Library
@@ -2525,81 +2528,146 @@ export default function ForgeAppShell({
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3.5 rounded-xl text-white font-bold text-sm cursor-pointer shadow-md hover:opacity-95 transition"
+                    className="w-full py-4 rounded-2xl text-white font-bold text-sm sm:text-base cursor-pointer shadow-lg hover:opacity-95 transition"
                     style={{ background: 'var(--accent-primary)' }}
                   >
                     {isSubmitting ? 'Adding Habit...' : 'Save Habit to Top of Queue'}
                   </button>
                 </form>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-5">
+                  {/* 1. Popular Template Dropdown Selector (Matches Target Identity dropdown pattern) */}
                   <div className="space-y-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider theme-muted block">
-                      Popular Identity Templates (Tap to Fill):
-                    </span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 sm:max-h-72 overflow-y-auto pr-1">
-                      {IDENTITY_PRESETS.map((preset) => (
-                        <button
-                          key={preset.key}
-                          type="button"
-                          onClick={() => {
-                            setNewIdTitle(preset.title);
-                            setNewIdMission(preset.lifesTaskStatement);
-                            setNewIdStage(preset.defaultPhase);
-                          }}
-                          className="p-3 rounded-xl glass-panel text-left hover:border-[var(--border-strong)] transition cursor-pointer"
-                        >
-                          <span className="text-[10px] font-mono text-amber-400 font-bold block">
-                            ✨ {preset.category}
-                          </span>
-                          <span className="text-xs font-bold theme-text block mt-0.5">
-                            {preset.title}
-                          </span>
-                          <p className="text-[10px] theme-subtext line-clamp-2 mt-1">
-                            {preset.lifesTaskStatement}
-                          </p>
-                        </button>
-                      ))}
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs sm:text-sm font-semibold theme-subtext">
+                        Popular Identity Templates
+                      </label>
+                      <span className="text-[11px] font-mono text-amber-400 font-bold">
+                        ⚡ Tap to auto-fill
+                      </span>
                     </div>
+
+                    <div className="p-4 rounded-2xl bg-white/[0.04] border border-[var(--border-subtle)] flex items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] sm:text-xs font-mono uppercase font-bold text-amber-400 block">
+                          {selectedTemplateKey
+                            ? IDENTITY_PRESETS.find((p) => p.key === selectedTemplateKey)?.category || '✨ Selected Template'
+                            : '✨ Ready-Made Archetypes'}
+                        </span>
+                        <span className="text-sm sm:text-base font-bold theme-text truncate block mt-0.5">
+                          {selectedTemplateKey
+                            ? IDENTITY_PRESETS.find((p) => p.key === selectedTemplateKey)?.title
+                            : 'Choose from 8+ popular templates or create custom'}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsTemplatePickerOpen((o) => !o)}
+                        className="px-3.5 py-2 rounded-xl border border-[var(--border-subtle)] text-xs sm:text-sm font-semibold theme-text hover:bg-white/5 transition flex items-center gap-1.5 shrink-0 cursor-pointer"
+                      >
+                        <span>{isTemplatePickerOpen ? 'Done' : 'Browse Templates'}</span>
+                        <ChevronDown
+                          className={`w-4 h-4 transition-transform duration-200 ${
+                            isTemplatePickerOpen ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Expandable Template Selector Dropdown */}
+                    {isTemplatePickerOpen && (
+                      <div className="p-3 rounded-2xl bg-[#12131c] border border-[var(--border-strong)] space-y-2.5">
+                        <div className="flex items-center justify-between px-1">
+                          <span className="text-[10px] sm:text-xs font-mono uppercase tracking-wider theme-muted block">
+                            Tap any template to auto-populate fields:
+                          </span>
+                          <span className="text-[10px] font-mono text-indigo-400 font-bold">
+                            {IDENTITY_PRESETS.length} Templates
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
+                          {IDENTITY_PRESETS.map((preset) => {
+                            const isSelected =
+                              newIdTitle.toLowerCase() === preset.title.toLowerCase() ||
+                              selectedTemplateKey === preset.key;
+                            return (
+                              <button
+                                key={preset.key}
+                                type="button"
+                                onClick={() => {
+                                  setNewIdTitle(preset.title);
+                                  setNewIdMission(preset.lifesTaskStatement);
+                                  setNewIdStage(preset.defaultPhase);
+                                  setSelectedTemplateKey(preset.key);
+                                  setIsTemplatePickerOpen(false);
+                                }}
+                                className={`p-3 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
+                                  isSelected
+                                    ? 'glass-tab-active border-transparent'
+                                    : 'bg-white/[0.04] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
+                                }`}
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <span className="text-[9px] font-mono text-amber-400 font-bold block truncate">
+                                    ✨ {preset.category}
+                                  </span>
+                                  <span className="text-xs sm:text-sm font-bold block theme-text truncate mt-0.5">
+                                    {preset.title}
+                                  </span>
+                                  <p className="text-[11px] theme-subtext line-clamp-1 mt-0.5">
+                                    {preset.lifesTaskStatement}
+                                  </p>
+                                </div>
+                                {isSelected && <Check className="w-4 h-4 shrink-0 text-amber-400" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
+                  {/* 2. Identity Input Form */}
                   <form
                     onSubmit={handleCreateIdentitySubmit}
-                    className="space-y-3.5 pt-2 border-t border-[var(--border-subtle)]"
+                    className="space-y-4 pt-1 border-t border-[var(--border-subtle)]"
                   >
                     <div>
-                      <label className="text-xs theme-subtext block mb-1">
+                      <label className="text-xs sm:text-sm font-semibold theme-subtext block mb-1.5">
                         Identity Title
                       </label>
                       <input
                         type="text"
                         required
-                        placeholder="Select a template above or type your own..."
+                        placeholder="e.g., Lifelong Scholar & Systems Thinker"
                         value={newIdTitle}
-                        onChange={(e) => setNewIdTitle(e.target.value)}
-                        className="w-full theme-input rounded-xl p-2.5 text-sm"
+                        onChange={(e) => {
+                          setNewIdTitle(e.target.value);
+                          if (selectedTemplateKey) setSelectedTemplateKey(null);
+                        }}
+                        className="w-full theme-input rounded-xl p-3.5 text-sm sm:text-base"
                       />
                     </div>
                     <div>
-                      <label className="text-xs theme-subtext block mb-1">
-                        Core Objective
+                      <label className="text-xs sm:text-sm font-semibold theme-subtext block mb-1.5">
+                        Core Objective / Life&apos;s Task
                       </label>
                       <textarea
-                        rows={2}
+                        rows={3}
                         required
-                        placeholder="What does this identity build or master?"
+                        placeholder="What specific capability or character are you forging?"
                         value={newIdMission}
                         onChange={(e) => setNewIdMission(e.target.value)}
-                        className="w-full theme-input rounded-xl p-2.5 text-sm"
+                        className="w-full theme-input rounded-xl p-3.5 text-sm sm:text-base"
                       />
                     </div>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full py-3.5 rounded-xl text-white font-bold text-sm cursor-pointer shadow-md hover:opacity-95 transition"
+                      className="w-full py-4 rounded-2xl text-white font-bold text-sm sm:text-base cursor-pointer shadow-lg hover:opacity-95 transition"
                       style={{ background: 'var(--accent-primary)' }}
                     >
-                      Create Identity &amp; Add Habits
+                      {isSubmitting ? 'Creating Identity...' : 'Create Identity & Add Habits'}
                     </button>
                   </form>
                 </div>
@@ -2623,7 +2691,7 @@ export default function ForgeAppShell({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: 'rgba(0,0,0,0.85)',
-            padding: '12px',
+            padding: '8px',
           }}
           onClick={() => setEditingHabit(null)}
         >
@@ -2631,32 +2699,33 @@ export default function ForgeAppShell({
             className="modal-card modal-surface"
             style={{
               backgroundColor: '#0d0e15',
-              width: '100%',
-              maxWidth: '520px',
-              height: '84vh',
-              maxHeight: '680px',
-              minHeight: '440px',
+              width: '98%',
+              maxWidth: '640px',
+              height: '94vh',
+              maxHeight: '860px',
+              minHeight: '520px',
               display: 'flex',
               flexDirection: 'column',
-              borderRadius: '24px',
+              borderRadius: '28px',
               overflow: 'hidden',
               border: '1px solid rgba(255, 255, 255, 0.18)',
               boxShadow: '0 24px 60px rgba(0,0,0,0.85)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3 shrink-0">
-              <h3 className="text-base font-bold theme-text">Edit Habit</h3>
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 sm:p-6 pb-4 sm:pb-4 shrink-0">
+              <h3 className="text-lg sm:text-xl font-black tracking-tight theme-text">Edit Habit</h3>
               <button
                 onClick={() => setEditingHabit(null)}
-                className="theme-muted cursor-pointer"
+                className="theme-muted hover:opacity-80 p-2 rounded-xl cursor-pointer"
+                aria-label="Close Edit Habit"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
             <div
-              className="modal-body-scroll p-5 space-y-4"
+              className="modal-body-scroll p-5 sm:p-6 space-y-5"
               style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}
             >
 
