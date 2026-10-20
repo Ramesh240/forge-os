@@ -2111,15 +2111,11 @@ export default function ForgeAppShell({
       )}
 
       {/* ========================================================= */}
-      {/* CUSTOM CREATOR MODAL (RESPONSIVE BOTTOM SHEET / CENTERED)  */}
+      {/* CUSTOM CREATOR MODAL (SPACIOUS CENTERED MODAL)            */}
       {/* ========================================================= */}
       {isCreatorOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 p-0 sm:p-4 flex items-end sm:items-center justify-center">
-          <div className="modal-surface rounded-t-3xl sm:rounded-3xl max-w-xl w-full flex flex-col h-[92vh] sm:h-auto sm:max-h-[760px] shadow-2xl overflow-hidden">
-            {/* Mobile drag bar */}
-            <div className="pt-2 pb-1 sm:hidden flex justify-center">
-              <div className="w-12 h-1 rounded-full bg-white/20" />
-            </div>
+        <div className="fixed inset-0 z-50 bg-black/80 p-3 sm:p-4 flex items-center justify-center">
+          <div className="modal-surface bg-[#0d0e15] rounded-3xl max-w-xl w-full flex flex-col h-[86vh] max-h-[760px] shadow-2xl overflow-hidden">
 
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3 shrink-0">
               <div>
@@ -2564,15 +2560,11 @@ export default function ForgeAppShell({
       )}
 
       {/* ========================================================= */}
-      {/* EDIT HABIT MODAL (RESPONSIVE BOTTOM SHEET / CENTERED)      */}
+      {/* EDIT HABIT MODAL (SPACIOUS CENTERED MODAL)                 */}
       {/* ========================================================= */}
       {editingHabit && (
-        <div className="fixed inset-0 z-50 bg-black/80 p-0 sm:p-4 flex items-end sm:items-center justify-center">
-          <div className="modal-surface rounded-t-3xl sm:rounded-3xl max-w-md w-full flex flex-col h-[92vh] sm:h-auto sm:max-h-[680px] shadow-2xl overflow-hidden">
-            {/* Mobile drag bar */}
-            <div className="pt-2 pb-1 sm:hidden flex justify-center">
-              <div className="w-12 h-1 rounded-full bg-white/20" />
-            </div>
+        <div className="fixed inset-0 z-50 bg-black/80 p-3 sm:p-4 flex items-center justify-center">
+          <div className="modal-surface bg-[#0d0e15] rounded-3xl max-w-md w-full flex flex-col h-[86vh] max-h-[680px] shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3 shrink-0">
               <h3 className="text-base font-bold theme-text">Edit Habit</h3>
               <button

@@ -119,9 +119,11 @@ body {
 }
 
 .modal-surface {
-  background-color: var(--bg-modal);
+  background-color: #0d0e15;
+  background-color: var(--bg-modal, #0d0e15);
   border: 1px solid var(--border-strong);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  opacity: 1 !important;
 }
 
 ::-webkit-scrollbar {

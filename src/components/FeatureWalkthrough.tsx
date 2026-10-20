@@ -144,12 +144,8 @@ export default function FeatureWalkthrough({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 p-0 sm:p-4 flex items-end sm:items-center justify-center">
-      <div className="modal-surface rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg md:max-w-xl flex flex-col h-[92vh] sm:h-auto sm:max-h-[740px] shadow-2xl overflow-hidden">
-        {/* Mobile drag bar */}
-        <div className="pt-2 pb-1 sm:hidden flex justify-center">
-          <div className="w-12 h-1 rounded-full bg-white/20" />
-        </div>
+    <div className="fixed inset-0 z-50 bg-black/80 p-3 sm:p-4 flex items-center justify-center">
+      <div className="modal-surface bg-[#0d0e15] rounded-3xl w-full max-w-lg md:max-w-xl flex flex-col h-[86vh] max-h-[740px] shadow-2xl overflow-hidden">
 
         {/* Top Header (Fixed) */}
         <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3.5 shrink-0">
