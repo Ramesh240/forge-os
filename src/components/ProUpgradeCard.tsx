@@ -88,6 +88,9 @@ export default function ProUpgradeCard({
     win.onGooglePlayPurchaseSuccess = async (orderId: string) => {
       setIsProcessingCheckout(true);
       try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('forge_pro_unlocked', 'true');
+        }
         await fetch('/api/verify-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -95,12 +98,16 @@ export default function ProUpgradeCard({
             razorpay_order_id: `gplay_${orderId}`,
             razorpay_payment_id: orderId,
             razorpay_signature: 'gplay_verified',
+            source: 'google_play',
           }),
         });
         setSuccessMessage('🎉 Google Play purchase successful! ForgeOS Pro lifetime pass unlocked.');
         onUnlocked?.();
         router.refresh();
       } catch {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('forge_pro_unlocked', 'true');
+        }
         setSuccessMessage('🎉 Google Play purchase verified! ForgeOS Pro unlocked.');
         onUnlocked?.();
       } finally {

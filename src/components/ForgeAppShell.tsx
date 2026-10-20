@@ -171,13 +171,58 @@ export default function ForgeAppShell({
     setSessions(initialSessions);
   }
 
-  const [userUnlockedPro, setUserUnlockedPro] = useState(false);
+  const [userUnlockedPro, setUserUnlockedPro] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('forge_pro_unlocked') === 'true';
+    }
+    return false;
+  });
   const userIsPro = isPro || userUnlockedPro;
 
   // Pro Modal Trigger State
   const [showProModal, setShowProModal] = useState(false);
   // Feature Walkthrough Onboarding State
   const [showWalkthrough, setShowWalkthrough] = useState(false);
+
+  // ── Global Google Play Billing Listener & Auto-Restore ──────────────────────
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const win = window as unknown as {
+      onGooglePlayPurchaseSuccess?: (orderId: string) => void;
+      ForgeAndroidBridge?: {
+        restoreGooglePlayPurchases?: () => void;
+      };
+    };
+
+    win.onGooglePlayPurchaseSuccess = async (orderId: string) => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('forge_pro_unlocked', 'true');
+      }
+      setUserUnlockedPro(true);
+      setShowProModal(false);
+
+      try {
+        await fetch('/api/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_order_id: `gplay_${orderId}`,
+            razorpay_payment_id: orderId,
+            razorpay_signature: 'gplay_verified',
+            source: 'google_play',
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to verify Google Play purchase:', err);
+      }
+    };
+
+    // Auto-restore any existing Google Play purchase on launch
+    if (win.ForgeAndroidBridge?.restoreGooglePlayPurchases) {
+      win.ForgeAndroidBridge.restoreGooglePlayPurchases();
+    }
+  }, []);
 
   const [activeTab, setActiveTab] = useState<TabType>('WORKSPACE');
   const [selectedIdentityFilter, setSelectedIdentityFilter] = useState<string>('ALL');

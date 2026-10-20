@@ -126,6 +126,10 @@ class PlayBillingManager(
                     }
                 }
             }
+            BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
+                Log.d(TAG, "Item already owned. Automatically restoring purchases.")
+                restorePurchases()
+            }
             BillingClient.BillingResponseCode.USER_CANCELED -> {
                 Log.d(TAG, "Google Play purchase cancelled by user.")
                 notifyWebPurchaseCancelled()
@@ -159,7 +163,10 @@ class PlayBillingManager(
     }
 
     fun restorePurchases() {
-        if (!isConnected) return
+        if (!isConnected) {
+            startConnection { restorePurchases() }
+            return
+        }
 
         val params = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.INAPP)
@@ -169,7 +176,7 @@ class PlayBillingManager(
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 for (purchase in purchases) {
                     if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-                        notifyWebPurchaseSuccess(purchase.orderId ?: purchase.purchaseToken)
+                        handlePurchase(purchase)
                     }
                 }
             }
