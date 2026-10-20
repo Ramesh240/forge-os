@@ -2143,7 +2143,7 @@ export default function ForgeAppShell({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: 'rgba(0,0,0,0.85)',
-            padding: '16px',
+            padding: '12px',
           }}
           onClick={() => setIsCreatorOpen(false)}
         >
@@ -2152,10 +2152,10 @@ export default function ForgeAppShell({
             style={{
               backgroundColor: '#0d0e15',
               width: '100%',
-              maxWidth: '500px',
-              height: '92vh',
-              maxHeight: '780px',
-              minHeight: '480px',
+              maxWidth: '580px',
+              height: '94vh',
+              maxHeight: '840px',
+              minHeight: '520px',
               display: 'flex',
               flexDirection: 'column',
               borderRadius: '28px',
@@ -2166,14 +2166,14 @@ export default function ForgeAppShell({
             onClick={(e) => e.stopPropagation()}
           >
 
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3.5 shrink-0">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 sm:p-6 pb-3.5 sm:pb-4 shrink-0">
               <div>
-                <h3 className="text-lg font-bold tracking-tight theme-text">
+                <h3 className="text-lg sm:text-xl font-bold tracking-tight theme-text">
                   {creatorTab === 'HABIT'
                     ? 'Create New Habit'
                     : 'Choose or Create an Identity'}
                 </h3>
-                <p className="text-xs theme-subtext mt-0.5">
+                <p className="text-xs sm:text-sm theme-subtext mt-0.5">
                   {creatorTab === 'HABIT'
                     ? 'Attach a simple habit and micro-start to an identity.'
                     : 'Pick a ready-made template or define your own.'}
@@ -2184,19 +2184,19 @@ export default function ForgeAppShell({
                 className="theme-muted hover:opacity-80 p-1.5 rounded-lg cursor-pointer"
                 aria-label="Close Creator"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
             <div
-              className="modal-body-scroll p-4 sm:p-5 space-y-3.5"
+              className="modal-body-scroll p-4 sm:p-6 space-y-4"
               style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}
             >
               <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl border border-[var(--border-subtle)] bg-black/20">
                 <button
                   type="button"
                   onClick={() => setCreatorTab('HABIT')}
-                  className={`py-2.5 rounded-xl text-xs font-bold cursor-pointer transition ${
+                  className={`py-3 rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition ${
                     creatorTab === 'HABIT' ? 'glass-tab-active' : 'theme-subtext hover:text-white'
                   }`}
                 >
@@ -2205,7 +2205,7 @@ export default function ForgeAppShell({
                 <button
                   type="button"
                   onClick={() => setCreatorTab('IDENTITY')}
-                  className={`py-2.5 rounded-xl text-xs font-bold cursor-pointer transition ${
+                  className={`py-3 rounded-xl text-xs sm:text-sm font-bold cursor-pointer transition ${
                     creatorTab === 'IDENTITY' ? 'glass-tab-active' : 'theme-subtext hover:text-white'
                   }`}
                 >
@@ -2691,7 +2691,7 @@ export default function ForgeAppShell({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: 'rgba(0,0,0,0.85)',
-            padding: '16px',
+            padding: '12px',
           }}
           onClick={() => setEditingHabit(null)}
         >
@@ -2700,10 +2700,10 @@ export default function ForgeAppShell({
             style={{
               backgroundColor: '#0d0e15',
               width: '100%',
-              maxWidth: '500px',
-              height: '92vh',
-              maxHeight: '780px',
-              minHeight: '480px',
+              maxWidth: '580px',
+              height: '94vh',
+              maxHeight: '840px',
+              minHeight: '520px',
               display: 'flex',
               flexDirection: 'column',
               borderRadius: '28px',
@@ -2713,19 +2713,19 @@ export default function ForgeAppShell({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3.5 shrink-0">
-              <h3 className="text-lg font-bold tracking-tight theme-text">Edit Habit</h3>
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 sm:p-6 pb-3.5 sm:pb-4 shrink-0">
+              <h3 className="text-lg sm:text-xl font-bold tracking-tight theme-text">Edit Habit</h3>
               <button
                 onClick={() => setEditingHabit(null)}
                 className="theme-muted hover:opacity-80 p-1.5 rounded-lg cursor-pointer"
                 aria-label="Close Edit Habit"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             </div>
 
             <div
-              className="modal-body-scroll p-4 sm:p-5 space-y-3.5"
+              className="modal-body-scroll p-4 sm:p-6 space-y-4"
               style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}
             >
 

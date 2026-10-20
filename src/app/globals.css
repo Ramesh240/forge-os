@@ -147,16 +147,22 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 12px;
   box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .modal-overlay {
+    padding: 24px;
+  }
 }
 
 .modal-card {
   width: 100%;
-  max-width: 500px;
-  height: 92vh;
-  max-height: 780px;
-  min-height: 480px;
+  max-width: 580px;
+  height: 94vh;
+  max-height: 840px;
+  min-height: 520px;
   background-color: #0d0e15 !important;
   background-color: var(--bg-modal, #0d0e15) !important;
   border: 1px solid var(--border-strong);
