@@ -7,6 +7,7 @@
   --bg-primary: #060609;
   --bg-elevated: rgba(255, 255, 255, 0.04);
   --bg-nav: rgba(14, 14, 20, 0.72);
+  --bg-modal: #0d0e15;
   --bg-input: rgba(0, 0, 0, 0.45);
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.18);
@@ -25,6 +26,7 @@
   --bg-primary: #f4ecd8;
   --bg-elevated: rgba(255, 251, 240, 0.68);
   --bg-nav: rgba(246, 238, 218, 0.85);
+  --bg-modal: #f7eedc;
   --bg-input: rgba(235, 224, 198, 0.7);
   --border-subtle: rgba(120, 90, 50, 0.15);
   --border-strong: rgba(120, 90, 50, 0.3);
@@ -43,6 +45,7 @@
   --bg-primary: #f8fafc;
   --bg-elevated: rgba(255, 255, 255, 0.78);
   --bg-nav: rgba(255, 255, 255, 0.85);
+  --bg-modal: #ffffff;
   --bg-input: rgba(241, 245, 249, 0.9);
   --border-subtle: rgba(15, 23, 42, 0.08);
   --border-strong: rgba(15, 23, 42, 0.18);
@@ -113,6 +116,12 @@ body {
   background: var(--accent-primary);
   color: #ffffff !important;
   box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+.modal-surface {
+  background-color: var(--bg-modal);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
 }
 
 ::-webkit-scrollbar {

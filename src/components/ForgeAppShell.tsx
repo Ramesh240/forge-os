@@ -2023,8 +2023,8 @@ export default function ForgeAppShell({
       {/* IN-APP COMPACT QUICK-LAUNCH WIDGET OVERLAY                */}
       {/* ========================================================= */}
       {isWidgetDrawerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md p-4 flex items-center justify-center">
-          <div className="glass-nav rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-black/75 p-4 flex items-center justify-center">
+          <div className="modal-surface rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <div className="flex items-center gap-2">
                 <LayoutGrid className="w-4 h-4 text-indigo-400" />
@@ -2111,11 +2111,11 @@ export default function ForgeAppShell({
       )}
 
       {/* ========================================================= */}
-      {/* CUSTOM GLASS CREATOR MODAL (RESPONSIVE BOTTOM SHEET / CENTERED) */}
+      {/* CUSTOM CREATOR MODAL (RESPONSIVE BOTTOM SHEET / CENTERED)  */}
       {/* ========================================================= */}
       {isCreatorOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-0 sm:p-4 flex items-end sm:items-center justify-center">
-          <div className="glass-nav rounded-t-3xl sm:rounded-3xl max-w-xl w-full flex flex-col h-[94vh] sm:h-[88vh] sm:max-h-[760px] shadow-2xl border border-[var(--border-strong)] overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/80 p-0 sm:p-4 flex items-end sm:items-center justify-center">
+          <div className="modal-surface rounded-t-3xl sm:rounded-3xl max-w-xl w-full flex flex-col h-[92vh] sm:h-auto sm:max-h-[760px] shadow-2xl overflow-hidden">
             {/* Mobile drag bar */}
             <div className="pt-2 pb-1 sm:hidden flex justify-center">
               <div className="w-12 h-1 rounded-full bg-white/20" />
@@ -2564,11 +2564,11 @@ export default function ForgeAppShell({
       )}
 
       {/* ========================================================= */}
-      {/* EDIT HABIT MODAL (CUSTOM GLASS PICKERS — RESPONSIVE SIZING) */}
+      {/* EDIT HABIT MODAL (RESPONSIVE BOTTOM SHEET / CENTERED)      */}
       {/* ========================================================= */}
       {editingHabit && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-0 sm:p-4 flex items-end sm:items-center justify-center">
-          <div className="glass-nav rounded-t-3xl sm:rounded-3xl max-w-md w-full flex flex-col h-[94vh] sm:h-[86vh] sm:max-h-[680px] shadow-2xl border border-[var(--border-strong)] overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/80 p-0 sm:p-4 flex items-end sm:items-center justify-center">
+          <div className="modal-surface rounded-t-3xl sm:rounded-3xl max-w-md w-full flex flex-col h-[92vh] sm:h-auto sm:max-h-[680px] shadow-2xl overflow-hidden">
             {/* Mobile drag bar */}
             <div className="pt-2 pb-1 sm:hidden flex justify-center">
               <div className="w-12 h-1 rounded-full bg-white/20" />
@@ -2755,8 +2755,8 @@ export default function ForgeAppShell({
       {/* EDIT IDENTITY MODAL                                       */}
       {/* ========================================================= */}
       {editingIdentity && (
-        <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-md p-4 flex items-center justify-center">
-          <div className="glass-nav rounded-3xl max-w-md w-full p-6 space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/75 p-4 flex items-center justify-center">
+          <div className="modal-surface rounded-3xl max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <h3 className="text-base font-bold theme-text">Edit Identity</h3>
               <button
@@ -3054,7 +3054,7 @@ export default function ForgeAppShell({
       {/* FORGEOS PRO UNLOCK MODAL OVERLAY                          */}
       {/* ========================================================= */}
       {showProModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-3 sm:p-4 flex items-center justify-center overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/80 p-3 sm:p-4 flex items-center justify-center overflow-y-auto">
           <div className="max-w-2xl w-full my-auto py-4">
             <ProUpgradeCard
               onClose={() => setShowProModal(false)}

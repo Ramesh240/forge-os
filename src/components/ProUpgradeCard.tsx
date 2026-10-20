@@ -268,7 +268,7 @@ export default function ProUpgradeCard({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 glass-nav border border-amber-500/30 shadow-2xl backdrop-blur-2xl space-y-6">
+    <div className="relative overflow-hidden rounded-3xl p-6 sm:p-8 modal-surface border border-amber-500/30 shadow-2xl space-y-6">
       {/* Ambient decorative glow */}
       <div className="absolute -top-24 -right-24 w-60 h-60 bg-gradient-to-br from-amber-500/25 via-indigo-500/20 to-rose-500/15 rounded-full blur-3xl pointer-events-none" />
 
