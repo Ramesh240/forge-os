@@ -15,10 +15,10 @@
     <style name="Theme.ForgeOS" parent="Theme.SplashScreen">
         <!-- Dark background — matches app exactly, no colour flash -->
         <item name="windowSplashScreenBackground">@color/forge_bg</item>
-        <!-- Your app icon as the splash centre icon -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_icon</item>
-        <!-- Fade-out duration once setKeepOnScreenCondition returns false -->
-        <item name="windowSplashScreenAnimationDuration">300</item>
+        <!-- Transparent splash icon: skip giant F graphic and go straight to app loading -->
+        <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
+        <!-- Fade-out duration -->
+        <item name="windowSplashScreenAnimationDuration">0</item>
         <!-- Theme applied after splash dismisses -->
         <item name="postSplashScreenTheme">@style/Theme.ForgeOS.Base</item>
     </style>

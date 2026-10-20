@@ -36,17 +36,7 @@ class MainActivity : ComponentActivity() {
         // ── STEP 1: Install splash screen ─────────────────────────────────────
         // MUST be called before super.onCreate() — this is the official API contract.
         // Source: https://developer.android.com/develop/ui/views/launch/splash-screen
-        val splashScreen = installSplashScreen()
-
-        // ── STEP 2: Hold splash until WebView is ready ────────────────────────
-        // setKeepOnScreenCondition is evaluated on every frame.
-        // While isLoading == true, the native splash stays visible.
-        // When the WebView fires onPageFinished, isLoading becomes false
-        // and Android fades the splash out with a 300ms animation.
-        splashScreen.setKeepOnScreenCondition {
-            viewModel.isLoading.value
-        }
-
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         com.forgeos.mastery.notifications.HabitReminderReceiver.createNotificationChannel(this)
 
