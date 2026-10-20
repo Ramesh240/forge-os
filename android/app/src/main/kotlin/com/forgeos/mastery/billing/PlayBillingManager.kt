@@ -13,6 +13,7 @@ import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.QueryPurchasesParams
 
 class PlayBillingManager(
@@ -75,10 +76,13 @@ class PlayBillingManager(
             .setProductList(productList)
             .build()
 
-        billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && !productDetailsList.isNullOrEmpty()) {
-                cachedProductDetails = productDetailsList.firstOrNull()
-                Log.d(TAG, "Loaded in-app product: ${cachedProductDetails?.productId}")
+        billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsResult ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                val detailsList = productDetailsResult.productDetailsList
+                if (!detailsList.isNullOrEmpty()) {
+                    cachedProductDetails = detailsList.firstOrNull()
+                    Log.d(TAG, "Loaded in-app product: ${cachedProductDetails?.productId}")
+                }
             }
         }
     }
