@@ -10,6 +10,8 @@
 
     <!-- Required to load the Next.js web app -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Required for Google Play Store In-App Purchases & Licensing -->
+    <uses-permission android:name="com.android.vending.BILLING" />
     <!-- Android 13+ runtime notification permission -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Exact alarms for habit micro-start reminders -->
