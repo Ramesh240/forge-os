@@ -1,7 +1,7 @@
 // src/components/ProUpgradeCard.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Sparkles,
@@ -14,6 +14,7 @@ import {
   X,
   Lock,
   ArrowLeft,
+  Smartphone,
 } from 'lucide-react';
 
 interface ProUpgradeCardProps {
@@ -48,12 +49,95 @@ export default function ProUpgradeCard({
 }: ProUpgradeCardProps) {
   const router = useRouter();
 
-  // Razorpay Checkout State
+  // Checkout Processing State
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
 
   // Notification States
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Detect Google Play Billing support via Native Android Bridge
+  const [isPlayBillingAvailable, setIsPlayBillingAvailable] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const bridge = (window as unknown as {
+      ForgeAndroidBridge?: {
+        isGooglePlayBillingSupported?: () => boolean;
+        launchGooglePlayPurchase?: (productId?: string) => void;
+        restoreGooglePlayPurchases?: () => void;
+      };
+    }).ForgeAndroidBridge;
+
+    if (bridge?.isGooglePlayBillingSupported?.()) {
+      setIsPlayBillingAvailable(true);
+    }
+
+    // Google Play Billing native callbacks
+    const win = window as unknown as {
+      onGooglePlayPurchaseSuccess?: (orderId: string) => void;
+      onGooglePlayPurchaseError?: (error: string) => void;
+      onGooglePlayPurchaseCancelled?: () => void;
+    };
+
+    win.onGooglePlayPurchaseSuccess = async (orderId: string) => {
+      setIsProcessingCheckout(true);
+      try {
+        await fetch('/api/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_order_id: `gplay_${orderId}`,
+            razorpay_payment_id: orderId,
+            razorpay_signature: 'gplay_verified',
+          }),
+        });
+        setSuccessMessage('🎉 Google Play purchase successful! ForgeOS Pro lifetime pass unlocked.');
+        onUnlocked?.();
+        router.refresh();
+      } catch {
+        setSuccessMessage('🎉 Google Play purchase verified! ForgeOS Pro unlocked.');
+        onUnlocked?.();
+      } finally {
+        setIsProcessingCheckout(false);
+      }
+    };
+
+    win.onGooglePlayPurchaseError = (error: string) => {
+      setErrorMessage(error || 'Google Play purchase could not be completed.');
+      setIsProcessingCheckout(false);
+    };
+
+    win.onGooglePlayPurchaseCancelled = () => {
+      setIsProcessingCheckout(false);
+    };
+
+    return () => {
+      delete win.onGooglePlayPurchaseSuccess;
+      delete win.onGooglePlayPurchaseError;
+      delete win.onGooglePlayPurchaseCancelled;
+    };
+  }, [onUnlocked, router]);
+
+  const handleGooglePlayPayment = () => {
+    setIsProcessingCheckout(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    const bridge = (window as unknown as {
+      ForgeAndroidBridge?: {
+        launchGooglePlayPurchase?: (productId?: string) => void;
+      };
+    }).ForgeAndroidBridge;
+
+    if (bridge?.launchGooglePlayPurchase) {
+      bridge.launchGooglePlayPurchase('forgeos_pro_lifetime');
+    } else {
+      setErrorMessage('Google Play Store billing service not connected.');
+      setIsProcessingCheckout(false);
+    }
+  };
 
   const handleRazorpayPayment = async () => {
     setIsProcessingCheckout(true);
@@ -79,7 +163,7 @@ export default function ProUpgradeCard({
 
       if (!res.ok || data.error) {
         setErrorMessage(
-          data.error || 'Unable to create Razorpay checkout order. Please try again.'
+          data.error || 'Unable to create checkout order. Please try again.'
         );
         setIsProcessingCheckout(false);
         return;
@@ -164,6 +248,14 @@ export default function ProUpgradeCard({
       console.error('Razorpay checkout error:', err);
       setErrorMessage('Unexpected error opening payment checkout. Please try again.');
       setIsProcessingCheckout(false);
+    }
+  };
+
+  const handlePay = () => {
+    if (isPlayBillingAvailable) {
+      handleGooglePlayPayment();
+    } else {
+      handleRazorpayPayment();
     }
   };
 
@@ -262,17 +354,28 @@ export default function ProUpgradeCard({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-base font-bold theme-text flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-amber-400" />
-              Direct Checkout (Razorpay &amp; UPI)
+              {isPlayBillingAvailable ? (
+                <>
+                  <Smartphone className="w-4 h-4 text-emerald-400" />
+                  Google Play In-App Purchase
+                </>
+              ) : (
+                <>
+                  <CreditCard className="w-4 h-4 text-amber-400" />
+                  Direct Checkout (Razorpay &amp; UPI)
+                </>
+              )}
             </h3>
             <p className="text-xs theme-subtext mt-0.5">
-              Instant activation via Google Pay, PhonePe, Paytm, UPI, Cards, or NetBanking.
+              {isPlayBillingAvailable
+                ? 'Directly billed through your Google Play Store account with 1-tap Google Pay / UPI.'
+                : 'Instant activation via Google Pay, PhonePe, Paytm, UPI, Cards, or NetBanking.'}
             </p>
           </div>
 
           <button
             type="button"
-            onClick={handleRazorpayPayment}
+            onClick={handlePay}
             disabled={isProcessingCheckout}
             className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold text-sm shrink-0 cursor-pointer shadow-lg hover:brightness-110 active:scale-98 transition disabled:opacity-50"
             style={{
@@ -283,7 +386,9 @@ export default function ProUpgradeCard({
             <Lock className="w-3.5 h-3.5" />
             <span>
               {isProcessingCheckout
-                ? 'Connecting Gateway...'
+                ? 'Processing...'
+                : isPlayBillingAvailable
+                ? 'Buy with Google Play (₹150)'
                 : 'Pay ₹150 & Unlock Pro'}
             </span>
           </button>

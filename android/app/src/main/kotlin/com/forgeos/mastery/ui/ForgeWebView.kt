@@ -94,9 +94,10 @@ fun ForgeWebView(
                     allowContentAccess  = false
                 }
 
-                // ── Native Bridge ─────────────────────────────────────────────
+                // ── Native Bridge & Google Play Billing ───────────────────────
                 (context as? Activity)?.let { act ->
-                    addJavascriptInterface(ForgeAndroidBridge(act), "ForgeAndroidBridge")
+                    val playBillingManager = com.forgeos.mastery.billing.PlayBillingManager(act) { this }
+                    addJavascriptInterface(ForgeAndroidBridge(act, playBillingManager), "ForgeAndroidBridge")
                 }
 
                 // ── WebChromeClient ───────────────────────────────────────────

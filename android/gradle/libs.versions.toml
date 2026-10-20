@@ -7,6 +7,7 @@ lifecycle           = "2.9.1"
 activity-compose    = "1.10.1"
 splashscreen        = "1.0.1"
 webkit              = "1.13.0"
+billing             = "7.1.1"
 junit               = "4.13.2"
 
 [libraries]
@@ -23,6 +24,7 @@ compose-material3               = { group = "androidx.compose.material3", name =
 compose-animation               = { group = "androidx.compose.animation", name = "animation" }
 splashscreen                    = { group = "androidx.core",          name = "core-splashscreen",            version.ref = "splashscreen" }
 webkit                          = { group = "androidx.webkit",        name = "webkit",                       version.ref = "webkit" }
+play-billing                    = { group = "com.android.billingclient", name = "billing-ktx",               version.ref = "billing" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

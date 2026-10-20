@@ -73,6 +73,9 @@ dependencies {
     // WebKit — stable WebView wrapper with WebViewFeature compat checks
     implementation(libs.webkit)
 
+    // Google Play In-App Billing for native Play Store purchases
+    implementation(libs.play.billing)
+
     // Compose BOM — pins all androidx.compose.* to a consistent, tested set
     // Source: https://developer.android.com/jetpack/compose/bom
     val composeBom = platform(libs.compose.bom)

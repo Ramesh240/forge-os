@@ -10,13 +10,34 @@ import android.os.Build
 import android.webkit.JavascriptInterface
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import com.forgeos.mastery.billing.PlayBillingManager
 import com.forgeos.mastery.notifications.HabitReminderReceiver
 import java.util.Calendar
 
-class ForgeAndroidBridge(private val activity: Activity) {
+class ForgeAndroidBridge(
+    private val activity: Activity,
+    private val playBillingManager: PlayBillingManager? = null,
+) {
 
     @JavascriptInterface
     fun isNativeApp(): Boolean = true
+
+    @JavascriptInterface
+    fun isGooglePlayBillingSupported(): Boolean = true
+
+    @JavascriptInterface
+    fun launchGooglePlayPurchase(productId: String?) {
+        activity.runOnUiThread {
+            playBillingManager?.launchPurchaseFlow(productId)
+        }
+    }
+
+    @JavascriptInterface
+    fun restoreGooglePlayPurchases() {
+        activity.runOnUiThread {
+            playBillingManager?.restorePurchases()
+        }
+    }
 
     @JavascriptInterface
     fun requestNotificationPermission() {
