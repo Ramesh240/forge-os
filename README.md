@@ -20,12 +20,16 @@
 
 ## 🎬 Product Showcase Video (16:9 Widescreen)
 
-https://github.com/user-attachments/assets/youtube-16x9.mp4
-
-> **File location**: [`youtube-16x9/youtube-16x9.mp4`](youtube-16x9/youtube-16x9.mp4) (Full HD 1080p, 20s, with synchronized synth sound design)
+<p align="center">
+  <a href="https://github.com/Ramesh240/forge-os/blob/main/youtube-16x9/youtube-16x9.mp4">
+    <img src="youtube-16x9/preview.gif" width="100%" alt="ForgeOS Product Showcase (Click to play 1080p video with audio)" style="border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);" />
+  </a>
+</p>
 
 <p align="center">
-  <video src="youtube-16x9/youtube-16x9.mp4" width="100%" controls autoplay loop muted></video>
+  <a href="https://github.com/Ramesh240/forge-os/blob/main/youtube-16x9/youtube-16x9.mp4">
+    ▶️ <strong>Click here to watch the full 1080p HD video with synchronized audio (youtube-16x9.mp4)</strong>
+  </a>
 </p>
 
 > 📱 **Looking for the mobile format?**  
