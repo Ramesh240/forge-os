@@ -144,19 +144,24 @@ export default function FeatureWalkthrough({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-4 flex items-center justify-center">
-      <div className="glass-nav rounded-3xl max-w-md w-full flex flex-col h-[82vh] max-h-[620px] min-h-[440px] shadow-2xl border border-[var(--border-strong)] overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-0 sm:p-4 flex items-end sm:items-center justify-center">
+      <div className="glass-nav rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg md:max-w-xl flex flex-col h-[94vh] sm:h-[86vh] sm:max-h-[740px] shadow-2xl border border-[var(--border-strong)] overflow-hidden">
+        {/* Mobile drag bar */}
+        <div className="pt-2 pb-1 sm:hidden flex justify-center">
+          <div className="w-12 h-1 rounded-full bg-white/20" />
+        </div>
+
         {/* Top Header (Fixed) */}
-        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3 shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-sm">
+        <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3.5 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-sm">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-indigo-400 block">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-indigo-400 block">
                 {step.badge}
               </span>
-              <h3 className="text-base font-black tracking-tight theme-text">
+              <h3 className="text-base sm:text-lg font-black tracking-tight theme-text">
                 {step.title}
               </h3>
             </div>
@@ -171,24 +176,24 @@ export default function FeatureWalkthrough({
         </div>
 
         {/* Scrollable Body */}
-        <div className="p-5 overflow-y-auto flex-1 space-y-4">
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
           {/* Visual Mock Card */}
-          <div>{step.cardMock}</div>
+          <div className="w-full">{step.cardMock}</div>
 
           {/* Step Explanation */}
-          <div className="space-y-2">
-            <h4 className="text-sm font-bold theme-text">{step.subtitle}</h4>
-            <p className="text-xs theme-subtext leading-relaxed">
+          <div className="space-y-2.5">
+            <h4 className="text-base font-bold theme-text">{step.subtitle}</h4>
+            <p className="text-sm theme-subtext leading-relaxed">
               {step.description}
             </p>
-            <div className="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-[11px] text-indigo-300 font-medium leading-relaxed">
+            <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-300 font-medium leading-relaxed">
               {step.tip}
             </div>
           </div>
         </div>
 
         {/* Fixed Footer (Dots + Navigation) */}
-        <div className="p-5 pt-3 border-t border-[var(--border-subtle)] shrink-0 space-y-3">
+        <div className="p-5 pt-3.5 border-t border-[var(--border-subtle)] shrink-0 space-y-3.5">
           {/* Progress Dots */}
           <div className="flex items-center justify-center gap-2">
             {STEPS.map((_, idx) => (
@@ -211,7 +216,7 @@ export default function FeatureWalkthrough({
               <button
                 type="button"
                 onClick={handlePrev}
-                className="px-4 py-3 rounded-xl border border-[var(--border-subtle)] glass-panel text-xs font-bold theme-text hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-3 rounded-xl border border-[var(--border-subtle)] glass-panel text-xs sm:text-sm font-bold theme-text hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back</span>
@@ -221,7 +226,7 @@ export default function FeatureWalkthrough({
             <button
               type="button"
               onClick={handleNext}
-              className="flex-1 py-3 px-4 rounded-xl text-white font-bold text-xs transition shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              className="flex-1 py-3.5 px-4 rounded-xl text-white font-bold text-xs sm:text-sm transition shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-95"
               style={{ background: 'var(--accent-primary)' }}
             >
               <span>{isLastStep ? 'Get Started — Create Habit' : 'Next Step'}</span>

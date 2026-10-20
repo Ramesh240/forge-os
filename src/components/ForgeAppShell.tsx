@@ -266,6 +266,9 @@ export default function ForgeAppShell({
   const [newHabitAnchorId, setNewHabitAnchorId] = useState('NONE');
   const [newHabitReminder, setNewHabitReminder] = useState('');
   const [isChainPickerOpen, setIsChainPickerOpen] = useState(false);
+  const [showAdvancedHabitOptions, setShowAdvancedHabitOptions] = useState(false);
+  const [isIdentityPickerOpen, setIsIdentityPickerOpen] = useState(false);
+  const [showHabitSuggestions, setShowHabitSuggestions] = useState(false);
 
   // Edit Identity Modal State
   const [editingIdentity, setEditingIdentity] = useState<SerializedIdentity | null>(null);
@@ -852,6 +855,24 @@ export default function ForgeAppShell({
 
   const selectedNewAnchorObj = habits.find((h) => h.id === newHabitAnchorId);
   const selectedEditAnchorObj = habits.find((h) => h.id === editHabitAnchorId);
+
+  const selectedCreatorIdentityObj = useMemo(() => {
+    if (newHabitIdentityId.startsWith('preset:')) {
+      const key = newHabitIdentityId.replace('preset:', '');
+      const preset = IDENTITY_PRESETS.find((p) => p.key === key);
+      return {
+        id: newHabitIdentityId,
+        title: preset?.title || 'Focused Deep Worker',
+        category: preset?.category || 'Identity Template',
+      };
+    }
+    const existing = identities.find((i) => i.id === newHabitIdentityId);
+    return {
+      id: newHabitIdentityId,
+      title: existing?.title || 'Active Identity',
+      category: 'Your Custom Identity',
+    };
+  }, [newHabitIdentityId, identities]);
 
   const navItems = [
     { id: 'WORKSPACE', label: 'Home', icon: Zap },
@@ -2090,11 +2111,16 @@ export default function ForgeAppShell({
       )}
 
       {/* ========================================================= */}
-      {/* CUSTOM GLASS CREATOR MODAL (ZERO NATIVE <select> LISTS!)  */}
+      {/* CUSTOM GLASS CREATOR MODAL (RESPONSIVE BOTTOM SHEET / CENTERED) */}
       {/* ========================================================= */}
       {isCreatorOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-4 flex items-center justify-center">
-          <div className="glass-nav rounded-3xl max-w-lg w-full flex flex-col h-[82vh] max-h-[640px] min-h-[440px] shadow-2xl border border-[var(--border-strong)] overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-0 sm:p-4 flex items-end sm:items-center justify-center">
+          <div className="glass-nav rounded-t-3xl sm:rounded-3xl max-w-xl w-full flex flex-col h-[94vh] sm:h-[88vh] sm:max-h-[760px] shadow-2xl border border-[var(--border-strong)] overflow-hidden">
+            {/* Mobile drag bar */}
+            <div className="pt-2 pb-1 sm:hidden flex justify-center">
+              <div className="w-12 h-1 rounded-full bg-white/20" />
+            </div>
+
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3 shrink-0">
               <div>
                 <h3 className="text-base font-bold theme-text">
@@ -2104,7 +2130,7 @@ export default function ForgeAppShell({
                 </h3>
                 <p className="text-xs theme-subtext">
                   {creatorTab === 'HABIT'
-                    ? 'Tap any identity card below to attach your habit.'
+                    ? 'Attach a simple habit and micro-start to an identity.'
                     : 'Pick a ready-made template or define your own.'}
                 </p>
               </div>
@@ -2118,367 +2144,435 @@ export default function ForgeAppShell({
 
             <div className="p-5 overflow-y-auto flex-1 space-y-4">
               <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl border border-[var(--border-subtle)]">
-              <button
-                type="button"
-                onClick={() => setCreatorTab('HABIT')}
-                className={`py-2 rounded-lg text-xs font-bold cursor-pointer ${
-                  creatorTab === 'HABIT' ? 'glass-tab-active' : 'theme-subtext'
-                }`}
-              >
-                + New Habit
-              </button>
-              <button
-                type="button"
-                onClick={() => setCreatorTab('IDENTITY')}
-                className={`py-2 rounded-lg text-xs font-bold cursor-pointer ${
-                  creatorTab === 'IDENTITY' ? 'glass-tab-active' : 'theme-subtext'
-                }`}
-              >
-                + Identity Library
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => setCreatorTab('HABIT')}
+                  className={`py-2 rounded-lg text-xs font-bold cursor-pointer ${
+                    creatorTab === 'HABIT' ? 'glass-tab-active' : 'theme-subtext'
+                  }`}
+                >
+                  + New Habit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCreatorTab('IDENTITY')}
+                  className={`py-2 rounded-lg text-xs font-bold cursor-pointer ${
+                    creatorTab === 'IDENTITY' ? 'glass-tab-active' : 'theme-subtext'
+                  }`}
+                >
+                  + Identity Library
+                </button>
+              </div>
 
-            {creatorTab === 'HABIT' ? (
-              <form onSubmit={handleCreateHabitSubmit} className="space-y-4">
-                {/* 1. Custom Visual Identity Card Grid (Replaces native <select>) */}
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold theme-subtext block">
-                    1. Choose Identity (Tap a Card)
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-60 sm:max-h-64 overflow-y-auto pr-1">
-                    {identities.map((i) => {
-                      const selected = newHabitIdentityId === i.id;
-                      return (
-                        <button
-                          key={i.id}
-                          type="button"
-                          onClick={() => setNewHabitIdentityId(i.id)}
-                          className={`p-3 rounded-xl border text-left transition flex items-center justify-between gap-2.5 cursor-pointer ${
-                            selected
-                              ? 'glass-tab-active border-transparent'
-                              : 'glass-panel hover:border-[var(--border-strong)]'
-                          }`}
-                        >
-                          <div className="min-w-0 flex-1">
-                            <span className="text-[10px] font-mono uppercase opacity-85 block text-indigo-400 font-bold">
-                              Active Identity
-                            </span>
-                            <span className="text-xs font-bold block theme-text">
-                              {i.title}
-                            </span>
-                          </div>
-                          {selected && <Check className="w-4 h-4 shrink-0 text-emerald-400" />}
-                        </button>
-                      );
-                    })}
-
-                    {IDENTITY_PRESETS.filter(
-                      (preset) =>
-                        !identities.some(
-                          (existing) =>
-                            existing.title.toLowerCase() ===
-                            preset.title.toLowerCase()
-                        )
-                    ).map((preset) => {
-                      const val = `preset:${preset.key}`;
-                      const selected = newHabitIdentityId === val;
-                      return (
-                        <button
-                          key={preset.key}
-                          type="button"
-                          onClick={() => setNewHabitIdentityId(val)}
-                          className={`p-3 rounded-xl border text-left transition flex items-center justify-between gap-2.5 cursor-pointer ${
-                            selected
-                              ? 'glass-tab-active border-transparent'
-                              : 'glass-panel hover:border-[var(--border-strong)]'
-                          }`}
-                        >
-                          <div className="min-w-0 flex-1">
-                            <span className="text-[10px] font-mono text-amber-400 font-bold block">
-                              ✨ {preset.category}
-                            </span>
-                            <span className="text-xs font-bold block theme-text">
-                              {preset.title}
-                            </span>
-                          </div>
-                          {selected && <Check className="w-4 h-4 shrink-0 text-amber-400" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 2. 1-Tap Habit Examples */}
-                {activeHabitExamples.length > 0 && (
-                  <div className="p-3 rounded-2xl glass-panel space-y-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider theme-muted flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-amber-500" />
-                      1-Tap Habit Examples (Tap to Auto-Fill):
-                    </span>
-                    <div className="flex flex-col gap-1.5">
-                      {activeHabitExamples.map((ex, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            setNewHabitTitle(ex.title);
-                            setNewHabitMicro(ex.gatewayVersion);
-                            setNewHabitStage(ex.stage);
-                          }}
-                          className="text-left p-2 rounded-xl border border-[var(--border-subtle)] hover:border-[var(--border-strong)] transition text-xs cursor-pointer"
-                        >
-                          <div className="font-semibold theme-text">{ex.title}</div>
-                          <div className="text-[11px] theme-subtext truncate">
-                            2m Start: {ex.gatewayVersion}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. Habit Title & 2-Min Micro-Start */}
-                <div>
-                  <label className="text-xs font-semibold theme-subtext block mb-1">
-                    2. Full Habit Action
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g., Complete 25-Min Strength Workout"
-                    value={newHabitTitle}
-                    onChange={(e) => setNewHabitTitle(e.target.value)}
-                    className="w-full theme-input rounded-xl p-2.5 text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-semibold theme-subtext block mb-1">
-                    3. 2-Minute Micro-Start Step
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g., Put on workout shoes and do 5 pushups"
-                    value={newHabitMicro}
-                    onChange={(e) => setNewHabitMicro(e.target.value)}
-                    className="w-full theme-input rounded-xl p-2.5 text-sm"
-                  />
-                </div>
-
-                {/* 4. Custom Segmented Stage Pill Selector (Replaces native <select>) */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold theme-subtext block">
-                    4. Skill Stage
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: 'PASSIVE' as SkillStage, title: 'Absorb', sub: 'Study • 0.8x' },
-                      { id: 'PRACTICE' as SkillStage, title: 'Drill', sub: 'Practice • 1.2x' },
-                      { id: 'ACTIVE' as SkillStage, title: 'Build', sub: 'Create • 1.75x' },
-                    ].map((st) => {
-                      const active = newHabitStage === st.id;
-                      return (
-                        <button
-                          key={st.id}
-                          type="button"
-                          onClick={() => setNewHabitStage(st.id)}
-                          className={`p-2.5 rounded-xl border text-center transition cursor-pointer ${
-                            active
-                              ? 'glass-tab-active border-transparent'
-                              : 'glass-panel theme-subtext'
-                          }`}
-                        >
-                          <div className="text-xs font-bold">{st.title}</div>
-                          <div className="text-[10px] opacity-80">{st.sub}</div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 5. Custom Glass Popover for "Chain After" (Replaces native <select>) */}
-                <div className="space-y-1.5 relative">
-                  <label className="text-xs font-semibold theme-subtext block">
-                    5. Chain Sequence (Optional)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setIsChainPickerOpen((o) => !o)}
-                    className="w-full p-2.5 rounded-xl glass-panel flex items-center justify-between text-xs font-semibold theme-text cursor-pointer"
-                  >
-                    <span className="truncate">
-                      {selectedNewAnchorObj
-                        ? `After: ${selectedNewAnchorObj.title}`
-                        : '⚡ Standalone (Start of Chain)'}
-                    </span>
-                    <ChevronDown className="w-4 h-4 shrink-0" />
-                  </button>
-
-                  {isChainPickerOpen && (
-                    <div className="p-2 rounded-2xl glass-nav space-y-1 max-h-40 overflow-y-auto border border-[var(--border-strong)]">
+              {creatorTab === 'HABIT' ? (
+                <form onSubmit={handleCreateHabitSubmit} className="space-y-4">
+                  {/* 1. Selected Identity Card with Expandable Switcher */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold theme-subtext block">
+                      Target Identity
+                    </label>
+                    <div className="p-3.5 rounded-2xl glass-panel border border-[var(--border-subtle)] flex items-center justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-mono uppercase font-bold text-indigo-400 block">
+                          {selectedCreatorIdentityObj.category}
+                        </span>
+                        <span className="text-sm font-bold theme-text truncate block">
+                          {selectedCreatorIdentityObj.title}
+                        </span>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => {
-                          setNewHabitAnchorId('NONE');
-                          setIsChainPickerOpen(false);
-                        }}
-                        className={`w-full text-left p-2 rounded-xl text-xs font-semibold flex items-center justify-between cursor-pointer ${
-                          newHabitAnchorId === 'NONE'
-                            ? 'glass-tab-active'
-                            : 'hover:bg-white/5 theme-text'
-                        }`}
+                        onClick={() => setIsIdentityPickerOpen((o) => !o)}
+                        className="px-3 py-1.5 rounded-xl border border-[var(--border-subtle)] text-xs font-semibold theme-text hover:bg-white/5 transition flex items-center gap-1.5 shrink-0 cursor-pointer"
                       >
-                        <span>⚡ Standalone (No preceding habit)</span>
-                        {newHabitAnchorId === 'NONE' && <Check className="w-3.5 h-3.5" />}
+                        <span>{isIdentityPickerOpen ? 'Done' : 'Change'}</span>
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isIdentityPickerOpen ? 'rotate-180' : ''}`} />
                       </button>
-                      {habits.map((h) => (
-                        <button
-                          key={h.id}
-                          type="button"
-                          onClick={() => {
-                            setNewHabitAnchorId(h.id);
-                            setIsChainPickerOpen(false);
-                          }}
-                          className={`w-full text-left p-2 rounded-xl text-xs flex items-center justify-between cursor-pointer ${
-                            newHabitAnchorId === h.id
-                              ? 'glass-tab-active'
-                              : 'hover:bg-white/5 theme-text'
-                          }`}
-                        >
-                          <span className="truncate">After: {h.title}</span>
-                          {newHabitAnchorId === h.id && <Check className="w-3.5 h-3.5" />}
-                        </button>
-                      ))}
+                    </div>
+
+                    {/* Expandable Identity Selector */}
+                    {isIdentityPickerOpen && (
+                      <div className="p-2.5 rounded-2xl glass-nav border border-[var(--border-strong)] space-y-2">
+                        <span className="text-[10px] font-mono uppercase tracking-wider theme-muted block px-1">
+                          Select from Active Identities or Templates:
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                          {identities.map((i) => {
+                            const selected = newHabitIdentityId === i.id;
+                            return (
+                              <button
+                                key={i.id}
+                                type="button"
+                                onClick={() => {
+                                  setNewHabitIdentityId(i.id);
+                                  setIsIdentityPickerOpen(false);
+                                }}
+                                className={`p-2.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
+                                  selected
+                                    ? 'glass-tab-active border-transparent'
+                                    : 'glass-panel hover:border-[var(--border-strong)]'
+                                }`}
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <span className="text-[9px] font-mono uppercase text-indigo-400 font-bold block">
+                                    Active Identity
+                                  </span>
+                                  <span className="text-xs font-bold block theme-text truncate">
+                                    {i.title}
+                                  </span>
+                                </div>
+                                {selected && <Check className="w-4 h-4 shrink-0 text-emerald-400" />}
+                              </button>
+                            );
+                          })}
+
+                          {IDENTITY_PRESETS.filter(
+                            (preset) =>
+                              !identities.some(
+                                (existing) =>
+                                  existing.title.toLowerCase() ===
+                                  preset.title.toLowerCase()
+                              )
+                          ).map((preset) => {
+                            const val = `preset:${preset.key}`;
+                            const selected = newHabitIdentityId === val;
+                            return (
+                              <button
+                                key={preset.key}
+                                type="button"
+                                onClick={() => {
+                                  setNewHabitIdentityId(val);
+                                  setIsIdentityPickerOpen(false);
+                                }}
+                                className={`p-2.5 rounded-xl border text-left transition flex items-center justify-between gap-2 cursor-pointer ${
+                                  selected
+                                    ? 'glass-tab-active border-transparent'
+                                    : 'glass-panel hover:border-[var(--border-strong)]'
+                                }`}
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <span className="text-[9px] font-mono text-amber-400 font-bold block truncate">
+                                    ✨ {preset.category}
+                                  </span>
+                                  <span className="text-xs font-bold block theme-text truncate">
+                                    {preset.title}
+                                  </span>
+                                </div>
+                                {selected && <Check className="w-4 h-4 shrink-0 text-amber-400" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 1-Tap Habit Inspiration Accordion */}
+                  {activeHabitExamples.length > 0 && (
+                    <div className="space-y-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowHabitSuggestions((o) => !o)}
+                        className="text-xs font-medium text-indigo-400 hover:underline flex items-center gap-1.5 cursor-pointer py-0.5"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{showHabitSuggestions ? 'Hide 1-tap habit examples' : '💡 Need inspiration? View 1-tap examples'}</span>
+                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showHabitSuggestions ? 'rotate-180' : ''}`} />
+                      </button>
+                      {showHabitSuggestions && (
+                        <div className="p-3 rounded-2xl glass-panel flex flex-col gap-1.5 border border-[var(--border-subtle)]">
+                          {activeHabitExamples.map((ex, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setNewHabitTitle(ex.title);
+                                setNewHabitMicro(ex.gatewayVersion);
+                                setNewHabitStage(ex.stage);
+                                setShowHabitSuggestions(false);
+                              }}
+                              className="text-left p-2.5 rounded-xl border border-[var(--border-subtle)] hover:border-[var(--border-strong)] transition text-xs cursor-pointer"
+                            >
+                              <div className="font-semibold theme-text">{ex.title}</div>
+                              <div className="text-[11px] theme-subtext truncate">
+                                2m Start: {ex.gatewayVersion}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
-                </div>
 
-                {/* 6. Daily Reminder Preset Pills + Custom Time */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold theme-subtext flex items-center gap-1">
-                      <Bell className="w-3.5 h-3.5 text-indigo-400" />
-                      Daily Reminder Notification (Optional)
-                    </label>
-                    <input
-                      type="time"
-                      value={newHabitReminder}
-                      onChange={(e) => setNewHabitReminder(e.target.value)}
-                      className="theme-input rounded-lg px-2 py-1 text-xs font-mono"
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {REMINDER_PRESETS.map((p) => (
-                      <button
-                        key={p.label}
-                        type="button"
-                        onClick={() => setNewHabitReminder(p.value)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer ${
-                          newHabitReminder === p.value
-                            ? 'glass-tab-active'
-                            : 'glass-panel theme-subtext'
-                        }`}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full py-3 rounded-xl text-white font-bold text-xs cursor-pointer shadow-sm"
-                  style={{ background: 'var(--accent-primary)' }}
-                >
-                  {isSubmitting ? 'Adding Habit...' : 'Save Habit to Top of Queue'}
-                </button>
-              </form>
-            ) : (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider theme-muted block">
-                    Popular Identity Templates (Tap to Fill):
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-56 sm:max-h-60 overflow-y-auto pr-1">
-                    {IDENTITY_PRESETS.map((preset) => (
-                      <button
-                        key={preset.key}
-                        type="button"
-                        onClick={() => {
-                          setNewIdTitle(preset.title);
-                          setNewIdMission(preset.lifesTaskStatement);
-                          setNewIdStage(preset.defaultPhase);
-                        }}
-                        className="p-3 rounded-xl glass-panel text-left hover:border-[var(--border-strong)] transition cursor-pointer"
-                      >
-                        <span className="text-[10px] font-mono text-amber-400 font-bold block">
-                          ✨ {preset.category}
-                        </span>
-                        <span className="text-xs font-bold theme-text block mt-0.5">
-                          {preset.title}
-                        </span>
-                        <p className="text-[10px] theme-subtext line-clamp-2 mt-1">
-                          {preset.lifesTaskStatement}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <form
-                  onSubmit={handleCreateIdentitySubmit}
-                  className="space-y-3.5 pt-2 border-t border-[var(--border-subtle)]"
-                >
+                  {/* 2. Core Habit Inputs (Action + 2-Min Micro-Start) */}
                   <div>
-                    <label className="text-xs theme-subtext block mb-1">
-                      Identity Title
+                    <label className="text-xs font-semibold theme-subtext block mb-1">
+                      Habit Action
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="Select a template above or type your own..."
-                      value={newIdTitle}
-                      onChange={(e) => setNewIdTitle(e.target.value)}
-                      className="w-full theme-input rounded-xl p-2.5 text-sm"
+                      placeholder="e.g., Complete 25-Min Strength Workout"
+                      value={newHabitTitle}
+                      onChange={(e) => setNewHabitTitle(e.target.value)}
+                      className="w-full theme-input rounded-xl p-3 text-sm"
                     />
                   </div>
+
                   <div>
-                    <label className="text-xs theme-subtext block mb-1">
-                      Core Objective
+                    <label className="text-xs font-semibold theme-subtext block mb-1">
+                      2-Minute Micro-Start Step
                     </label>
-                    <textarea
-                      rows={2}
+                    <input
+                      type="text"
                       required
-                      placeholder="What does this identity build or master?"
-                      value={newIdMission}
-                      onChange={(e) => setNewIdMission(e.target.value)}
-                      className="w-full theme-input rounded-xl p-2.5 text-sm"
+                      placeholder="e.g., Put on workout shoes and do 5 pushups"
+                      value={newHabitMicro}
+                      onChange={(e) => setNewHabitMicro(e.target.value)}
+                      className="w-full theme-input rounded-xl p-3 text-sm"
                     />
                   </div>
+
+                  {/* 3. Collapsible Dropdown for All Additional Options */}
+                  <div className="border border-[var(--border-subtle)] rounded-2xl overflow-hidden glass-panel">
+                    <button
+                      type="button"
+                      onClick={() => setShowAdvancedHabitOptions((prev) => !prev)}
+                      className="w-full p-3.5 flex items-center justify-between text-xs font-bold theme-text hover:bg-white/5 transition cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Sliders className="w-4 h-4 text-indigo-400" />
+                        <span>Additional Options (Skill Stage, Habit Chain & Reminders)</span>
+                      </div>
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform duration-200 ${
+                          showAdvancedHabitOptions ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+
+                    {showAdvancedHabitOptions && (
+                      <div className="p-4 pt-2 space-y-4 border-t border-[var(--border-subtle)]">
+                        {/* Custom Segmented Stage Pill Selector */}
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-semibold theme-subtext block">
+                            Skill Stage
+                          </label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {[
+                              { id: 'PASSIVE' as SkillStage, title: 'Absorb', sub: 'Study • 0.8x' },
+                              { id: 'PRACTICE' as SkillStage, title: 'Drill', sub: 'Practice • 1.2x' },
+                              { id: 'ACTIVE' as SkillStage, title: 'Build', sub: 'Create • 1.75x' },
+                            ].map((st) => {
+                              const active = newHabitStage === st.id;
+                              return (
+                                <button
+                                  key={st.id}
+                                  type="button"
+                                  onClick={() => setNewHabitStage(st.id)}
+                                  className={`p-2.5 rounded-xl border text-center transition cursor-pointer ${
+                                    active
+                                      ? 'glass-tab-active border-transparent'
+                                      : 'glass-panel theme-subtext'
+                                  }`}
+                                >
+                                  <div className="text-xs font-bold">{st.title}</div>
+                                  <div className="text-[10px] opacity-80">{st.sub}</div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Custom Glass Popover for "Chain After" */}
+                        <div className="space-y-1.5 relative">
+                          <label className="text-xs font-semibold theme-subtext block">
+                            Chain Sequence (Habit Stacking)
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => setIsChainPickerOpen((o) => !o)}
+                            className="w-full p-2.5 rounded-xl glass-panel flex items-center justify-between text-xs font-semibold theme-text cursor-pointer"
+                          >
+                            <span className="truncate">
+                              {selectedNewAnchorObj
+                                ? `After: ${selectedNewAnchorObj.title}`
+                                : '⚡ Standalone (Start of Chain)'}
+                            </span>
+                            <ChevronDown className="w-4 h-4 shrink-0" />
+                          </button>
+
+                          {isChainPickerOpen && (
+                            <div className="p-2 rounded-2xl glass-nav space-y-1 max-h-40 overflow-y-auto border border-[var(--border-strong)]">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setNewHabitAnchorId('NONE');
+                                  setIsChainPickerOpen(false);
+                                }}
+                                className={`w-full text-left p-2 rounded-xl text-xs font-semibold flex items-center justify-between cursor-pointer ${
+                                  newHabitAnchorId === 'NONE'
+                                    ? 'glass-tab-active'
+                                    : 'hover:bg-white/5 theme-text'
+                                }`}
+                              >
+                                <span>⚡ Standalone (No preceding habit)</span>
+                                {newHabitAnchorId === 'NONE' && <Check className="w-3.5 h-3.5" />}
+                              </button>
+                              {habits.map((h) => (
+                                <button
+                                  key={h.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setNewHabitAnchorId(h.id);
+                                    setIsChainPickerOpen(false);
+                                  }}
+                                  className={`w-full text-left p-2 rounded-xl text-xs flex items-center justify-between cursor-pointer ${
+                                    newHabitAnchorId === h.id
+                                      ? 'glass-tab-active'
+                                      : 'hover:bg-white/5 theme-text'
+                                  }`}
+                                >
+                                  <span className="truncate">After: {h.title}</span>
+                                  {newHabitAnchorId === h.id && <Check className="w-3.5 h-3.5" />}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Daily Reminder Preset Pills + Custom Time */}
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold theme-subtext flex items-center gap-1">
+                              <Bell className="w-3.5 h-3.5 text-indigo-400" />
+                              Daily Reminder Notification
+                            </label>
+                            <input
+                              type="time"
+                              value={newHabitReminder}
+                              onChange={(e) => setNewHabitReminder(e.target.value)}
+                              className="theme-input rounded-lg px-2 py-1 text-xs font-mono"
+                            />
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {REMINDER_PRESETS.map((p) => (
+                              <button
+                                key={p.label}
+                                type="button"
+                                onClick={() => setNewHabitReminder(p.value)}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer ${
+                                  newHabitReminder === p.value
+                                    ? 'glass-tab-active'
+                                    : 'glass-panel theme-subtext'
+                                }`}
+                              >
+                                {p.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-3 rounded-xl text-white font-bold text-xs cursor-pointer"
+                    className="w-full py-3.5 rounded-xl text-white font-bold text-sm cursor-pointer shadow-md hover:opacity-95 transition"
                     style={{ background: 'var(--accent-primary)' }}
                   >
-                    Create Identity &amp; Add Habits
+                    {isSubmitting ? 'Adding Habit...' : 'Save Habit to Top of Queue'}
                   </button>
                 </form>
-              </div>
-            )}
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider theme-muted block">
+                      Popular Identity Templates (Tap to Fill):
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-64 sm:max-h-72 overflow-y-auto pr-1">
+                      {IDENTITY_PRESETS.map((preset) => (
+                        <button
+                          key={preset.key}
+                          type="button"
+                          onClick={() => {
+                            setNewIdTitle(preset.title);
+                            setNewIdMission(preset.lifesTaskStatement);
+                            setNewIdStage(preset.defaultPhase);
+                          }}
+                          className="p-3 rounded-xl glass-panel text-left hover:border-[var(--border-strong)] transition cursor-pointer"
+                        >
+                          <span className="text-[10px] font-mono text-amber-400 font-bold block">
+                            ✨ {preset.category}
+                          </span>
+                          <span className="text-xs font-bold theme-text block mt-0.5">
+                            {preset.title}
+                          </span>
+                          <p className="text-[10px] theme-subtext line-clamp-2 mt-1">
+                            {preset.lifesTaskStatement}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <form
+                    onSubmit={handleCreateIdentitySubmit}
+                    className="space-y-3.5 pt-2 border-t border-[var(--border-subtle)]"
+                  >
+                    <div>
+                      <label className="text-xs theme-subtext block mb-1">
+                        Identity Title
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Select a template above or type your own..."
+                        value={newIdTitle}
+                        onChange={(e) => setNewIdTitle(e.target.value)}
+                        className="w-full theme-input rounded-xl p-2.5 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs theme-subtext block mb-1">
+                        Core Objective
+                      </label>
+                      <textarea
+                        rows={2}
+                        required
+                        placeholder="What does this identity build or master?"
+                        value={newIdMission}
+                        onChange={(e) => setNewIdMission(e.target.value)}
+                        className="w-full theme-input rounded-xl p-2.5 text-sm"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full py-3.5 rounded-xl text-white font-bold text-sm cursor-pointer shadow-md hover:opacity-95 transition"
+                      style={{ background: 'var(--accent-primary)' }}
+                    >
+                      Create Identity &amp; Add Habits
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
       {/* ========================================================= */}
-      {/* EDIT HABIT MODAL (CUSTOM GLASS PICKERS — ZERO <select>!)  */}
+      {/* EDIT HABIT MODAL (CUSTOM GLASS PICKERS — RESPONSIVE SIZING) */}
       {/* ========================================================= */}
       {editingHabit && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-4 flex items-center justify-center">
-          <div className="glass-nav rounded-3xl max-w-md w-full flex flex-col h-[82vh] max-h-[620px] min-h-[440px] shadow-2xl border border-[var(--border-strong)] overflow-hidden">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md p-0 sm:p-4 flex items-end sm:items-center justify-center">
+          <div className="glass-nav rounded-t-3xl sm:rounded-3xl max-w-md w-full flex flex-col h-[94vh] sm:h-[86vh] sm:max-h-[680px] shadow-2xl border border-[var(--border-strong)] overflow-hidden">
+            {/* Mobile drag bar */}
+            <div className="pt-2 pb-1 sm:hidden flex justify-center">
+              <div className="w-12 h-1 rounded-full bg-white/20" />
+            </div>
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3 shrink-0">
               <h3 className="text-base font-bold theme-text">Edit Habit</h3>
               <button
