@@ -2152,16 +2152,16 @@ export default function ForgeAppShell({
             style={{
               backgroundColor: '#0d0e15',
               width: '100%',
-              maxWidth: '480px',
-              height: 'auto',
-              maxHeight: 'calc(100dvh - 32px)',
+              maxWidth: '500px',
+              height: '92vh',
+              maxHeight: '780px',
+              minHeight: '480px',
               display: 'flex',
               flexDirection: 'column',
               borderRadius: '28px',
               overflow: 'hidden',
               border: '1px solid rgba(255, 255, 255, 0.18)',
               boxShadow: '0 24px 60px rgba(0,0,0,0.85)',
-              margin: 'auto',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -2700,16 +2700,16 @@ export default function ForgeAppShell({
             style={{
               backgroundColor: '#0d0e15',
               width: '100%',
-              maxWidth: '480px',
-              height: 'auto',
-              maxHeight: 'calc(100dvh - 32px)',
+              maxWidth: '500px',
+              height: '92vh',
+              maxHeight: '780px',
+              minHeight: '480px',
               display: 'flex',
               flexDirection: 'column',
               borderRadius: '28px',
               overflow: 'hidden',
               border: '1px solid rgba(255, 255, 255, 0.18)',
               boxShadow: '0 24px 60px rgba(0,0,0,0.85)',
-              margin: 'auto',
             }}
             onClick={(e) => e.stopPropagation()}
           >
