@@ -28,7 +28,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forgeos.mastery.ui.ForgeWebView
 
-class MainActivity : ComponentActivity() {
+class  MainActivity : ComponentActivity() {
 
     private val viewModel: WebAppViewModel by viewModels()
 
@@ -36,8 +36,12 @@ class MainActivity : ComponentActivity() {
         // ── STEP 1: Install splash screen ─────────────────────────────────────
         // MUST be called before super.onCreate() — this is the official API contract.
         // Source: https://developer.android.com/develop/ui/views/launch/splash-screen
-        installSplashScreen()
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        // Hold native splash on screen until WebView completes initial render
+        splashScreen.setKeepOnScreenCondition { viewModel.isLoading.value }
+
         com.forgeos.mastery.notifications.HabitReminderReceiver.createNotificationChannel(this)
 
         // Edge-to-edge: content renders behind system bars with insets handled safely

@@ -135,9 +135,9 @@ const REMINDER_PRESETS = [
 ];
 
 export default function ForgeAppShell({
-  identities,
-  habits,
-  sessions,
+  identities: initialIdentities,
+  habits: initialHabits,
+  sessions: initialSessions,
   currentUser = null,
   googleAuthEnabled = false,
   isPro = false,
@@ -149,6 +149,28 @@ export default function ForgeAppShell({
   googleAuthEnabled?: boolean;
   isPro?: boolean;
 }) {
+  // ── Reactive Local State (Enables Instant 0ms Optimistic UI Updates) ─────────
+  const [identities, setIdentities] = useState<SerializedIdentity[]>(initialIdentities);
+  const [prevIdentities, setPrevIdentities] = useState(initialIdentities);
+  if (initialIdentities !== prevIdentities) {
+    setPrevIdentities(initialIdentities);
+    setIdentities(initialIdentities);
+  }
+
+  const [habits, setHabits] = useState<SerializedHabit[]>(initialHabits);
+  const [prevHabits, setPrevHabits] = useState(initialHabits);
+  if (initialHabits !== prevHabits) {
+    setPrevHabits(initialHabits);
+    setHabits(initialHabits);
+  }
+
+  const [sessions, setSessions] = useState<SerializedSession[]>(initialSessions);
+  const [prevSessions, setPrevSessions] = useState(initialSessions);
+  if (initialSessions !== prevSessions) {
+    setPrevSessions(initialSessions);
+    setSessions(initialSessions);
+  }
+
   const [userUnlockedPro, setUserUnlockedPro] = useState(false);
   const userIsPro = isPro || userUnlockedPro;
 
@@ -696,148 +718,333 @@ export default function ForgeAppShell({
 
   const handleFinishSession = async (microOnly: boolean) => {
     if (!activeHabit) return;
-    setIsSubmitting(true);
-    try {
-      const res = await logForgeSession({
-        habitId: activeHabit.id,
-        identityId: activeHabit.identityId,
-        phase: stage,
-        durationMinutes: microOnly ? 2 : sessionMins,
-        completedGatewayOnly: microOnly,
-        isResistancePractice: isChallenge,
-        frictionRating: difficulty,
-        bottleneckAttacked: bottleneckNote,
-        tacitInsight: insightNote,
-      });
 
-      soundEngine.playSessionCompleteFanfare(soundEnabled);
+    // 1. Calculate votes & scores instantly in memory
+    const durMins = microOnly ? 2 : sessionMins;
+    const votesEarned = calculateSessionScore({
+      phase: stage,
+      isChallengeMode: isChallenge,
+      isRecoveryBonus: activeHabit.isReboundPriority,
+      durationMinutes: durMins,
+      completedMicroOnly: microOnly,
+    });
+    const hoursAdded = Number((durMins / 60).toFixed(2));
+    const todayStr = new Date().toISOString().split('T')[0];
 
-      const nextTitle = activeHabit.nextStackedHabitTitle;
-      const nextId = activeHabit.nextStackedHabitId;
+    // 2. Play sound fanfare & give instant audio/haptic feedback
+    soundEngine.playSessionCompleteFanfare(soundEnabled);
 
-      setToastMessage(
-        `+${res.votesEarned} pts logged${nextTitle ? ` • Next: ${nextTitle}` : ''}`
-      );
+    // 3. Optimistically update habits list
+    setHabits((prev) =>
+      prev.map((h) => {
+        if (h.id !== activeHabit.id) return h;
+        const isNewDay = h.lastCompletedDate !== todayStr;
+        return {
+          ...h,
+          currentStreak: isNewDay ? h.currentStreak + 1 : h.currentStreak,
+          missedYesterday: false,
+          isReboundPriority: false,
+          downscaledDaysRemaining: h.downscaledDaysRemaining > 0 ? h.downscaledDaysRemaining - 1 : 0,
+          lastCompletedDate: todayStr,
+        };
+      })
+    );
 
-      if (nextId) {
-        const nextHabit = habits.find((h) => h.id === nextId) || null;
-        if (nextHabit) {
-          startFocusSession(nextHabit);
-          return;
-        }
+    // 4. Optimistically update identity scores
+    setIdentities((prev) =>
+      prev.map((i) => {
+        if (i.id !== activeHabit.identityId) return i;
+        return {
+          ...i,
+          totalVotes: i.totalVotes + 1,
+          weightedScore: Number((i.weightedScore + votesEarned).toFixed(2)),
+          totalHoursLogged: Number((i.totalHoursLogged + hoursAdded).toFixed(1)),
+        };
+      })
+    );
+
+    // 5. Optimistically record the session log
+    const optimisticSession: SerializedSession = {
+      id: `temp-sess-${Date.now()}`,
+      habitId: activeHabit.id,
+      identityId: activeHabit.identityId,
+      habitTitle: activeHabit.title,
+      identityTitle: activeHabit.identityTitle,
+      phase: stage,
+      durationMinutes: durMins,
+      completedGatewayOnly: microOnly,
+      isResistancePractice: isChallenge,
+      frictionRating: difficulty,
+      bottleneckAttacked: bottleneckNote.trim() || null,
+      tacitInsight: insightNote.trim() || null,
+      votesEarned,
+      loggedAt: new Date().toISOString(),
+    };
+    setSessions((prev) => [...prev, optimisticSession]);
+
+    // 6. Transition to next habit or close modal INSTANTLY (0ms response)
+    const nextTitle = activeHabit.nextStackedHabitTitle;
+    const nextId = activeHabit.nextStackedHabitId;
+
+    setToastMessage(
+      `+${votesEarned} pts logged${nextTitle ? ` • Next: ${nextTitle}` : ''}`
+    );
+
+    const targetHabit = activeHabit;
+    const targetStage = stage;
+    const targetChallenge = isChallenge;
+    const targetDifficulty = difficulty;
+    const targetBottleneck = bottleneckNote;
+    const targetInsight = insightNote;
+
+    if (nextId) {
+      const nextHabit = habits.find((h) => h.id === nextId) || null;
+      if (nextHabit) {
+        startFocusSession(nextHabit);
+      } else {
+        setActiveHabit(null);
+        setIsRunning(false);
       }
+    } else {
       setActiveHabit(null);
       setIsRunning(false);
-    } finally {
-      setIsSubmitting(false);
+    }
+
+    // 7. Background sync to server without freezing the UI
+    try {
+      await logForgeSession({
+        habitId: targetHabit.id,
+        identityId: targetHabit.identityId,
+        phase: targetStage,
+        durationMinutes: durMins,
+        completedGatewayOnly: microOnly,
+        isResistancePractice: targetChallenge,
+        frictionRating: targetDifficulty,
+        bottleneckAttacked: targetBottleneck,
+        tacitInsight: targetInsight,
+      });
+    } catch (err) {
+      console.error('Failed to sync session to server:', err);
+      setToastMessage('Session saved locally, will sync when online.');
     }
   };
 
   const handleCreateIdentitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    const title = newIdTitle.trim();
+    const mission = newIdMission.trim();
+    const stage = newIdStage;
+    if (!title) return;
+
+    // Reset inputs & close modal immediately (0ms instant response)
+    setNewIdTitle('');
+    setNewIdMission('');
+    setCreatorTab('HABIT');
+    setToastMessage(`Identity "${title}" created!`);
+
+    const tempId = `temp-id-${Date.now()}`;
+    const optimisticIdentity: SerializedIdentity = {
+      id: tempId,
+      title,
+      lifesTaskStatement: mission,
+      currentPhase: stage,
+      totalVotes: 0,
+      weightedScore: 0,
+      totalHoursLogged: 0,
+    };
+
+    setIdentities((prev) => [...prev, optimisticIdentity]);
+    setNewHabitIdentityId(tempId);
+
     try {
       const created = await createIdentityVector({
-        title: newIdTitle,
-        lifesTaskStatement: newIdMission,
-        currentPhase: newIdStage,
+        title,
+        lifesTaskStatement: mission,
+        currentPhase: stage,
       });
-      setNewIdTitle('');
-      setNewIdMission('');
+      // Replace temporary id with DB id
+      setIdentities((prev) =>
+        prev.map((i) => (i.id === tempId ? { ...i, id: created.id } : i))
+      );
       setNewHabitIdentityId(created.id);
-      setCreatorTab('HABIT');
-      setToastMessage(`Identity "${created.title}" created!`);
-    } finally {
-      setIsSubmitting(false);
+    } catch (err) {
+      console.error('Failed to create identity on server:', err);
     }
   };
 
   const handleUpdateIdentitySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingIdentity) return;
-    setIsSubmitting(true);
+
+    const id = editingIdentity.id;
+    const title = editIdTitle.trim();
+    const mission = editIdMission.trim();
+    const stage = editIdStage;
+
+    // Close modal & toast immediately (0ms)
+    setEditingIdentity(null);
+    setToastMessage('Identity updated!');
+
+    setIdentities((prev) =>
+      prev.map((i) =>
+        i.id === id
+          ? { ...i, title, lifesTaskStatement: mission, currentPhase: stage }
+          : i
+      )
+    );
+
     try {
       await updateIdentityVector({
-        id: editingIdentity.id,
-        title: editIdTitle,
-        lifesTaskStatement: editIdMission,
-        currentPhase: editIdStage,
+        id,
+        title,
+        lifesTaskStatement: mission,
+        currentPhase: stage,
       });
-      setEditingIdentity(null);
-      setToastMessage('Identity updated!');
-    } finally {
-      setIsSubmitting(false);
+    } catch (err) {
+      console.error('Failed to update identity on server:', err);
     }
   };
 
   const handleDeleteIdentity = async () => {
     if (!editingIdentity) return;
-    setIsSubmitting(true);
+    const id = editingIdentity.id;
+
+    if (selectedIdentityFilter === id) {
+      setSelectedIdentityFilter('ALL');
+    }
+    setEditingIdentity(null);
+    setToastMessage('Identity removed.');
+
+    setIdentities((prev) => prev.filter((i) => i.id !== id));
+    setHabits((prev) => prev.filter((h) => h.identityId !== id));
+
     try {
-      await deleteIdentityVector(editingIdentity.id);
-      if (selectedIdentityFilter === editingIdentity.id) {
-        setSelectedIdentityFilter('ALL');
-      }
-      setEditingIdentity(null);
-      setToastMessage('Identity removed.');
-    } finally {
-      setIsSubmitting(false);
+      await deleteIdentityVector(id);
+    } catch (err) {
+      console.error('Failed to delete identity on server:', err);
     }
   };
 
   const handleCreateHabitSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    const title = newHabitTitle.trim();
+    const micro = newHabitMicro.trim();
+    const targetIdId = newHabitIdentityId || identities[0]?.id || 'preset:deep-worker';
+    const targetIdentity = identities.find((i) => i.id === targetIdId);
+    const reminder = newHabitReminder || null;
+    const anchorId = newHabitAnchorId === 'NONE' ? null : newHabitAnchorId;
+
+    if (!title) return;
+
+    // 0ms Instant Response: Clear inputs & close modal immediately
+    setNewHabitTitle('');
+    setNewHabitMicro('');
+    setNewHabitReminder('');
+    setNewHabitAnchorId('NONE');
+    setIsCreatorOpen(false);
+    setToastMessage('New habit added to the top of your queue!');
+
+    const tempId = `temp-h-${Date.now()}`;
+    const optimisticHabit: SerializedHabit = {
+      id: tempId,
+      identityId: targetIdId,
+      title,
+      gatewayVersion: micro,
+      defaultPhase: newHabitStage,
+      anchorHabitId: anchorId,
+      reminderTime: reminder,
+      lastCompletedDate: null,
+      temptationBundleUrl: null,
+      temptationLabel: null,
+      currentStreak: 0,
+      missedYesterday: false,
+      isReboundPriority: false,
+      downscaledDaysRemaining: 0,
+      identityTitle: targetIdentity?.title || 'Personal Master',
+      nextStackedHabitTitle: null,
+      nextStackedHabitId: null,
+    };
+
+    setHabits((prev) => [optimisticHabit, ...prev]);
+
     try {
       await createStackedHabit({
-        identityId: newHabitIdentityId || identities[0]?.id || 'preset:deep-worker',
-        title: newHabitTitle,
-        gatewayVersion: newHabitMicro,
+        identityId: targetIdId,
+        title,
+        gatewayVersion: micro,
         defaultPhase: newHabitStage,
-        anchorHabitId: newHabitAnchorId === 'NONE' ? null : newHabitAnchorId,
-        reminderTime: newHabitReminder || null,
+        anchorHabitId: anchorId,
+        reminderTime: reminder,
       });
-      setNewHabitTitle('');
-      setNewHabitMicro('');
-      setNewHabitReminder('');
-      setNewHabitAnchorId('NONE');
-      setIsCreatorOpen(false);
-      setToastMessage('New habit added to the top of your queue!');
-    } finally {
-      setIsSubmitting(false);
+    } catch (err) {
+      console.error('Failed to create habit on server:', err);
+      setToastMessage('Failed to save habit. Please check your connection.');
     }
   };
 
   const handleUpdateHabitSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingHabit) return;
-    setIsSubmitting(true);
+
+    const targetHabitId = editingHabit.id;
+    const updatedTitle = editHabitTitle.trim();
+    const updatedMicro = editHabitMicro.trim();
+    const updatedStage = editHabitStage;
+    const updatedAnchorId = editHabitAnchorId === 'NONE' ? null : editHabitAnchorId;
+    const updatedReminder = editHabitReminder || null;
+    const targetIdId = editHabitIdentityId;
+    const targetIdentity = identities.find((i) => i.id === targetIdId);
+
+    // 0ms Instant Response: Close modal immediately
+    setEditingHabit(null);
+    setToastMessage('Habit updated!');
+
+    setHabits((prev) =>
+      prev.map((h) => {
+        if (h.id !== targetHabitId) return h;
+        return {
+          ...h,
+          title: updatedTitle,
+          gatewayVersion: updatedMicro,
+          defaultPhase: updatedStage,
+          anchorHabitId: updatedAnchorId,
+          reminderTime: updatedReminder,
+          identityId: targetIdId,
+          identityTitle: targetIdentity?.title || h.identityTitle,
+        };
+      })
+    );
+
     try {
       await updateStackedHabit({
-        id: editingHabit.id,
-        identityId: editHabitIdentityId,
-        title: editHabitTitle,
-        gatewayVersion: editHabitMicro,
-        defaultPhase: editHabitStage,
-        anchorHabitId: editHabitAnchorId === 'NONE' ? null : editHabitAnchorId,
-        reminderTime: editHabitReminder || null,
+        id: targetHabitId,
+        identityId: targetIdId,
+        title: updatedTitle,
+        gatewayVersion: updatedMicro,
+        defaultPhase: updatedStage,
+        anchorHabitId: updatedAnchorId,
+        reminderTime: updatedReminder,
       });
-      setEditingHabit(null);
-      setToastMessage('Habit updated!');
-    } finally {
-      setIsSubmitting(false);
+    } catch (err) {
+      console.error('Failed to update habit on server:', err);
+      setToastMessage('Failed to update habit on server.');
     }
   };
 
   const handleDeleteHabit = async () => {
     if (!editingHabit) return;
-    setIsSubmitting(true);
+    const targetId = editingHabit.id;
+
+    // 0ms Instant Response: Close modal immediately
+    setEditingHabit(null);
+    setToastMessage('Habit removed.');
+
+    setHabits((prev) => prev.filter((h) => h.id !== targetId));
+
     try {
-      await deleteStackedHabit(editingHabit.id);
-      setEditingHabit(null);
-      setToastMessage('Habit removed.');
-    } finally {
-      setIsSubmitting(false);
+      await deleteStackedHabit(targetId);
+    } catch (err) {
+      console.error('Failed to delete habit on server:', err);
     }
   };
 

@@ -57,7 +57,15 @@ export default function ProUpgradeCard({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Detect Google Play Billing support via Native Android Bridge
-  const [isPlayBillingAvailable, setIsPlayBillingAvailable] = useState(false);
+  const [isPlayBillingAvailable, setIsPlayBillingAvailable] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const bridge = (window as unknown as {
+      ForgeAndroidBridge?: {
+        isGooglePlayBillingSupported?: () => boolean;
+      };
+    }).ForgeAndroidBridge;
+    return !!bridge?.isGooglePlayBillingSupported?.();
+  });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -69,10 +77,6 @@ export default function ProUpgradeCard({
         restoreGooglePlayPurchases?: () => void;
       };
     }).ForgeAndroidBridge;
-
-    if (bridge?.isGooglePlayBillingSupported?.()) {
-      setIsPlayBillingAvailable(true);
-    }
 
     // Google Play Billing native callbacks
     const win = window as unknown as {
