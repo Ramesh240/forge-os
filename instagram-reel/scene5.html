@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scene 5 - Outro & CTA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 40%, #0c162d 0%, #050a17 65%, #02040a 100%);
+      font-family: 'Outfit', sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 60px;
+      position: relative;
+    }
+
+    /* Ambient lighting */
+    .glow-cyan {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .glow-indigo {
+      position: absolute;
+      bottom: 25%;
+      left: 50%;
+      transform: translate(-50%, 50%);
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+
+    /* Logo Box */
+    .hero-logo-box {
+      position: relative;
+      margin-bottom: 48px;
+    }
+    .hero-logo {
+      width: 220px;
+      height: 220px;
+      border-radius: 50px;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 0 80px rgba(56, 189, 248, 0.5), 0 30px 60px rgba(0, 0, 0, 0.8);
+    }
+    .pulsing-ring {
+      position: absolute;
+      inset: -30px;
+      border-radius: 65px;
+      border: 2px solid rgba(56, 189, 248, 0.5);
+      pointer-events: none;
+    }
+
+    /* Main brand */
+    .brand-title {
+      font-size: 110px;
+      font-weight: 900;
+      letter-spacing: -2px;
+      line-height: 1;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #ffffff 30%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+      text-shadow: 0 0 40px rgba(56, 189, 248, 0.3);
+    }
+    .brand-tagline {
+      font-size: 36px;
+      color: #94a3b8;
+      font-weight: 600;
+      text-align: center;
+      max-width: 800px;
+      line-height: 1.35;
+      margin-bottom: 60px;
+    }
+
+    /* Feature Pills */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+      margin-bottom: 70px;
+    }
+    .f-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 22px 28px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      backdrop-filter: blur(16px);
+    }
+    .f-pill span {
+      color: #38bdf8;
+    }
+
+    /* Badges */
+    .store-badges {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 60px;
+    }
+    .store-card {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 20px 36px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      backdrop-filter: blur(20px);
+    }
+    .store-icon {
+      font-size: 38px;
+    }
+    .store-label {
+      font-size: 18px;
+      color: #94a3b8;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .store-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    /* Big CTA Button */
+    .cta-btn {
+      width: 100%;
+      max-width: 860px;
+      padding: 34px 40px;
+      background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 50%, #38bdf8 100%);
+      border-radius: 999px;
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #030712;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      box-shadow: 0 0 50px rgba(56, 189, 248, 0.6), 0 20px 40px rgba(0, 0, 0, 0.6);
+      position: relative;
+    }
+    .cta-ring {
+      position: absolute;
+      inset: -12px;
+      border-radius: 999px;
+      border: 2px dashed rgba(56, 189, 248, 0.6);
+      pointer-events: none;
+    }
+
+    .cta-sub {
+      margin-top: 32px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      color: #64748b;
+      letter-spacing: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-cyan" id="glowCyan"></div>
+  <div class="glow-indigo"></div>
+
+  <div class="hero-logo-box" id="logoBox">
+    <img src="assets/logo.png" class="hero-logo" alt="ForgeOS">
+    <div class="pulsing-ring" id="pulseRing"></div>
+  </div>
+
+  <div class="brand-title" id="brandTitle">FORGEOS</div>
+  <div class="brand-tagline" id="tagline">Upgrade Your Human Operating System.</div>
+
+  <div class="feature-grid" id="featureGrid">
+    <div class="f-pill"><span>⚡</span> Identity Vectors</div>
+    <div class="f-pill"><span>⏱️</span> 2-Minute Gateway</div>
+    <div class="f-pill"><span>📊</span> Continuity Grid</div>
+    <div class="f-pill"><span>🛡️</span> Rebound Priority</div>
+  </div>
+
+  <div class="store-badges" id="storeBadges">
+    <div class="store-card">
+      <div class="store-icon">🤖</div>
+      <div>
+        <div class="store-label">AVAILABLE ON</div>
+        <div class="store-title">Google Play</div>
+      </div>
+    </div>
+    <div class="store-card">
+      <div class="store-icon">⚡</div>
+      <div>
+        <div class="store-label">ACCESS ON</div>
+        <div class="store-title">Web App</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-btn" id="ctaBtn">
+    <span>INSTALL TODAY • LINK IN BIO</span>
+    <span>➔</span>
+    <div class="cta-ring" id="ctaRing"></div>
+  </div>
+
+  <div class="cta-sub" id="ctaSub">forgeos.app • com.forgeos.mastery</div>
+
+  <script type="module">
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+
+    const logoBox = document.getElementById('logoBox');
+    const pulseRing = document.getElementById('pulseRing');
+    const brandTitle = document.getElementById('brandTitle');
+    const tagline = document.getElementById('tagline');
+    const featureGrid = document.getElementById('featureGrid');
+    const storeBadges = document.getElementById('storeBadges');
+    const ctaBtn = document.getElementById('ctaBtn');
+    const ctaRing = document.getElementById('ctaRing');
+    const ctaSub = document.getElementById('ctaSub');
+
+    window.film = {
+      duration: 3.5,
+      ready: document.fonts.ready,
+      frame(t) {
+        // Logo & title visible immediately with punchy scale-in
+        const inProg = easeOutCubic(clamp(t / 0.4, 0, 1));
+        logoBox.style.opacity = '1';
+        logoBox.style.transform = `scale(${1.08 - 0.08 * inProg})`;
+        brandTitle.style.opacity = '1';
+        tagline.style.opacity = '1';
+
+        // Grid entrance (0.1s -> 0.4s)
+        const gridProg = easeOutCubic(clamp((t - 0.1) / 0.35, 0, 1));
+        featureGrid.style.opacity = '1';
+        featureGrid.style.transform = `translateY(${(1 - gridProg) * 20}px)`;
+
+        // Badges entrance (0.25s -> 0.55s)
+        const badgeProg = easeOutCubic(clamp((t - 0.25) / 0.35, 0, 1));
+        storeBadges.style.opacity = '1';
+        storeBadges.style.transform = `translateY(${(1 - badgeProg) * 20}px)`;
+
+        // CTA entrance (0.4s -> 0.7s)
+        const ctaProg = easeOutCubic(clamp((t - 0.4) / 0.35, 0, 1));
+        ctaBtn.style.opacity = '1';
+        ctaBtn.style.transform = `scale(${0.95 + 0.05 * ctaProg})`;
+        ctaSub.style.opacity = '1';
+
+        // Micro motion
+        const pulse = 1 + 0.06 * Math.sin(t * 4);
+        pulseRing.style.transform = `scale(${pulse})`;
+        ctaRing.style.transform = `rotate(${t * 30}deg)`;
+      }
+    };
+  </script>
+</body>
+</html>

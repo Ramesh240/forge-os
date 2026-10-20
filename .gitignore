@@ -57,5 +57,7 @@ android/.idea/
 android/**/*.iml
 android/captures/
 android/.cxx/
-android/wrapper/
+# openfilm temporary caches
+**/.film/
+
 

@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scene 3 - The 2-Minute Gateway Rule (Widescreen 16:9)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: radial-gradient(circle at 55% 45%, #180d24 0%, #08040f 65%, #030206 100%);
+      font-family: 'Outfit', sans-serif;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 120px;
+      position: relative;
+    }
+
+    /* Ambient glow */
+    .glow-amber {
+      position: absolute;
+      top: 25%;
+      right: 25%;
+      width: 750px;
+      height: 750px;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.16) 0%, transparent 70%);
+      filter: blur(90px);
+      pointer-events: none;
+    }
+
+    /* Left Column */
+    .left-col {
+      width: 860px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .section-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 24px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      letter-spacing: 3px;
+      color: #fbbf24;
+      text-transform: uppercase;
+      width: fit-content;
+      margin-bottom: 28px;
+    }
+
+    .header-title {
+      font-size: 80px;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
+    }
+    .header-title span {
+      background: linear-gradient(135deg, #fbbf24, #f97316);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: block;
+    }
+
+    .header-sub {
+      font-size: 26px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 44px;
+    }
+
+    .state-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      padding: 24px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .sb-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      color: #94a3b8;
+    }
+    .state-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 22px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .badge-friction {
+      background: rgba(239, 68, 68, 0.15);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.35);
+    }
+    .badge-flow {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Right Column: Hero Timer & Action Card */
+    .right-col {
+      width: 760px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 36px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .timer-container {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .timer-svg {
+      position: absolute;
+      inset: 0;
+      transform: rotate(-90deg);
+    }
+    .ring-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 22;
+    }
+    .ring-progress {
+      fill: none;
+      stroke: url(#timerGrad);
+      stroke-width: 22;
+      stroke-linecap: round;
+      stroke-dasharray: 1130; /* 2 * PI * 180 */
+      stroke-dashoffset: 0;
+      filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.7));
+    }
+    .timer-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      z-index: 10;
+    }
+    .time-digits {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 78px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1;
+      color: #ffffff;
+      text-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+    }
+    .time-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      letter-spacing: 3px;
+      color: #f59e0b;
+      margin-top: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .gw-card {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 28px;
+      padding: 32px;
+      backdrop-filter: blur(20px);
+    }
+    .gw-target {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      color: #94a3b8;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+    .gw-title {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 14px;
+    }
+    .gw-micro {
+      font-size: 22px;
+      color: #fbbf24;
+      background: rgba(245, 158, 11, 0.1);
+      border-left: 4px solid #fbbf24;
+      padding: 12px 20px;
+      border-radius: 0 14px 14px 0;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-amber"></div>
+
+  <!-- Left Column -->
+  <div class="left-col">
+    <div class="section-pill">FRICTION ELIMINATOR // THE 2-MINUTE RULE</div>
+    <h1 class="header-title">
+      CRUSH INITIAL<br>
+      <span>RESISTANCE.</span>
+    </h1>
+    <p class="header-sub">
+      The hardest part of any habit is the first 120 seconds. ForgeOS gives every habit a gateway version to break inertia and let flow take over naturally.
+    </p>
+
+    <div class="state-box">
+      <div class="sb-label">COGNITIVE RESISTANCE:</div>
+      <div class="state-badge badge-friction" id="stateBadge">
+        <span>⚠️</span> RESISTANCE ACTIVE
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="right-col">
+    <div class="timer-container" id="timerBox">
+      <svg class="timer-svg" width="400" height="400" viewBox="0 0 400 400">
+        <defs>
+          <linearGradient id="timerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fbbf24" />
+            <stop offset="100%" stop-color="#f97316" />
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="200" cy="200" r="180" />
+        <circle class="ring-progress" id="ringProgress" cx="200" cy="200" r="180" />
+      </svg>
+      <div class="timer-center">
+        <div class="time-digits" id="timeDigits">02:00</div>
+        <div class="time-label" id="timeLabel">GATEWAY TIMER</div>
+      </div>
+    </div>
+
+    <div class="gw-card">
+      <div class="gw-target">TARGET BEHAVIOR</div>
+      <div class="gw-title">Deep Engineering & Code Craft</div>
+      <div class="gw-micro">⚡ Gateway: "Just open your editor and write 1 line."</div>
+    </div>
+  </div>
+
+  <script type="module">
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+
+    const ringProgress = document.getElementById('ringProgress');
+    const timeDigits = document.getElementById('timeDigits');
+    const timeLabel = document.getElementById('timeLabel');
+    const stateBadge = document.getElementById('stateBadge');
+    const timerBox = document.getElementById('timerBox');
+
+    const circumference = 2 * Math.PI * 180; // ~1130.9
+
+    window.film = {
+      duration: 4.0,
+      ready: document.fonts.ready,
+      frame(t) {
+        // Immediate visual presence on cut
+        timerBox.style.opacity = '1';
+
+        // Countdown simulation (0.1s -> 2.6s)
+        const timerActiveProg = clamp((t - 0.1) / 2.5, 0, 1);
+        const secondsLeft = Math.max(0, Math.floor(120 * (1 - timerActiveProg)));
+
+        ringProgress.style.strokeDashoffset = circumference * (1 - timerActiveProg);
+
+        const m = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
+        const s = (secondsLeft % 60).toString().padStart(2, '0');
+
+        if (timerActiveProg < 1.0) {
+          timeDigits.textContent = `${m}:${s}`;
+          timeDigits.style.color = '#ffffff';
+          timeLabel.textContent = 'GATEWAY COUNTDOWN';
+          stateBadge.className = 'state-badge badge-friction';
+          stateBadge.innerHTML = '<span>⚠️</span> RESISTANCE ACTIVE';
+        } else {
+          timeDigits.textContent = 'FLOW';
+          timeDigits.style.color = '#34d399';
+          timeLabel.textContent = 'RESISTANCE CRUSHED';
+          stateBadge.className = 'state-badge badge-flow';
+          stateBadge.innerHTML = '<span>⚡</span> FLOW STATE UNLOCKED';
+        }
+      }
+    };
+  </script>
+</body>
+</html>

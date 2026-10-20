@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scene 2 - Identity Vectors (Widescreen 16:9)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 40%, #0a1324 0%, #050813 65%, #020408 100%);
+      font-family: 'Outfit', sans-serif;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 120px;
+      position: relative;
+    }
+
+    /* Ambient glows */
+    .glow-cyan {
+      position: absolute;
+      top: 15%;
+      left: 15%;
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+      filter: blur(90px);
+      pointer-events: none;
+    }
+    .glow-violet {
+      position: absolute;
+      bottom: 10%;
+      right: 20%;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.18) 0%, transparent 70%);
+      filter: blur(90px);
+      pointer-events: none;
+    }
+
+    /* Left Column */
+    .left-col {
+      width: 840px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .section-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 24px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      letter-spacing: 3px;
+      color: #38bdf8;
+      text-transform: uppercase;
+      width: fit-content;
+      margin-bottom: 28px;
+    }
+
+    .header-title {
+      font-size: 80px;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
+    }
+    .header-title span {
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: block;
+    }
+
+    .header-sub {
+      font-size: 26px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 44px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      width: 100%;
+    }
+    .metric-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 20px 24px;
+    }
+    .mc-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      font-weight: 800;
+      color: #38bdf8;
+      margin-bottom: 4px;
+    }
+    .mc-desc {
+      font-size: 16px;
+      color: #94a3b8;
+    }
+
+    /* Right Column: Identity Cards */
+    .right-col {
+      width: 760px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .id-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 28px;
+      padding: 28px 36px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    .card-glow-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 6px;
+      height: 100%;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .card-left {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .icon-box {
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+    .id-name {
+      font-size: 28px;
+      font-weight: 800;
+    }
+    .id-habit {
+      font-size: 18px;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    .level-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 6px 16px;
+      border-radius: 999px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      width: 0%;
+    }
+
+    .card-foot {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
+      color: #64748b;
+    }
+    .xp-gain {
+      font-weight: 700;
+    }
+
+    /* Colors */
+    .card-systems .card-glow-bar { background: #38bdf8; }
+    .card-systems .icon-box { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .card-systems .level-badge { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+    .card-systems .progress-fill { background: linear-gradient(90deg, #0284c7, #38bdf8); box-shadow: 0 0 12px #38bdf8; }
+    .card-systems .xp-gain { color: #38bdf8; }
+
+    .card-focus .card-glow-bar { background: #a855f7; }
+    .card-focus .icon-box { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); }
+    .card-focus .level-badge { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+    .card-focus .progress-fill { background: linear-gradient(90deg, #7e22ce, #c084fc); box-shadow: 0 0 12px #c084fc; }
+    .card-focus .xp-gain { color: #c084fc; }
+
+    .card-vitality .card-glow-bar { background: #10b981; }
+    .card-vitality .icon-box { background: rgba(168, 85, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .card-vitality .level-badge { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+    .card-vitality .progress-fill { background: linear-gradient(90deg, #059669, #34d399); box-shadow: 0 0 12px #34d399; }
+    .card-vitality .xp-gain { color: #34d399; }
+  </style>
+</head>
+<body>
+  <div class="glow-cyan"></div>
+  <div class="glow-violet"></div>
+
+  <!-- Left Column -->
+  <div class="left-col">
+    <div class="section-pill">CORE PARADIGM // IDENTITY VECTORS</div>
+    <h1 class="header-title">
+      VOTE FOR YOUR<br>
+      <span>DESIRED SELF.</span>
+    </h1>
+    <p class="header-sub">
+      Forget chores and checklists that lead nowhere. ForgeOS anchors habits directly to your chosen identities. Every execution casts a vote, levels up attributes, and earns tangible skill progression.
+    </p>
+
+    <div class="metric-grid">
+      <div class="metric-card">
+        <div class="mc-num">+270 XP</div>
+        <div class="mc-desc">Skill points credited per habit execution</div>
+      </div>
+      <div class="metric-card">
+        <div class="mc-num">100% ATOMIC</div>
+        <div class="mc-desc">Continuous feedback reinforces identity</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="right-col">
+    <div class="id-card card-systems" id="card1">
+      <div class="card-glow-bar"></div>
+      <div class="card-top">
+        <div class="card-left">
+          <div class="icon-box">⚡</div>
+          <div>
+            <div class="id-name">Systems Craftsman</div>
+            <div class="id-habit">Refactor 1 Core Module Daily</div>
+          </div>
+        </div>
+        <div class="level-badge">LVL 14</div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="fill1"></div>
+      </div>
+      <div class="card-foot">
+        <span>8,420 / 9,000 XP</span>
+        <span class="xp-gain">+270 XP CAST</span>
+      </div>
+    </div>
+
+    <div class="id-card card-focus" id="card2">
+      <div class="card-glow-bar"></div>
+      <div class="card-top">
+        <div class="card-left">
+          <div class="icon-box">🧠</div>
+          <div>
+            <div class="id-name">Deep Worker</div>
+            <div class="id-habit">90-Minute Focus Session</div>
+          </div>
+        </div>
+        <div class="level-badge">LVL 9</div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="fill2"></div>
+      </div>
+      <div class="card-foot">
+        <span>4,150 / 5,000 XP</span>
+        <span class="xp-gain">+180 XP CAST</span>
+      </div>
+    </div>
+
+    <div class="id-card card-vitality" id="card3">
+      <div class="card-glow-bar"></div>
+      <div class="card-top">
+        <div class="card-left">
+          <div class="icon-box">🧬</div>
+          <div>
+            <div class="id-name">Vitality Athlete</div>
+            <div class="id-habit">5km Morning Zone-2 Run</div>
+          </div>
+        </div>
+        <div class="level-badge">LVL 12</div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="fill3"></div>
+      </div>
+      <div class="card-foot">
+        <span>6,200 / 7,500 XP</span>
+        <span class="xp-gain">+320 XP CAST</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+
+    const card1 = document.getElementById('card1');
+    const card2 = document.getElementById('card2');
+    const card3 = document.getElementById('card3');
+    const fill1 = document.getElementById('fill1');
+    const fill2 = document.getElementById('fill2');
+    const fill3 = document.getElementById('fill3');
+
+    window.film = {
+      duration: 4.0,
+      ready: document.fonts.ready,
+      frame(t) {
+        // Immediate visual presence on cut
+        card1.style.opacity = '1';
+        card2.style.opacity = '1';
+        card3.style.opacity = '1';
+
+        const c1Prog = easeOutCubic(clamp(t / 0.35, 0, 1));
+        card1.style.transform = `translateY(${(1 - c1Prog) * 20}px)`;
+
+        const c2Prog = easeOutCubic(clamp((t - 0.15) / 0.35, 0, 1));
+        card2.style.transform = `translateY(${(1 - c2Prog) * 20}px)`;
+
+        const c3Prog = easeOutCubic(clamp((t - 0.3) / 0.35, 0, 1));
+        card3.style.transform = `translateY(${(1 - c3Prog) * 20}px)`;
+
+        // Progress bar fills
+        const barProg = clamp((t - 0.4) / 2.2, 0, 1);
+        const barEase = easeOutCubic(barProg);
+
+        fill1.style.width = `${55 + 38 * barEase}%`;
+        fill2.style.width = `${40 + 43 * barEase}%`;
+        fill3.style.width = `${50 + 33 * barEase}%`;
+      }
+    };
+  </script>
+</body>
+</html>

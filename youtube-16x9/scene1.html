@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scene 1 - The Hook (Widescreen 16:9)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: radial-gradient(circle at 45% 45%, #0b1120 0%, #05070d 65%, #020306 100%);
+      font-family: 'Outfit', sans-serif;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 120px;
+      position: relative;
+    }
+
+    /* Cyber grid background */
+    .grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+      background-size: 80px 80px;
+      perspective: 900px;
+      transform: rotateX(15deg) scale(1.1);
+      transform-origin: center 80%;
+      pointer-events: none;
+    }
+
+    /* Ambient glows */
+    .glow-cyan {
+      position: absolute;
+      top: 20%;
+      left: 20%;
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%);
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .glow-purple {
+      position: absolute;
+      bottom: 10%;
+      right: 15%;
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, transparent 70%);
+      filter: blur(90px);
+      pointer-events: none;
+    }
+
+    /* Left Content Column */
+    .left-col {
+      width: 1020px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .top-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 24px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      backdrop-filter: blur(16px);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      width: fit-content;
+      margin-bottom: 32px;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981;
+    }
+
+    .phase-box {
+      position: relative;
+      min-height: 480px;
+    }
+
+    /* Phase 1: Problem */
+    .phase-1 {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+    }
+    .sub-eyebrow-red {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 5px;
+      color: #f43f5e;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .hero-title-red {
+      font-size: 84px;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      text-transform: uppercase;
+      color: #ffffff;
+      margin-bottom: 24px;
+    }
+    .hero-title-red span {
+      background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: block;
+      filter: drop-shadow(0 0 30px rgba(225, 29, 72, 0.4));
+    }
+
+    /* Phase 2: Solution */
+    .phase-2 {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+    }
+    .sub-eyebrow-cyan {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 5px;
+      color: #38bdf8;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .hero-title-cyan {
+      font-size: 84px;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      text-transform: uppercase;
+      color: #ffffff;
+      margin-bottom: 24px;
+    }
+    .hero-title-cyan span {
+      background: linear-gradient(135deg, #38bdf8 0%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: block;
+      filter: drop-shadow(0 0 30px rgba(56, 189, 248, 0.4));
+    }
+
+    .tagline {
+      font-size: 28px;
+      color: #94a3b8;
+      max-width: 860px;
+      line-height: 1.45;
+      margin-bottom: 36px;
+    }
+
+    .tag-row {
+      display: flex;
+      gap: 16px;
+    }
+    .t-tag {
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      color: #cbd5e1;
+    }
+
+    /* Right Column: Phone Mockup */
+    .right-col {
+      width: 520px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .phone-mockup {
+      width: 440px;
+      height: 820px;
+      background: #080c16;
+      border-radius: 60px;
+      border: 4px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 
+        0 0 60px rgba(56, 189, 248, 0.35),
+        0 40px 80px rgba(0, 0, 0, 0.8);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 40px 32px;
+    }
+    .phone-notch {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 28px;
+      background: #000;
+      border-radius: 999px;
+    }
+
+    .phone-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 24px;
+      margin-bottom: 36px;
+    }
+    .phone-logo {
+      width: 60px;
+      height: 60px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .phone-app-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .phone-app-sub {
+      font-size: 15px;
+      color: #38bdf8;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .phone-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 28px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .pc-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .pc-title {
+      font-size: 22px;
+      font-weight: 800;
+    }
+    .pc-lvl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.15);
+      padding: 6px 14px;
+      border-radius: 999px;
+    }
+    .pc-bar-bg {
+      width: 100%;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .pc-bar-fill {
+      height: 100%;
+      width: 78%;
+      background: linear-gradient(90deg, #0284c7, #38bdf8);
+      border-radius: 999px;
+      box-shadow: 0 0 14px #38bdf8;
+    }
+    .pc-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .phone-streak-badge {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(56, 189, 248, 0.15));
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: 24px;
+      padding: 20px;
+    }
+    .ps-fire {
+      font-size: 36px;
+    }
+    .ps-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      font-weight: 900;
+    }
+    .ps-label {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="glow-cyan"></div>
+  <div class="glow-purple"></div>
+
+  <!-- Left Column -->
+  <div class="left-col">
+    <div class="top-pill">
+      <div class="status-dot"></div>
+      <span>FORGEOS // IDENTITY ARCHITECTURE v1.0.7</span>
+    </div>
+
+    <div class="phase-box">
+      <!-- Phase 1: Problem -->
+      <div class="phase-1" id="phase1">
+        <div class="sub-eyebrow-red">THE OLD WAY IS BROKEN</div>
+        <div class="hero-title-red">
+          STOP TRACKING<br>
+          <span>RANDOM CHORES.</span>
+        </div>
+        <p class="tagline">Checklists don't build character. They build guilt and cognitive fatigue.</p>
+        <div class="tag-row">
+          <div class="t-tag">❌ To-Do Lists</div>
+          <div class="t-tag">❌ Broken Streaks</div>
+          <div class="t-tag">❌ Zero Identity</div>
+        </div>
+      </div>
+
+      <!-- Phase 2: Solution -->
+      <div class="phase-2" id="phase2">
+        <div class="sub-eyebrow-cyan">A NEW ARCHITECTURE</div>
+        <div class="hero-title-cyan">
+          START FORGING<br>
+          <span>YOUR IDENTITY.</span>
+        </div>
+        <p class="tagline">Every deliberate action is a vote for the person you choose to become.</p>
+        <div class="tag-row">
+          <div class="t-tag">⚡ Identity Vectors</div>
+          <div class="t-tag">⏱️ 2-Min Gateway</div>
+          <div class="t-tag">🔥 Never Miss Twice</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="right-col" id="rightCol">
+    <div class="phone-mockup" id="phoneMockup">
+      <div class="phone-notch"></div>
+      
+      <div class="phone-header">
+        <img src="assets/logo.png" class="phone-logo" alt="ForgeOS">
+        <div>
+          <div class="phone-app-title">ForgeOS</div>
+          <div class="phone-app-sub">IDENTITY ENGINE</div>
+        </div>
+      </div>
+
+      <div class="phone-card">
+        <div class="pc-top">
+          <div class="pc-title">⚡ Systems Craftsman</div>
+          <div class="pc-lvl">LVL 14</div>
+        </div>
+        <div class="pc-bar-bg">
+          <div class="pc-bar-fill" id="phoneBar"></div>
+        </div>
+        <div class="pc-sub">8,420 / 9,000 XP (+270 XP)</div>
+      </div>
+
+      <div class="phone-card" style="border-color: rgba(168, 85, 247, 0.3);">
+        <div class="pc-top">
+          <div class="pc-title">🧠 Deep Worker</div>
+          <div class="pc-lvl" style="color: #c084fc; background: rgba(168, 85, 247, 0.15);">LVL 9</div>
+        </div>
+        <div class="pc-bar-bg">
+          <div class="pc-bar-fill" style="width: 65%; background: linear-gradient(90deg, #7e22ce, #c084fc); box-shadow: 0 0 14px #c084fc;"></div>
+        </div>
+        <div class="pc-sub">4,150 / 5,000 XP (+180 XP)</div>
+      </div>
+
+      <div class="phone-streak-badge">
+        <div class="ps-fire">🔥</div>
+        <div>
+          <div class="ps-num">47 DAYS</div>
+          <div class="ps-label">UNBREAKABLE CONTINUITY</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+
+    const phase1 = document.getElementById('phase1');
+    const phase2 = document.getElementById('phase2');
+    const rightCol = document.getElementById('rightCol');
+    const phoneBar = document.getElementById('phoneBar');
+
+    window.film = {
+      duration: 4.0,
+      ready: document.fonts.ready,
+      frame(t) {
+        // Phone mockup gentle entrance and float
+        const phoneProg = easeOutCubic(clamp(t / 0.6, 0, 1));
+        const floatY = Math.sin(t * 2) * 8;
+        rightCol.style.opacity = '1';
+        rightCol.style.transform = `translateY(${floatY}px) scale(${0.96 + 0.04 * phoneProg})`;
+
+        // Live XP fill in the phone card
+        const fillProg = clamp((t - 0.5) / 2.5, 0, 1);
+        phoneBar.style.width = `${60 + 32 * easeOutCubic(fillProg)}%`;
+
+        // Cross-fade: Phase 1 (0 -> 1.9s) to Phase 2 (1.9s -> 4.0s)
+        if (t < 1.9) {
+          const p1Out = clamp((1.9 - t) / 0.25, 0, 1);
+          phase1.style.opacity = p1Out;
+          phase1.style.transform = `scale(${1 - (1 - p1Out) * 0.05})`;
+          phase2.style.opacity = 0;
+          phase2.style.pointerEvents = 'none';
+        } else {
+          phase1.style.opacity = 0;
+          phase1.style.pointerEvents = 'none';
+          const p2Prog = easeOutCubic(clamp((t - 1.9) / 0.35, 0, 1));
+          phase2.style.opacity = p2Prog;
+          phase2.style.transform = `scale(${0.95 + 0.05 * p2Prog})`;
+        }
+      }
+    };
+  </script>
+</body>
+</html>

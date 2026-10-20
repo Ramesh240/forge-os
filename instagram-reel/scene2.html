@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scene 2 - Identity Vectors</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 30%, #0c1427 0%, #060913 70%, #030408 100%);
+      font-family: 'Outfit', sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 160px 60px 100px;
+      position: relative;
+    }
+
+    /* Ambient lighting */
+    .glow-cyan {
+      position: absolute;
+      top: 15%;
+      right: -100px;
+      width: 550px;
+      height: 550px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.2) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(60px);
+      pointer-events: none;
+    }
+    .glow-violet {
+      position: absolute;
+      bottom: 20%;
+      left: -100px;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(168, 85, 247, 0.18) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(60px);
+      pointer-events: none;
+    }
+
+    /* Top pill badge */
+    .section-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 24px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      letter-spacing: 3px;
+      color: #38bdf8;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    /* Header text */
+    .header-title {
+      font-size: 76px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 18px;
+    }
+    .header-title span {
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header-sub {
+      font-size: 28px;
+      color: #94a3b8;
+      text-align: center;
+      max-width: 860px;
+      margin-bottom: 70px;
+      line-height: 1.4;
+    }
+
+    /* Identity cards container */
+    .cards-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+      z-index: 10;
+    }
+
+    /* Card styling */
+    .id-card {
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 36px;
+      padding: 40px;
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    .card-glow-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 6px;
+      height: 100%;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .icon-box {
+      width: 76px;
+      height: 76px;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+    }
+    .identity-name {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .identity-habit {
+      font-size: 24px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .level-badge {
+      font-family: 'JetBrains Mono', monospace;
+      padding: 10px 22px;
+      border-radius: 999px;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    /* Progress bar */
+    .progress-track {
+      width: 100%;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      width: 0%;
+      box-shadow: 0 0 20px currentColor;
+    }
+
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      color: #64748b;
+    }
+    .xp-gain {
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Individual card themes */
+    .card-systems .card-glow-bar { background: #38bdf8; box-shadow: 0 0 16px #38bdf8; }
+    .card-systems .icon-box { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .card-systems .level-badge { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .card-systems .progress-fill { background: linear-gradient(90deg, #0284c7, #38bdf8); color: #38bdf8; }
+    .card-systems .xp-gain { color: #38bdf8; }
+
+    .card-focus .card-glow-bar { background: #a855f7; box-shadow: 0 0 16px #a855f7; }
+    .card-focus .icon-box { background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); }
+    .card-focus .level-badge { background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .card-focus .progress-fill { background: linear-gradient(90deg, #7e22ce, #c084fc); color: #c084fc; }
+    .card-focus .xp-gain { color: #c084fc; }
+
+    .card-vitality .card-glow-bar { background: #10b981; box-shadow: 0 0 16px #10b981; }
+    .card-vitality .icon-box { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .card-vitality .level-badge { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .card-vitality .progress-fill { background: linear-gradient(90deg, #059669, #34d399); color: #34d399; }
+    .card-vitality .xp-gain { color: #34d399; }
+
+    /* Bottom footer callout */
+    .bottom-callout {
+      margin-top: 60px;
+      font-size: 26px;
+      font-weight: 700;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255,255,255,0.05);
+      padding: 16px 36px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-cyan"></div>
+  <div class="glow-violet"></div>
+
+  <div class="section-pill" id="pill">CORE PARADIGM // IDENTITY VECTORS</div>
+
+  <h1 class="header-title" id="title">
+    VOTE FOR YOUR<br>
+    <span>DESIRED SELF.</span>
+  </h1>
+  <p class="header-sub" id="sub">Stop tracking random chores. Every habit is tied to an identity vector that levels up with every execution.</p>
+
+  <div class="cards-container">
+    <!-- Card 1: Systems Craftsman -->
+    <div class="id-card card-systems" id="card1">
+      <div class="card-glow-bar"></div>
+      <div class="card-top">
+        <div class="card-left">
+          <div class="icon-box">⚡</div>
+          <div>
+            <div class="identity-name">Systems Craftsman</div>
+            <div class="identity-habit">Refactor 1 Core Module Daily</div>
+          </div>
+        </div>
+        <div class="level-badge">LVL 14</div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="fill1"></div>
+      </div>
+      <div class="card-footer">
+        <span id="xp1">8,420 / 9,000 XP</span>
+        <span class="xp-gain">+270 XP CAST</span>
+      </div>
+    </div>
+
+    <!-- Card 2: Deep Worker -->
+    <div class="id-card card-focus" id="card2">
+      <div class="card-glow-bar"></div>
+      <div class="card-top">
+        <div class="card-left">
+          <div class="icon-box">🧠</div>
+          <div>
+            <div class="identity-name">Deep Worker</div>
+            <div class="identity-habit">90-Minute Unbroken Focus Block</div>
+          </div>
+        </div>
+        <div class="level-badge">LVL 9</div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="fill2"></div>
+      </div>
+      <div class="card-footer">
+        <span id="xp2">4,150 / 5,000 XP</span>
+        <span class="xp-gain">+180 XP CAST</span>
+      </div>
+    </div>
+
+    <!-- Card 3: Vitality Athlete -->
+    <div class="id-card card-vitality" id="card3">
+      <div class="card-glow-bar"></div>
+      <div class="card-top">
+        <div class="card-left">
+          <div class="icon-box">🧬</div>
+          <div>
+            <div class="identity-name">Vitality Athlete</div>
+            <div class="identity-habit">5km Morning Zone-2 Run</div>
+          </div>
+        </div>
+        <div class="level-badge">LVL 12</div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="fill3"></div>
+      </div>
+      <div class="card-footer">
+        <span id="xp3">6,200 / 7,500 XP</span>
+        <span class="xp-gain">+320 XP CAST</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-callout" id="callout">
+    <span>🏆</span> EARN SKILL POINTS WITH EVERY REP
+  </div>
+
+  <script type="module">
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+    function easeOutBack(x) {
+      const c1 = 1.70158;
+      const c3 = c1 + 1;
+      return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+    }
+
+    const pill = document.getElementById('pill');
+    const title = document.getElementById('title');
+    const sub = document.getElementById('sub');
+    const card1 = document.getElementById('card1');
+    const card2 = document.getElementById('card2');
+    const card3 = document.getElementById('card3');
+    const fill1 = document.getElementById('fill1');
+    const fill2 = document.getElementById('fill2');
+    const fill3 = document.getElementById('fill3');
+    const callout = document.getElementById('callout');
+
+    window.film = {
+      duration: 4.0,
+      ready: document.fonts.ready,
+      frame(t) {
+        // Instant visual presence with subtle punch
+        pill.style.opacity = '1';
+        title.style.opacity = '1';
+        sub.style.opacity = '1';
+
+        // Card 1 entrance (0s -> 0.3s)
+        const c1Prog = clamp(t / 0.35, 0, 1);
+        const c1Ease = easeOutCubic(c1Prog);
+        card1.style.opacity = '1';
+        card1.style.transform = `translateY(${(1 - c1Ease) * 30}px) scale(${0.96 + 0.04 * c1Ease})`;
+
+        // Card 2 entrance (0.2s -> 0.5s)
+        const c2Prog = clamp((t - 0.15) / 0.35, 0, 1);
+        const c2Ease = easeOutCubic(c2Prog);
+        card2.style.opacity = '1';
+        card2.style.transform = `translateY(${(1 - c2Ease) * 30}px) scale(${0.96 + 0.04 * c2Ease})`;
+
+        // Card 3 entrance (0.35s -> 0.65s)
+        const c3Prog = clamp((t - 0.3) / 0.35, 0, 1);
+        const c3Ease = easeOutCubic(c3Prog);
+        card3.style.opacity = '1';
+        card3.style.transform = `translateY(${(1 - c3Ease) * 30}px) scale(${0.96 + 0.04 * c3Ease})`;
+
+        // Progress bar animations (0.4s -> 2.6s)
+        const barProg = clamp((t - 0.4) / 1.8, 0, 1);
+        const barEase = easeOutCubic(barProg);
+
+        fill1.style.width = `${55 + 38 * barEase}%`;
+        fill2.style.width = `${40 + 43 * barEase}%`;
+        fill3.style.width = `${50 + 33 * barEase}%`;
+
+        // Callout entrance (0.8s)
+        const callProg = clamp((t - 0.8) / 0.4, 0, 1);
+        callout.style.opacity = easeOutCubic(callProg);
+        callout.style.transform = `translateY(${(1 - easeOutCubic(callProg)) * 15}px)`;
+      }
+    };
+  </script>
+</body>
+</html>

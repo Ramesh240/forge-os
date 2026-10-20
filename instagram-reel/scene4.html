@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scene 4 - Continuity Grid & Rebound</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 30%, #0d1e19 0%, #050e0b 65%, #020605 100%);
+      font-family: 'Outfit', sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 160px 60px 100px;
+      position: relative;
+    }
+
+    /* Ambient emerald glow */
+    .glow-emerald {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(60px);
+      pointer-events: none;
+    }
+
+    /* Top pill */
+    .section-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 24px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      letter-spacing: 3px;
+      color: #34d399;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    /* Header */
+    .header-title {
+      font-size: 76px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 18px;
+    }
+    .header-title span {
+      background: linear-gradient(135deg, #34d399, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header-sub {
+      font-size: 28px;
+      color: #94a3b8;
+      text-align: center;
+      max-width: 860px;
+      margin-bottom: 50px;
+      line-height: 1.4;
+    }
+
+    /* Streak Hero Box */
+    .streak-hero {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 36px;
+      padding: 36px 44px;
+      backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 40px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 30px rgba(16, 185, 129, 0.15);
+    }
+    .streak-left {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .flame-icon {
+      font-size: 64px;
+      filter: drop-shadow(0 0 20px #f59e0b);
+    }
+    .streak-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1;
+      color: #ffffff;
+    }
+    .streak-label {
+      font-size: 22px;
+      color: #94a3b8;
+      font-weight: 600;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+    .streak-badge {
+      font-family: 'JetBrains Mono', monospace;
+      padding: 10px 20px;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.5);
+      border-radius: 999px;
+      color: #34d399;
+      font-weight: 700;
+      font-size: 20px;
+    }
+
+    /* Continuity Heatmap Grid */
+    .grid-container {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 36px;
+      padding: 40px;
+      backdrop-filter: blur(20px);
+      margin-bottom: 40px;
+    }
+    .grid-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      color: #64748b;
+    }
+    .heatmap-cells {
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      gap: 12px;
+    }
+    .cell {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      transition: background 0.2s;
+    }
+
+    /* Rebound Priority Box */
+    .rebound-box {
+      width: 100%;
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(239, 68, 68, 0.08));
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 32px;
+      padding: 32px 36px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .rebound-icon {
+      font-size: 48px;
+    }
+    .rebound-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #fbbf24;
+      margin-bottom: 4px;
+    }
+    .rebound-desc {
+      font-size: 22px;
+      color: #cbd5e1;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-emerald"></div>
+
+  <div class="section-pill" id="pill">RESILIENCE ARCHITECTURE // NEVER MISS TWICE</div>
+
+  <h1 class="header-title" id="title">
+    UNBREAKABLE<br>
+    <span>CONTINUITY.</span>
+  </h1>
+  <p class="header-sub" id="sub">Missing one day is an accident. Missing two days is the start of a new habit. ForgeOS ensures you rebound immediately.</p>
+
+  <div class="streak-hero" id="streakHero">
+    <div class="streak-left">
+      <div class="flame-icon">🔥</div>
+      <div>
+        <div class="streak-num" id="streakNum">47 DAYS</div>
+        <div class="streak-label">ACTIVE CONTINUITY STREAK</div>
+      </div>
+    </div>
+    <div class="streak-badge">UNBREAKABLE</div>
+  </div>
+
+  <div class="grid-container" id="gridContainer">
+    <div class="grid-header">
+      <span>CONTINUITY MATRIX (98 DAYS)</span>
+      <span style="color: #34d399;">94.2% CONSISTENCY</span>
+    </div>
+    <div class="heatmap-cells" id="heatmapCells"></div>
+  </div>
+
+  <div class="rebound-box" id="reboundBox">
+    <div class="rebound-icon">⚡</div>
+    <div>
+      <div class="rebound-title">REBOUND PRIORITY ENGAGED</div>
+      <div class="rebound-desc">Missed yesterday? The system automatically surfaces and stacks this habit at the top of your morning queue.</div>
+    </div>
+  </div>
+
+  <script type="module">
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+
+    const pill = document.getElementById('pill');
+    const title = document.getElementById('title');
+    const sub = document.getElementById('sub');
+    const streakHero = document.getElementById('streakHero');
+    const streakNum = document.getElementById('streakNum');
+    const gridContainer = document.getElementById('gridContainer');
+    const heatmapCells = document.getElementById('heatmapCells');
+    const reboundBox = document.getElementById('reboundBox');
+
+    // Generate 7 rows * 14 cols = 98 cells
+    const cellElements = [];
+    const totalCells = 7 * 14;
+    for (let i = 0; i < totalCells; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      heatmapCells.appendChild(cell);
+      cellElements.push(cell);
+    }
+
+    const shades = [
+      'rgba(16, 185, 129, 0.25)',
+      'rgba(16, 185, 129, 0.5)',
+      'rgba(16, 185, 129, 0.8)',
+      '#34d399'
+    ];
+
+    window.film = {
+      duration: 3.5,
+      ready: document.fonts.ready,
+      frame(t) {
+        // Instant visual presence on scene cut
+        pill.style.opacity = '1';
+        title.style.opacity = '1';
+        sub.style.opacity = '1';
+        gridContainer.style.opacity = '1';
+        reboundBox.style.opacity = '1';
+
+        const inProg = easeOutCubic(clamp(t / 0.35, 0, 1));
+        streakHero.style.opacity = '1';
+        streakHero.style.transform = `scale(${0.95 + 0.05 * inProg})`;
+
+        // Heatmap wave animation (0.1s -> 2.2s)
+        const cellProgress = clamp((t - 0.1) / 2.1, 0, 1);
+        const litCount = Math.floor(cellProgress * totalCells);
+
+        for (let i = 0; i < totalCells; i++) {
+          if (i < litCount) {
+            const shadeIdx = (i % 4);
+            cellElements[i].style.background = shades[shadeIdx];
+            cellElements[i].style.boxShadow = i === litCount - 1 ? '0 0 12px #34d399' : 'none';
+          } else {
+            cellElements[i].style.background = 'rgba(255, 255, 255, 0.06)';
+            cellElements[i].style.boxShadow = 'none';
+          }
+        }
+
+        // Streak number count-up effect
+        const currentStreak = Math.min(47, Math.floor(10 + 37 * cellProgress));
+        streakNum.textContent = `${currentStreak} DAYS`;
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scene 1 - The Hook</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 35%, #0d1224 0%, #05070d 75%, #020307 100%);
+      font-family: 'Outfit', sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Ambient cyber grid */
+    .grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.05) 1px, transparent 1px);
+      background-size: 60px 60px;
+      perspective: 800px;
+      transform: rotateX(20deg) scale(1.1);
+      transform-origin: center 70%;
+      pointer-events: none;
+    }
+
+    /* Radial glow orbs */
+    .glow-orb-1 {
+      position: absolute;
+      top: 25%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 650px;
+      height: 650px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.28) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(50px);
+      pointer-events: none;
+    }
+    .glow-orb-2 {
+      position: absolute;
+      bottom: 20%;
+      left: 50%;
+      transform: translate(-50%, 50%);
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, transparent 70%);
+      border-radius: 50%;
+      filter: blur(50px);
+      pointer-events: none;
+    }
+
+    /* Header badge */
+    .top-badge {
+      position: absolute;
+      top: 140px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 28px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      backdrop-filter: blur(16px);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 12px #10b981;
+    }
+
+    /* Logo container positioned nicely at top */
+    .logo-container {
+      position: absolute;
+      top: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-img {
+      width: 170px;
+      height: 170px;
+      border-radius: 42px;
+      box-shadow: 0 0 60px rgba(56, 189, 248, 0.45), 0 20px 40px rgba(0,0,0,0.8);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    .logo-ring {
+      position: absolute;
+      inset: -18px;
+      border-radius: 54px;
+      border: 2px dashed rgba(56, 189, 248, 0.45);
+      pointer-events: none;
+    }
+
+    /* Typography stages */
+    .content-box {
+      position: absolute;
+      top: 500px;
+      left: 60px;
+      right: 60px;
+      bottom: 220px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      z-index: 10;
+    }
+
+    /* Phase 1: Problem */
+    .phase-1 {
+      position: absolute;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .sub-eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 6px;
+      color: #f43f5e;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .hero-title-red {
+      font-size: 92px;
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -2px;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+    .hero-title-red span {
+      background: linear-gradient(135deg, #fb7185 0%, #e11d48 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: block;
+      filter: drop-shadow(0 0 30px rgba(225, 29, 72, 0.4));
+    }
+
+    /* Phase 2: Solution */
+    .phase-2 {
+      position: absolute;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .sub-eyebrow-green {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 6px;
+      color: #38bdf8;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+    .hero-title-cyan {
+      font-size: 92px;
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -2px;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+    .hero-title-cyan span {
+      background: linear-gradient(135deg, #38bdf8 0%, #10b981 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: block;
+      filter: drop-shadow(0 0 30px rgba(56, 189, 248, 0.4));
+    }
+
+    .tagline {
+      margin-top: 48px;
+      font-size: 32px;
+      color: #94a3b8;
+      font-weight: 500;
+      max-width: 820px;
+      line-height: 1.45;
+    }
+
+    /* Feature highlights bar */
+    .feature-tags {
+      margin-top: 48px;
+      display: flex;
+      gap: 16px;
+    }
+    .f-tag {
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      color: #cbd5e1;
+    }
+
+    /* Bottom footer hint */
+    .footer-hint {
+      position: absolute;
+      bottom: 120px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      color: #64748b;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="glow-orb-1" id="orb1"></div>
+  <div class="glow-orb-2" id="orb2"></div>
+
+  <div class="top-badge" id="topBadge">
+    <div class="status-dot"></div>
+    <span>FORGEOS // IDENTITY PROTOCOL</span>
+  </div>
+
+  <div class="logo-container" id="logoBox">
+    <img src="assets/logo.png" class="logo-img" alt="ForgeOS">
+    <div class="logo-ring" id="logoRing"></div>
+  </div>
+
+  <div class="content-box">
+    <!-- Phase 1: Stop tracking chores -->
+    <div class="phase-1" id="phase1">
+      <div class="sub-eyebrow">THE OLD WAY IS BROKEN</div>
+      <div class="hero-title-red">
+        STOP TRACKING<br>
+        <span>RANDOM CHORES.</span>
+      </div>
+      <div class="tagline">Checklists don't build character. They build guilt and fatigue.</div>
+      <div class="feature-tags">
+        <div class="f-tag">❌ To-Do Lists</div>
+        <div class="f-tag">❌ Broken Streaks</div>
+        <div class="f-tag">❌ Zero Identity</div>
+      </div>
+    </div>
+
+    <!-- Phase 2: Start forging identity -->
+    <div class="phase-2" id="phase2">
+      <div class="sub-eyebrow-green">A NEW ARCHITECTURE</div>
+      <div class="hero-title-cyan">
+        START FORGING<br>
+        <span>YOUR IDENTITY.</span>
+      </div>
+      <div class="tagline">Every deliberate action is a vote for the person you choose to become.</div>
+      <div class="feature-tags">
+        <div class="f-tag">⚡ Identity Vectors</div>
+        <div class="f-tag">⏱️ 2-Min Gateway</div>
+        <div class="f-tag">🔥 Never Miss Twice</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-hint" id="footerHint">SWIPE TO EVOLVE • FORGEOS v1.0.7</div>
+
+  <script type="module">
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+
+    const phase1 = document.getElementById('phase1');
+    const phase2 = document.getElementById('phase2');
+    const logoBox = document.getElementById('logoBox');
+    const logoRing = document.getElementById('logoRing');
+    const topBadge = document.getElementById('topBadge');
+    const orb1 = document.getElementById('orb1');
+
+    window.film = {
+      duration: 3.5,
+      ready: document.fonts.ready,
+      frame(t) {
+        // Logo is visible immediately from t=0 with high impact slam
+        const logoProgress = clamp(t / 0.5, 0, 1);
+        const logoScale = 1.08 - 0.08 * easeOutCubic(logoProgress);
+        logoBox.style.transform = `scale(${logoScale})`;
+        logoBox.style.opacity = '1';
+
+        // Subtle logo ring rotation
+        logoRing.style.transform = `rotate(${t * 50}deg)`;
+
+        // Top badge visible immediately
+        topBadge.style.opacity = '1';
+
+        // Ambient orb pulse
+        const pulse = 1 + 0.08 * Math.sin(t * 3.5);
+        orb1.style.transform = `translate(-50%, -50%) scale(${pulse})`;
+
+        // Cross-fade: Phase 1 (0 -> 1.7s) to Phase 2 (1.7s -> 3.5s)
+        if (t < 1.7) {
+          const p1Out = clamp((1.7 - t) / 0.25, 0, 1);
+          phase1.style.opacity = p1Out;
+          const p1Scale = 1.0 - (1 - p1Out) * 0.05;
+          phase1.style.transform = `scale(${p1Scale})`;
+          phase2.style.opacity = 0;
+          phase2.style.pointerEvents = 'none';
+        } else {
+          phase1.style.opacity = 0;
+          phase1.style.pointerEvents = 'none';
+          const p2Progress = clamp((t - 1.7) / 0.35, 0, 1);
+          const p2In = easeOutCubic(p2Progress);
+          phase2.style.opacity = p2In;
+          phase2.style.transform = `scale(${0.94 + 0.06 * p2In})`;
+        }
+      }
+    };
+  </script>
+</body>
+</html>
