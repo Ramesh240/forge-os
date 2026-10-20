@@ -2023,8 +2023,25 @@ export default function ForgeAppShell({
       {/* IN-APP COMPACT QUICK-LAUNCH WIDGET OVERLAY                */}
       {/* ========================================================= */}
       {isWidgetDrawerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/75 p-4 flex items-center justify-center">
-          <div className="modal-surface rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+        <div
+          className="modal-overlay"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            padding: '16px',
+          }}
+          onClick={() => setIsWidgetDrawerOpen(false)}
+        >
+          <div
+            className="modal-surface rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl"
+            style={{ backgroundColor: '#0d0e15', border: '1px solid rgba(255,255,255,0.18)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <div className="flex items-center gap-2">
                 <LayoutGrid className="w-4 h-4 text-indigo-400" />
@@ -2114,8 +2131,38 @@ export default function ForgeAppShell({
       {/* CUSTOM CREATOR MODAL (SPACIOUS CENTERED MODAL)            */}
       {/* ========================================================= */}
       {isCreatorOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 p-3 sm:p-4 flex items-center justify-center">
-          <div className="modal-surface bg-[#0d0e15] rounded-3xl max-w-xl w-full flex flex-col h-[86vh] max-h-[760px] shadow-2xl overflow-hidden">
+        <div
+          className="modal-overlay"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            padding: '12px',
+          }}
+          onClick={() => setIsCreatorOpen(false)}
+        >
+          <div
+            className="modal-card modal-surface"
+            style={{
+              backgroundColor: '#0d0e15',
+              width: '100%',
+              maxWidth: '580px',
+              height: '84vh',
+              maxHeight: '760px',
+              minHeight: '440px',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: '24px',
+              overflow: 'hidden',
+              border: '1px solid rgba(255, 255, 255, 0.18)',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.85)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
 
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3 shrink-0">
               <div>
@@ -2138,7 +2185,10 @@ export default function ForgeAppShell({
               </button>
             </div>
 
-            <div className="p-5 overflow-y-auto flex-1 space-y-4">
+            <div
+              className="modal-body-scroll p-5 space-y-4"
+              style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}
+            >
               <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl border border-[var(--border-subtle)]">
                 <button
                   type="button"
@@ -2563,8 +2613,38 @@ export default function ForgeAppShell({
       {/* EDIT HABIT MODAL (SPACIOUS CENTERED MODAL)                 */}
       {/* ========================================================= */}
       {editingHabit && (
-        <div className="fixed inset-0 z-50 bg-black/80 p-3 sm:p-4 flex items-center justify-center">
-          <div className="modal-surface bg-[#0d0e15] rounded-3xl max-w-md w-full flex flex-col h-[86vh] max-h-[680px] shadow-2xl overflow-hidden">
+        <div
+          className="modal-overlay"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            padding: '12px',
+          }}
+          onClick={() => setEditingHabit(null)}
+        >
+          <div
+            className="modal-card modal-surface"
+            style={{
+              backgroundColor: '#0d0e15',
+              width: '100%',
+              maxWidth: '520px',
+              height: '84vh',
+              maxHeight: '680px',
+              minHeight: '440px',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: '24px',
+              overflow: 'hidden',
+              border: '1px solid rgba(255, 255, 255, 0.18)',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.85)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3 shrink-0">
               <h3 className="text-base font-bold theme-text">Edit Habit</h3>
               <button
@@ -2575,7 +2655,10 @@ export default function ForgeAppShell({
               </button>
             </div>
 
-            <div className="p-5 overflow-y-auto flex-1 space-y-4">
+            <div
+              className="modal-body-scroll p-5 space-y-4"
+              style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}
+            >
 
             <form onSubmit={handleUpdateHabitSubmit} className="space-y-4">
               <div>
@@ -2747,8 +2830,25 @@ export default function ForgeAppShell({
       {/* EDIT IDENTITY MODAL                                       */}
       {/* ========================================================= */}
       {editingIdentity && (
-        <div className="fixed inset-0 z-50 bg-black/75 p-4 flex items-center justify-center">
-          <div className="modal-surface rounded-3xl max-w-md w-full p-6 space-y-4">
+        <div
+          className="modal-overlay"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            padding: '16px',
+          }}
+          onClick={() => setEditingIdentity(null)}
+        >
+          <div
+            className="modal-surface rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl"
+            style={{ backgroundColor: '#0d0e15', border: '1px solid rgba(255,255,255,0.18)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
               <h3 className="text-base font-bold theme-text">Edit Identity</h3>
               <button
@@ -3046,8 +3146,24 @@ export default function ForgeAppShell({
       {/* FORGEOS PRO UNLOCK MODAL OVERLAY                          */}
       {/* ========================================================= */}
       {showProModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 p-3 sm:p-4 flex items-center justify-center overflow-y-auto">
-          <div className="max-w-2xl w-full my-auto py-4">
+        <div
+          className="modal-overlay overflow-y-auto"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            padding: '12px',
+          }}
+          onClick={() => setShowProModal(false)}
+        >
+          <div
+            className="max-w-2xl w-full my-auto py-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <ProUpgradeCard
               onClose={() => setShowProModal(false)}
               onBackToWorkspace={() => {

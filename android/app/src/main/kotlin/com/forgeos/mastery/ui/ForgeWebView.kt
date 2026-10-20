@@ -58,19 +58,14 @@ fun ForgeWebView(
             WebView(context).apply {
                 webViewRef = this
 
-                // ── Dark Mode ──────────────────────────────────────────────────
-                // Uses WebViewFeature compat check — safe on all API levels.
-                if (WebViewFeature.isFeatureSupported(WebViewFeature.ALGORITHMIC_DARKENING)) {
-                    WebSettingsCompat.setAlgorithmicDarkeningAllowed(settings, true)
-                }
-
-                // Transparent so Activity's #060609 bg shows through during
-                // the micro-gap before the first paint — zero white flash.
-                setBackgroundColor(Color.TRANSPARENT)
+                // Dark bg matches native theme #060609 — zero white flash,
+                // and avoids transparent-surface GPU compositing glitches in Android WebView.
+                setBackgroundColor(Color.parseColor("#060609"))
 
                 // ── WebView Settings ───────────────────────────────────────────
                 if (com.forgeos.mastery.BuildConfig.DEBUG) {
                     clearCache(true)
+                    android.webkit.WebStorage.getInstance().deleteAllData()
                 }
 
                 settings.apply {

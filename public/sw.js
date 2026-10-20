@@ -1,6 +1,6 @@
 // public/sw.js — ForgeOS TWA-optimised service worker
 // Version bump here forces reinstall when you change the SW logic.
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v7';
 const SHELL_CACHE = `forgeos-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `forgeos-static-${CACHE_VERSION}`;
 

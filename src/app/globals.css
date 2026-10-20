@@ -118,12 +118,58 @@ body {
   box-shadow: 0 4px 16px var(--accent-glow);
 }
 
-.modal-surface {
-  background-color: #0d0e15;
-  background-color: var(--bg-modal, #0d0e15);
+.modal-surface,
+.modal-card {
+  background-color: #0d0e15 !important;
+  background-color: var(--bg-modal, #0d0e15) !important;
   border: 1px solid var(--border-strong);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
   opacity: 1 !important;
+}
+
+/* Prevent Android WebView layer compositing failures by disabling backdrop blur inside modals */
+.modal-surface .glass-panel,
+.modal-surface .glass-nav,
+.modal-card .glass-panel,
+.modal-card .glass-nav {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.82);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 580px;
+  height: 84vh;
+  max-height: 740px;
+  min-height: 440px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 24px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.modal-body-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
 }
 
 ::-webkit-scrollbar {

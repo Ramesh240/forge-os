@@ -32,7 +32,7 @@ const STEPS = [
       'Instead of tracking random chores, ForgeOS anchors habits to your core identities (like "Systems Craftsman", "Vitality Athlete", or "Deep Worker"). You earn skill points and cast votes for your desired self every time you execute.',
     tip: '💡 Tip: Start with 2 to 3 identities that truly matter to you this season.',
     cardMock: (
-      <div className="p-3.5 rounded-2xl glass-panel border border-[var(--border-subtle)] space-y-2.5">
+      <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-[var(--border-subtle)] space-y-2.5">
         <div className="flex items-center justify-between text-xs">
           <span className="font-mono text-[10px] text-indigo-400 uppercase tracking-wider font-bold">
             Identity Vector
@@ -63,7 +63,7 @@ const STEPS = [
       'The hardest part of any habit is the first 120 seconds. ForgeOS gives every habit a "Gateway Version" — just put on your shoes, or open your editor. Once the 2-minute timer finishes, your resistance drops and flow takes over.',
     tip: '⚡ Success rule: If you only do the 2-minute gateway version, you STILL win the day.',
     cardMock: (
-      <div className="p-3.5 rounded-2xl glass-panel border border-amber-500/20 bg-amber-500/5 space-y-2.5">
+      <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-amber-500/20 bg-amber-500/5 space-y-2.5">
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5 font-bold text-amber-400">
             <Timer className="w-4 h-4 animate-pulse" />
@@ -93,7 +93,7 @@ const STEPS = [
       'Link habits so that completing one automatically triggers the next. As your streaks compound, ForgeOS maps your consistency on the Continuity Grid and lets you run deep Pomodoro focus sessions.',
     tip: '🔗 Pro-tip: Anchor new habits to an existing routine you already do without thinking.',
     cardMock: (
-      <div className="p-3.5 rounded-2xl glass-panel border border-[var(--border-subtle)] space-y-2">
+      <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-[var(--border-subtle)] space-y-2">
         <div className="flex items-center gap-2 text-xs font-semibold theme-text">
           <span className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">
             1
@@ -144,8 +144,38 @@ export default function FeatureWalkthrough({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 p-3 sm:p-4 flex items-center justify-center">
-      <div className="modal-surface bg-[#0d0e15] rounded-3xl w-full max-w-lg md:max-w-xl flex flex-col h-[86vh] max-h-[740px] shadow-2xl overflow-hidden">
+    <div
+      className="modal-overlay"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0,0,0,0.85)',
+        padding: '12px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        className="modal-card modal-surface"
+        style={{
+          backgroundColor: '#0d0e15',
+          width: '100%',
+          maxWidth: '560px',
+          height: '84vh',
+          maxHeight: '740px',
+          minHeight: '440px',
+          display: 'flex',
+          flexDirection: 'column',
+          borderRadius: '24px',
+          overflow: 'hidden',
+          border: '1px solid rgba(255, 255, 255, 0.18)',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.85)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
 
         {/* Top Header (Fixed) */}
         <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 pb-3.5 shrink-0">
@@ -172,7 +202,10 @@ export default function FeatureWalkthrough({
         </div>
 
         {/* Scrollable Body */}
-        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
+        <div
+          className="modal-body-scroll p-5 sm:p-6 space-y-4"
+          style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto' }}
+        >
           {/* Visual Mock Card */}
           <div className="w-full">{step.cardMock}</div>
 
@@ -212,7 +245,7 @@ export default function FeatureWalkthrough({
               <button
                 type="button"
                 onClick={handlePrev}
-                className="px-4 py-3 rounded-xl border border-[var(--border-subtle)] glass-panel text-xs sm:text-sm font-bold theme-text hover:bg-white/5 transition flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-3 rounded-xl border border-[var(--border-subtle)] bg-white/[0.04] text-xs sm:text-sm font-bold theme-text hover:bg-white/10 transition flex items-center gap-1.5 cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>Back</span>
