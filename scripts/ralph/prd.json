@@ -1,0 +1,103 @@
+{
+  "project": "ForgeOS",
+  "branchName": "ralph/habit-chain-theme-engine",
+  "description": "Habit Streak Visual Chain Upgrades & Pro Theme Engine - Interactive 7-day visual node chains, milestone flames, rebound badges, and multi-theme palette switcher with Pro gating and Android system sync",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Establish core CSS variables and theme attributes in globals.css and layout.tsx",
+      "description": "As a developer, I need standardized semantic CSS variables for Obsidian, Light, and Sepia so all components can adapt dynamically without hardcoded dark background overrides.",
+      "acceptanceCriteria": [
+        "Remove hardcoded '#060609 !important' in src/app/layout.tsx and apply data-theme on <html>",
+        "Define comprehensive semantic variables (--bg-primary, --bg-elevated, --bg-nav, --bg-modal, --bg-input, --border-subtle, --border-strong, --text-primary, --text-secondary, --text-muted) for obsidian, light, and sepia in src/app/globals.css",
+        "Ensure light mode meets WCAG AA 4.5:1 text contrast",
+        "Initialize theme from localStorage('forge_theme') on mount to prevent flash",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Completed and verified with Next.js Turbopack build and WCAG AA contrast colors."
+    },
+    {
+      "id": "US-002",
+      "title": "Add dynamic accent color palette system",
+      "description": "As a user, I want custom accent colors (Indigo, Amber, Emerald, Rose) so that ForgeOS highlights and glows match my focus style.",
+      "acceptanceCriteria": [
+        "Define CSS tokens for 4 accent options: Indigo (#6366f1), Amber (#f59e0b), Emerald (#10b981), Rose (#f43f5e)",
+        "Expose --accent-primary, --accent-glow, and button gradients tied to data-accent attribute",
+        "Persist chosen accent in localStorage('forge_accent')",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Added tokens to globals.css and wired to data-accent attribute with persistence."
+    },
+    {
+      "id": "US-003",
+      "title": "Build Theme & Palette Switcher modal with Pro gating",
+      "description": "As a user, I want to preview and switch themes from the top navigation, with premium themes exclusively unlocked for Pro users.",
+      "acceptanceCriteria": [
+        "Add Palette button in header/top navigation opening a Theme Drawer/Modal",
+        "Display visual selector cards for Themes (Obsidian, Daylight, Sepia) and Accents (Indigo, Amber, Emerald, Rose)",
+        "Obsidian theme is active and selectable for all users",
+        "Light, Sepia, and custom accents show a lock badge for non-Pro users",
+        "Clicking a locked theme opens ProUpgradeCard modal",
+        "Pro users can select and immediately apply any theme/accent with smooth transition",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Created ThemePaletteModal component with Pro gating and instant reactive transitions."
+    },
+    {
+      "id": "US-004",
+      "title": "Synchronize theme changes with Android native bridge and viewport meta",
+      "description": "As an Android user, I want native status bar and navigation bar colors to adjust when switching themes.",
+      "acceptanceCriteria": [
+        "Dynamically update <meta name='theme-color'> on theme change",
+        "Invoke window.ForgeAndroidBridge?.setSystemBarTheme(theme, isDark) if available",
+        "Gracefully handle standard web browser environments where window.ForgeAndroidBridge is absent",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Implemented setSystemBarTheme in ForgeAndroidBridge and synced in applyThemeAndAccentToDocument."
+    },
+    {
+      "id": "US-005",
+      "title": "Implement 7-Day Rolling Visual Node Chain on habit cards",
+      "description": "As a user, I want to see a horizontal 7-day visual node chain on each habit card to track daily momentum at a glance.",
+      "acceptanceCriteria": [
+        "Habit card renders horizontal row of 7 linked nodes (last 6 days + today)",
+        "Nodes show 4 states: Solid filled (Completed), Ring/Gateway (2-min micro-start only), Dashed/Empty (Missed), Pulsing outline (Today pending)",
+        "Hovering/tapping a node displays tooltip with date and session details",
+        "Responsive layout that scales cleanly on mobile viewports",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Created HabitVisualChain component with 7-day rolling calculations and tooltips."
+    },
+    {
+      "id": "US-006",
+      "title": "Add dynamic milestone flame animations and Rebound Priority alerts",
+      "description": "As a user, I want visual milestone flames and immediate rebound warnings so I stay motivated and never miss twice.",
+      "acceptanceCriteria": [
+        "Streak count displays dynamic flame tiers: Spark (1-2d), Ember (3-6d), Blaze (7-29d), Forge Core (30d+ electric violet glow)",
+        "When missedYesterday is true, card renders prominent 'Never Miss Twice: Rebound Priority' badge",
+        "When downscaledDaysRemaining > 0, card displays 2-minute gateway downscaler status",
+        "Logging today's session immediately clears the rebound alert and increments the streak flame",
+        "Typecheck passes",
+        "Verify in browser using dev-browser skill"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Integrated milestone flame tiers, Never Miss Twice recovery badge, and auto-downscaler status."
+    }
+  ]
+}

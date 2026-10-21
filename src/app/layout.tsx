@@ -38,17 +38,33 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark" style={{ backgroundColor: '#060609', colorScheme: 'dark' }}>
+    <html lang="en" data-theme="obsidian" data-accent="indigo" className="dark" suppressHydrationWarning>
       <head>
-        <style
+        <script
           dangerouslySetInnerHTML={{
-            __html: 'html,body{background-color:#060609!important;color:#f4f4f5;color-scheme:dark;}',
+            __html: `
+              (function() {
+                try {
+                  var t = localStorage.getItem('forge_theme') || 'obsidian';
+                  var a = localStorage.getItem('forge_accent') || 'indigo';
+                  document.documentElement.setAttribute('data-theme', t);
+                  document.documentElement.setAttribute('data-accent', a);
+                  if (t === 'light') {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light');
+                  } else {
+                    document.documentElement.classList.remove('light');
+                    document.documentElement.classList.add('dark');
+                  }
+                } catch(e) {}
+              })();
+            `,
           }}
         />
       </head>
       <body
-        style={{ backgroundColor: '#060609', margin: 0 }}
-        className="min-h-screen bg-[#060609] text-zinc-100 antialiased selection:bg-indigo-500 selection:text-white overscroll-none"
+        style={{ margin: 0 }}
+        className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased selection:bg-[var(--accent-primary)] selection:text-white overscroll-none"
       >
         {children}
         <script

@@ -2,13 +2,14 @@
 @import "tailwindcss";
 
 :root,
-[data-theme="obsidian"] {
+html[data-theme="obsidian"],
+html.dark {
   color-scheme: dark;
   --bg-primary: #060609;
   --bg-elevated: rgba(255, 255, 255, 0.04);
-  --bg-nav: rgba(14, 14, 20, 0.72);
+  --bg-nav: rgba(14, 14, 20, 0.78);
   --bg-modal: #0d0e15;
-  --bg-input: rgba(0, 0, 0, 0.45);
+  --bg-input: rgba(0, 0, 0, 0.5);
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.18);
   --text-primary: #f4f4f5;
@@ -21,41 +22,66 @@
 }
 
 /* Warm Sepia Parchment Theme */
-[data-theme="sepia"] {
+html[data-theme="sepia"] {
   color-scheme: light;
-  --bg-primary: #f4ecd8;
-  --bg-elevated: rgba(255, 251, 240, 0.68);
-  --bg-nav: rgba(246, 238, 218, 0.85);
-  --bg-modal: #f7eedc;
-  --bg-input: rgba(235, 224, 198, 0.7);
-  --border-subtle: rgba(120, 90, 50, 0.15);
-  --border-strong: rgba(120, 90, 50, 0.3);
+  --bg-primary: #f5eedc;
+  --bg-elevated: #fbf5e8;
+  --bg-nav: rgba(245, 238, 220, 0.9);
+  --bg-modal: #fbf5e8;
+  --bg-input: #eee3cb;
+  --border-subtle: rgba(120, 90, 50, 0.16);
+  --border-strong: rgba(120, 90, 50, 0.32);
   --text-primary: #2b2118;
   --text-secondary: #5c4938;
-  --text-muted: #8a735c;
+  --text-muted: #7d654f;
   --accent-primary: #b45309;
   --accent-glow: rgba(180, 83, 9, 0.2);
-  --orb-1: rgba(217, 119, 6, 0.12);
-  --orb-2: rgba(180, 83, 9, 0.08);
+  --orb-1: rgba(217, 119, 6, 0.1);
+  --orb-2: rgba(180, 83, 9, 0.07);
 }
 
-/* Daylight Minimal Theme */
-[data-theme="light"] {
+/* Daylight Minimal Theme (Clean WCAG AA 4.5:1 Contrast) */
+html[data-theme="light"],
+html.light {
   color-scheme: light;
   --bg-primary: #f8fafc;
-  --bg-elevated: rgba(255, 255, 255, 0.78);
-  --bg-nav: rgba(255, 255, 255, 0.85);
+  --bg-elevated: #ffffff;
+  --bg-nav: rgba(255, 255, 255, 0.9);
   --bg-modal: #ffffff;
-  --bg-input: rgba(241, 245, 249, 0.9);
-  --border-subtle: rgba(15, 23, 42, 0.08);
-  --border-strong: rgba(15, 23, 42, 0.18);
+  --bg-input: #f1f5f9;
+  --border-subtle: rgba(15, 23, 42, 0.1);
+  --border-strong: rgba(15, 23, 42, 0.22);
   --text-primary: #0f172a;
   --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --text-muted: #64748b;
   --accent-primary: #4f46e5;
-  --accent-glow: rgba(79, 70, 229, 0.18);
-  --orb-1: rgba(99, 102, 241, 0.08);
-  --orb-2: rgba(16, 185, 129, 0.06);
+  --accent-glow: rgba(79, 70, 229, 0.2);
+}
+
+/* Accent Palettes */
+:root,
+[data-accent="indigo"] {
+  --accent-primary: #6366f1;
+  --accent-glow: rgba(99, 102, 241, 0.28);
+  --orb-1: rgba(99, 102, 241, 0.14);
+}
+
+[data-accent="amber"] {
+  --accent-primary: #f59e0b;
+  --accent-glow: rgba(245, 158, 11, 0.28);
+  --orb-1: rgba(245, 158, 11, 0.14);
+}
+
+[data-accent="emerald"] {
+  --accent-primary: #10b981;
+  --accent-glow: rgba(16, 185, 129, 0.28);
+  --orb-1: rgba(16, 185, 129, 0.14);
+}
+
+[data-accent="rose"] {
+  --accent-primary: #f43f5e;
+  --accent-glow: rgba(244, 63, 94, 0.28);
+  --orb-1: rgba(244, 63, 94, 0.14);
 }
 
 body {
@@ -120,10 +146,10 @@ body {
 
 .modal-surface,
 .modal-card {
-  background-color: #0d0e15 !important;
   background-color: var(--bg-modal, #0d0e15) !important;
+  color: var(--text-primary) !important;
   border: 1px solid var(--border-strong);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
   opacity: 1 !important;
 }
 
@@ -134,7 +160,7 @@ body {
 .modal-card .glass-nav {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: var(--bg-elevated) !important;
 }
 
 .modal-overlay {
@@ -142,7 +168,7 @@ body {
   inset: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.85);
+  background-color: rgba(0, 0, 0, 0.75);
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -163,10 +189,10 @@ body {
   height: 94vh;
   max-height: 840px;
   min-height: 520px;
-  background-color: #0d0e15 !important;
   background-color: var(--bg-modal, #0d0e15) !important;
+  color: var(--text-primary) !important;
   border: 1px solid var(--border-strong);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
   opacity: 1 !important;
   border-radius: 28px;
   display: flex;

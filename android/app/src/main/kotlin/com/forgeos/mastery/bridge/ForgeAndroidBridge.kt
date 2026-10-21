@@ -126,6 +126,20 @@ class ForgeAndroidBridge(
     }
 
     @JavascriptInterface
+    fun setSystemBarTheme(theme: String?, isDark: Boolean) {
+        activity.runOnUiThread {
+            try {
+                androidx.core.view.WindowCompat.getInsetsController(activity.window, activity.window.decorView)?.let { controller ->
+                    controller.isAppearanceLightStatusBars = !isDark
+                    controller.isAppearanceLightNavigationBars = !isDark
+                }
+            } catch (_: Exception) {
+                // Fallback gracefully
+            }
+        }
+    }
+
+    @JavascriptInterface
     fun showToast(message: String) {
         activity.runOnUiThread {
             Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()

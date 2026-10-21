@@ -27,6 +27,12 @@ import {
 } from '@/app/actions';
 import ProUpgradeCard from '@/components/ProUpgradeCard';
 import FeatureWalkthrough from '@/components/FeatureWalkthrough';
+import HabitVisualChain from '@/components/HabitVisualChain';
+import ThemePaletteModal, {
+  ThemeMode,
+  AccentColor,
+  applyThemeAndAccentToDocument,
+} from '@/components/ThemePaletteModal';
 import {
   HelpCircle,
   Zap,
@@ -118,7 +124,6 @@ export interface SerializedSession {
   loggedAt: string;
 }
 
-type ThemeMode = 'obsidian' | 'sepia' | 'light';
 type TabType = 'WORKSPACE' | 'ANALYTICS' | 'HEATMAP' | 'VAULT' | 'ACCOUNT';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -238,6 +243,21 @@ export default function ForgeAppShell({
     }
     return 'obsidian';
   });
+
+  const [accent, setAccent] = useState<AccentColor>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('forge_accent') as AccentColor;
+      if (saved) {
+        if (!isPro && saved !== 'indigo') {
+          return 'indigo';
+        }
+        return saved;
+      }
+    }
+    return 'indigo';
+  });
+
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
   // Quick Widget Drawer State
   const [isWidgetDrawerOpen, setIsWidgetDrawerOpen] = useState(false);
@@ -478,7 +498,8 @@ export default function ForgeAppShell({
   // Initialize Theme, Sound, Notification Permission, and Deep-Link Auto-Start (?startHabit=<id>)
   useEffect(() => {
     const savedTheme = (localStorage.getItem('forge_theme') as ThemeMode) || theme;
-    document.documentElement.setAttribute('data-theme', savedTheme);
+    const savedAccent = (localStorage.getItem('forge_accent') as AccentColor) || accent;
+    applyThemeAndAccentToDocument(savedTheme, savedAccent);
 
     // Check if launched from /widget or notification with ?startHabit=<id>
     if (typeof window !== 'undefined') {
@@ -626,8 +647,18 @@ export default function ForgeAppShell({
       return;
     }
     setTheme(nextTheme);
-    localStorage.setItem('forge_theme', nextTheme);
-    document.documentElement.setAttribute('data-theme', nextTheme);
+    applyThemeAndAccentToDocument(nextTheme, accent);
+    soundEngine.playTactileClick(soundEnabled);
+  };
+
+  const selectAccent = (nextAccent: AccentColor) => {
+    if (nextAccent !== 'indigo' && !userIsPro) {
+      soundEngine.playTactileClick(soundEnabled);
+      setShowProModal(true);
+      return;
+    }
+    setAccent(nextAccent);
+    applyThemeAndAccentToDocument(theme, nextAccent);
     soundEngine.playTactileClick(soundEnabled);
   };
 
@@ -1226,6 +1257,18 @@ export default function ForgeAppShell({
               <span className="hidden sm:inline">Widget</span>
             </button>
 
+            <button
+              onClick={() => {
+                soundEngine.playTactileClick(soundEnabled);
+                setIsThemeModalOpen(true);
+              }}
+              title="Theme & Accent Palette"
+              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl glass-panel text-xs font-semibold theme-text hover:opacity-90 cursor-pointer"
+            >
+              <Palette className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Theme</span>
+            </button>
+
             <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl glass-panel text-xs font-bold text-orange-500">
               <Flame className="w-3.5 h-3.5 fill-orange-500" />
               <span>{analytics.resilientStreak}d</span>
@@ -1454,6 +1497,16 @@ export default function ForgeAppShell({
                             Next: {habit.nextStackedHabitTitle}
                           </p>
                         )}
+
+                        {/* 7-Day Visual Node Chain Timeline & Milestone Flame */}
+                        <HabitVisualChain
+                          habitId={habit.id}
+                          sessions={sessions}
+                          currentStreak={habit.currentStreak}
+                          missedYesterday={habit.missedYesterday}
+                          downscaledDaysRemaining={habit.downscaledDaysRemaining}
+                          lastCompletedDate={habit.lastCompletedDate}
+                        />
                       </div>
 
                       <button
@@ -3514,6 +3567,23 @@ export default function ForgeAppShell({
         }}
         onStartCreating={() => {
           setIsCreatorOpen(true);
+        }}
+      />
+
+      {/* ========================================================= */}
+      {/* THEME & ACCENT PALETTE SWITCHER MODAL                     */}
+      {/* ========================================================= */}
+      <ThemePaletteModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+        currentTheme={theme}
+        currentAccent={accent}
+        isPro={userIsPro}
+        onSelectTheme={(t) => selectTheme(t)}
+        onSelectAccent={(a) => selectAccent(a)}
+        onOpenProModal={() => {
+          setIsThemeModalOpen(false);
+          setShowProModal(true);
         }}
       />
     </div>

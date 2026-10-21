@@ -1,0 +1,32 @@
+# Ralph Progress Log
+Started: 2026-10-21 17:14
+Project: ForgeOS
+Branch: ralph/habit-chain-theme-engine
+
+## Codebase Patterns
+- Layout styling: Use semantic CSS variables (`var(--bg-primary)`, `var(--text-primary)`, `var(--border-subtle)`) instead of hardcoded dark hex values (`#060609`).
+- Habit data structure: Habit model in `prisma/schema.prisma` contains `currentStreak`, `missedYesterday`, `isReboundPriority`, `downscaledDaysRemaining`, `lastCompletedDate`.
+- Android WebView bridge: Check `window.ForgeAndroidBridge` before invoking native methods.
+- Dynamic theme sync: Call `applyThemeAndAccentToDocument(theme, accent)` which handles localStorage, DOM attributes (`data-theme`, `data-accent`), `<meta name="theme-color">`, and native Android status bar icon brightness.
+---
+
+## 2026-10-21 17:25 - US-001 through US-006 Complete
+- **What was implemented:**
+  - Standardized semantic CSS variables for Obsidian, Daylight Minimal (Light), and Sepia Studio in `globals.css` with WCAG AA 4.5:1 text contrast.
+  - Added 4 dynamic accent palette options (Indigo, Amber, Emerald, Rose) tied to `data-accent`.
+  - Built `ThemePaletteModal` component with visual cards, Pro feature gating, and instantaneous transitions.
+  - Wired native Android system bar synchronization in `ForgeAndroidBridge.kt` and `ForgeWebView.kt`.
+  - Built `HabitVisualChain` component featuring a 7-day rolling timeline with 4 status states (Completed, Gateway Micro-Start, Missed, Today Pending).
+  - Implemented dynamic milestone flame tiers (Spark, Ember, Blaze, Forge Core) with streak bonuses, "Never Miss Twice" rebound alerts, and auto-downscaler badges.
+- **Files changed:**
+  - `src/app/globals.css`
+  - `src/app/layout.tsx`
+  - `src/components/ForgeAppShell.tsx`
+  - `src/components/HabitVisualChain.tsx` (new)
+  - `src/components/ThemePaletteModal.tsx` (new)
+  - `android/app/src/main/kotlin/com/forgeos/mastery/bridge/ForgeAndroidBridge.kt`
+  - `scripts/ralph/prd.json`
+- **Learnings:**
+  - Next.js root layout should initialize `data-theme` and `data-accent` via an inline `<script>` to eliminate flash of unstyled theme (FOUC).
+  - In Android WebView, `WindowCompat.getInsetsController` easily toggles light/dark status bar icons without requiring activity recreation.
+---
