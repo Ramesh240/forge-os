@@ -33,6 +33,7 @@ import ThemePaletteModal, {
   AccentColor,
   applyThemeAndAccentToDocument,
 } from '@/components/ThemePaletteModal';
+import QuickCreateFab from '@/components/QuickCreateFab';
 import {
   HelpCircle,
   Zap,
@@ -3586,6 +3587,23 @@ export default function ForgeAppShell({
           setIsThemeModalOpen(false);
           setShowProModal(true);
         }}
+      />
+
+      {/* ========================================================= */}
+      {/* ERGONOMIC BOTTOM-RIGHT QUICK CREATE SPEED-DIAL (FAB)      */}
+      {/* ========================================================= */}
+      <QuickCreateFab
+        onCreateHabit={() => openCenteredCreator('HABIT')}
+        onCreateIdentity={() => openCenteredCreator('IDENTITY')}
+        soundEnabled={soundEnabled}
+        hidden={
+          isRunning ||
+          isCreatorOpen ||
+          showProModal ||
+          showWalkthrough ||
+          isWidgetDrawerOpen ||
+          isThemeModalOpen
+        }
       />
     </div>
   );
