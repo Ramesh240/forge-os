@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scene 1 - Quest Arrival & Awakening</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 40%, #060b18 0%, #03050c 70%, #010206 100%);
+      font-family: 'Outfit', sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    /* Ambient Cyber Matrix Grid */
+    .grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(6, 182, 212, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(6, 182, 212, 0.08) 1px, transparent 1px);
+      background-size: 70px 70px;
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    /* Glowing Holographic Energy Orbs */
+    .orb-cyan {
+      position: absolute;
+      top: 35%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.28) 0%, transparent 65%);
+      filter: blur(60px);
+      pointer-events: none;
+    }
+    .orb-blue {
+      position: absolute;
+      top: 60%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.22) 0%, transparent 70%);
+      filter: blur(70px);
+      pointer-events: none;
+    }
+
+    /* Scanlines effect */
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.2) 0px, rgba(0, 0, 0, 0.2) 2px, transparent 2px, transparent 4px);
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    /* ─── PHASE 1: SOLO LEVELING HOLOGRAPHIC QUEST WINDOW ─── */
+    .quest-wrapper {
+      position: absolute;
+      top: 320px;
+      width: 920px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 20;
+    }
+
+    .quest-window {
+      width: 100%;
+      background: rgba(3, 10, 24, 0.88);
+      border: 2px solid #06b6d4;
+      border-radius: 28px;
+      box-shadow: 
+        0 0 50px rgba(6, 182, 212, 0.35),
+        inset 0 0 35px rgba(6, 182, 212, 0.15);
+      backdrop-filter: blur(24px);
+      padding: 44px 48px;
+      position: relative;
+    }
+
+    /* Corner HUD brackets */
+    .bracket-tl, .bracket-tr, .bracket-bl, .bracket-br {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: #38bdf8;
+      border-style: solid;
+      pointer-events: none;
+    }
+    .bracket-tl { top: -4px; left: -4px; border-width: 4px 0 0 4px; }
+    .bracket-tr { top: -4px; right: -4px; border-width: 4px 4px 0 0; }
+    .bracket-bl { bottom: -4px; left: -4px; border-width: 0 0 4px 4px; }
+    .bracket-br { bottom: -4px; right: -4px; border-width: 0 4px 4px 0; }
+
+    .quest-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(6, 182, 212, 0.3);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+    .system-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      color: #38bdf8;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .hazard-pulse {
+      width: 14px;
+      height: 14px;
+      background: #06b6d4;
+      border-radius: 50%;
+      box-shadow: 0 0 16px #06b6d4;
+    }
+    .system-timestamp {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      color: #94a3b8;
+    }
+
+    .quest-alert-title {
+      font-size: 58px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      text-shadow: 0 0 30px rgba(6, 182, 212, 0.8);
+      margin-bottom: 32px;
+    }
+    .quest-alert-title span {
+      color: #22d3ee;
+      display: block;
+    }
+
+    .quest-details-box {
+      background: rgba(6, 182, 212, 0.05);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      border-radius: 18px;
+      padding: 26px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 21px;
+      margin-bottom: 36px;
+    }
+    .quest-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .q-label { color: #94a3b8; font-weight: 600; }
+    .q-value-cyan { color: #38bdf8; font-weight: 800; }
+    .q-value-red { color: #f43f5e; font-weight: 800; }
+    .q-value-gold { color: #fbbf24; font-weight: 800; }
+
+    .quest-accept-btn {
+      width: 100%;
+      padding: 24px;
+      background: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%);
+      border: none;
+      border-radius: 18px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #ffffff;
+      box-shadow: 0 0 40px rgba(6, 182, 212, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    /* ─── PHASE 2: AWAKENING AT THE DESK ─── */
+    .awakening-container {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 60px;
+      z-index: 30;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Cinematic Cyber Desk Graphic (High-tech SVG Illustration) */
+    .desk-graphic-wrap {
+      width: 860px;
+      height: 640px;
+      position: relative;
+      margin-bottom: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* HUD Targeting Reticle */
+    .hud-target {
+      position: absolute;
+      width: 440px;
+      height: 440px;
+      border: 1px dashed rgba(6, 182, 212, 0.4);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hud-ring-inner {
+      width: 380px;
+      height: 380px;
+      border: 2px solid rgba(56, 189, 248, 0.6);
+      border-radius: 50%;
+      border-top-color: transparent;
+      border-bottom-color: transparent;
+    }
+
+    .hud-tag {
+      position: absolute;
+      top: 60px;
+      background: rgba(3, 10, 24, 0.9);
+      border: 1px solid #06b6d4;
+      padding: 10px 22px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 19px;
+      letter-spacing: 2px;
+      color: #38bdf8;
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+    }
+
+    .hero-punchline {
+      font-size: 78px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 22px;
+    }
+    .hero-punchline span {
+      background: linear-gradient(135deg, #22d3ee, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtext {
+      font-size: 32px;
+      color: #94a3b8;
+      font-weight: 600;
+      text-align: center;
+      max-width: 820px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="orb-cyan" id="orbCyan"></div>
+  <div class="orb-blue"></div>
+  <div class="scanlines"></div>
+
+  <!-- PHASE 1: SOLO LEVELING BLUE QUEST ALERT -->
+  <div class="quest-wrapper" id="questWrapper">
+    <div class="quest-window" id="questWindow">
+      <div class="bracket-tl"></div>
+      <div class="bracket-tr"></div>
+      <div class="bracket-bl"></div>
+      <div class="bracket-br"></div>
+
+      <div class="quest-header-bar">
+        <div class="system-label">
+          <div class="hazard-pulse"></div>
+          [ SYSTEM NOTIFICATION ]
+        </div>
+        <div class="system-timestamp">TIME REMAINING: 23:59:59</div>
+      </div>
+
+      <h1 class="quest-alert-title">
+        A DAILY QUEST<br>
+        <span>HAS ARRIVED.</span>
+      </h1>
+
+      <div class="quest-details-box">
+        <div class="quest-row">
+          <span class="q-label">[QUEST NAME]</span>
+          <span class="q-value-cyan">FORGE YOUR S-RANK IDENTITY</span>
+        </div>
+        <div class="quest-row">
+          <span class="q-label">[OBJECTIVE]</span>
+          <span class="q-value-cyan">COMPLETE 1 HABIT STACK</span>
+        </div>
+        <div class="quest-row">
+          <span class="q-label">[PENALTY]</span>
+          <span class="q-value-red">PERMANENT MEDIOCRITY</span>
+        </div>
+        <div class="quest-row">
+          <span class="q-label">[REWARD]</span>
+          <span class="q-value-gold">UNSHAKABLE DISCIPLINE</span>
+        </div>
+      </div>
+
+      <div class="quest-accept-btn">
+        <span>⚡ ACCEPT QUEST &amp; AWAKEN</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE 2: DETERMINED AWAKENING AT DESK -->
+  <div class="awakening-container" id="awakeningContainer">
+    <div class="desk-graphic-wrap">
+      <!-- HUD Reticle -->
+      <div class="hud-target" id="hudTarget">
+        <div class="hud-ring-inner" id="hudRingInner"></div>
+      </div>
+      <div class="hud-tag">TARGET: AWAKENED SUBJECT • CLASS: DEEP WORKER</div>
+
+      <!-- High Tech Desk Silhouette SVG -->
+      <svg width="680" height="460" viewBox="0 0 680 460" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Desk Surface with Glow -->
+        <path d="M40 380 L640 380 L580 440 L100 440 Z" fill="#0b1329" stroke="#06b6d4" stroke-width="2"/>
+        <line x1="60" y1="380" x2="620" y2="380" stroke="#38bdf8" stroke-width="3" filter="drop-shadow(0 0 10px #06b6d4)"/>
+        
+        <!-- Multi-Monitor Rig glowing cyan & violet -->
+        <rect x="230" y="110" width="220" height="150" rx="10" fill="#040918" stroke="#38bdf8" stroke-width="3" filter="drop-shadow(0 0 15px rgba(56, 189, 248, 0.4))"/>
+        <rect x="70" y="130" width="150" height="130" rx="8" fill="#030713" stroke="#818cf8" stroke-width="2" transform="rotate(8 70 130)"/>
+        <rect x="460" y="130" width="150" height="130" rx="8" fill="#030713" stroke="#818cf8" stroke-width="2" transform="rotate(-8 460 130)"/>
+        
+        <!-- Code / HUD Lines on Central Monitor -->
+        <line x1="250" y1="140" x2="350" y2="140" stroke="#06b6d4" stroke-width="3" stroke-linecap="round"/>
+        <line x1="250" y1="160" x2="420" y2="160" stroke="#22d3ee" stroke-width="3" stroke-linecap="round"/>
+        <line x1="250" y1="180" x2="390" y2="180" stroke="#818cf8" stroke-width="3" stroke-linecap="round"/>
+        <line x1="250" y1="200" x2="320" y2="200" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+
+        <!-- User Silhouette (Determined Posture with glowing cyan rim) -->
+        <path d="M340 210 C320 210 305 225 305 245 C305 265 320 280 340 280 C360 280 375 265 375 245 C375 225 360 210 340 210 Z" fill="#050a1b" stroke="#38bdf8" stroke-width="2.5"/>
+        <path d="M280 360 C280 300 305 290 340 290 C375 290 400 300 400 360 Z" fill="#060c20" stroke="#38bdf8" stroke-width="3"/>
+      </svg>
+    </div>
+
+    <div class="hero-punchline">
+      STOP SLEEPWALKING.<br>
+      <span>START LEVELING UP.</span>
+    </div>
+    <p class="hero-subtext">
+      The world rewards output. Forge your daily system into an S-Rank machine.
+    </p>
+  </div>
+
+  <script type="module">
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+
+    const questWrapper = document.getElementById('questWrapper');
+    const questWindow = document.getElementById('questWindow');
+    const awakeningContainer = document.getElementById('awakeningContainer');
+    const hudRingInner = document.getElementById('hudRingInner');
+    const orbCyan = document.getElementById('orbCyan');
+
+    window.film = {
+      duration: 6.0,
+      ready: document.fonts.ready,
+      frame(t) {
+        // Ambient background pulse
+        const pulse = 1 + 0.05 * Math.sin(t * 4);
+        orbCyan.style.transform = `translate(-50%, -50%) scale(${pulse})`;
+
+        // Phase 1: Holographic Quest Window (0s -> 3.2s)
+        if (t < 3.2) {
+          awakeningContainer.style.opacity = '0';
+          awakeningContainer.style.transform = 'scale(0.95)';
+          hudRingInner.style.transform = 'rotate(0deg)';
+
+          questWrapper.style.opacity = '1';
+
+          // Pop-in animation with energy snap
+          const popProg = clamp(t / 0.45, 0, 1);
+          const popEase = easeOutCubic(popProg);
+          const scale = 0.92 + 0.08 * popEase;
+          questWrapper.style.transform = 'scale(1)';
+          questWindow.style.transform = `scale(${scale})`;
+
+          // Glitch / Holo flicker intensity
+          const holoGlow = 40 + 15 * Math.sin(t * 8);
+          questWindow.style.boxShadow = `0 0 ${holoGlow}px rgba(6, 182, 212, 0.45), inset 0 0 35px rgba(6, 182, 212, 0.2)`;
+        } 
+        // Transition: Quest accepts & shatters into Awakening (3.2s -> 6.0s)
+        else {
+          questWindow.style.transform = 'scale(1)';
+          questWindow.style.boxShadow = 'none';
+
+          const tTrans = t - 3.2;
+
+          // Fade out quest window rapidly
+          if (tTrans < 0.3) {
+            const out = clamp((0.3 - tTrans) / 0.3, 0, 1);
+            questWrapper.style.opacity = `${out}`;
+            questWrapper.style.transform = `scale(${1 + (1 - out) * 0.15})`;
+          } else {
+            questWrapper.style.opacity = '0';
+            questWrapper.style.transform = 'scale(1.15)';
+          }
+
+          // Fade in Awakening screen
+          const inProg = clamp(tTrans / 0.4, 0, 1);
+          const inEase = easeOutCubic(inProg);
+          awakeningContainer.style.opacity = `${inEase}`;
+          awakeningContainer.style.transform = `scale(${0.95 + 0.05 * inEase})`;
+
+          // Rotate HUD targeting ring
+          hudRingInner.style.transform = `rotate(${tTrans * 60}deg)`;
+        }
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scene 2 - Real ForgeOS v1.0.9 Interface & Quick-Create FAB</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 30%, #081126 0%, #040813 70%, #010207 100%);
+      font-family: 'Outfit', sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(56, 189, 248, 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.06) 1px, transparent 1px);
+      background-size: 70px 70px;
+      pointer-events: none;
+    }
+
+    .glow-cyan {
+      position: absolute;
+      top: 20%;
+      left: 10%;
+      width: 650px;
+      height: 650px;
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.22) 0%, transparent 65%);
+      filter: blur(70px);
+      pointer-events: none;
+    }
+    .glow-indigo {
+      position: absolute;
+      bottom: 25%;
+      right: 5%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+      filter: blur(70px);
+      pointer-events: none;
+    }
+
+    /* Top HUD Section Tag */
+    .hud-badge {
+      margin-top: 80px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 24px;
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 20px;
+      letter-spacing: 3px;
+      color: #38bdf8;
+      text-transform: uppercase;
+      box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+    }
+
+    .main-title {
+      font-size: 64px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.1;
+      letter-spacing: -1px;
+      margin-top: 16px;
+      margin-bottom: 24px;
+    }
+    .main-title span {
+      background: linear-gradient(135deg, #22d3ee, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Smartphone Frame Container */
+    .phone-container {
+      position: relative;
+      width: 740px;
+      height: 1400px;
+      background: #060609;
+      border: 6px solid #1e293b;
+      border-radius: 56px;
+      box-shadow: 
+        0 25px 60px rgba(0, 0, 0, 0.85),
+        0 0 50px rgba(6, 182, 212, 0.3);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 24px;
+    }
+
+    .phone-camera {
+      width: 22px;
+      height: 22px;
+      background: #020617;
+      border: 2px solid #334155;
+      border-radius: 50%;
+      margin: 2px auto 14px;
+    }
+
+    /* ─── REAL FORGEOS TOP HEADER ─── */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .app-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 22px;
+      font-weight: 800;
+    }
+    .f-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: #4f46e5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 900;
+      color: #fff;
+    }
+    .app-header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    /* ─── CENTERED HERO SECTION ─── */
+    .hero-center {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .hero-stats {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      letter-spacing: 2px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .hero-question {
+      font-size: 28px;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 14px;
+    }
+
+    /* Centered Command Pill Dock */
+    .hero-dock {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      margin-bottom: 16px;
+    }
+    .dock-btn-habit {
+      padding: 10px 20px;
+      background: #4f46e5;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .dock-btn-id {
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Single-Row Horizontal Scrolling Identity Filters */
+    .id-filter-strip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: hidden;
+      padding: 4px 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 16px;
+    }
+    .id-pill {
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      white-space: nowrap;
+      background: rgba(255, 255, 255, 0.05);
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .id-pill.active {
+      background: #06b6d4;
+      color: #000;
+      font-weight: 800;
+      border-color: #06b6d4;
+      box-shadow: 0 0 16px rgba(6, 182, 212, 0.5);
+    }
+
+    /* Habit Queue Section */
+    .queue-title {
+      font-size: 15px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Real Habit Cards with Visual Chains & Connectors */
+    .habit-stack-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+    }
+
+    .habit-card {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+    .habit-card.active-glow {
+      border-color: #06b6d4;
+      background: rgba(6, 182, 212, 0.12);
+      box-shadow: 0 0 30px rgba(6, 182, 212, 0.35);
+    }
+
+    .card-row-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-h-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .card-flame-tag {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 800;
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+    }
+
+    /* 7-Day Rolling Chain inside Habit Card */
+    .chain-timeline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 12px;
+      padding: 8px 12px;
+    }
+    .chain-dot-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .dot-node {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #06b6d4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 900;
+      color: #000;
+      box-shadow: 0 0 8px #06b6d4;
+    }
+    .dot-lbl {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #94a3b8;
+    }
+
+    /* Energy Connection Line */
+    .conduit-line {
+      width: 4px;
+      height: 20px;
+      background: #06b6d4;
+      margin: -6px auto;
+      border-radius: 2px;
+      box-shadow: 0 0 12px #06b6d4;
+    }
+
+    /* ─── REAL ONE-HANDED QUICK-CREATE SPEED-DIAL FAB ─── */
+    .fab-dock {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+      z-index: 50;
+    }
+
+    .fab-expanded-menu {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .fab-item-pill {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 18px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1.5px solid #06b6d4;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+    }
+    .fab-item-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: #06b6d4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      color: #000;
+    }
+
+    .fab-main-btn {
+      width: 68px;
+      height: 68px;
+      border-radius: 22px;
+      background: #4f46e5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 900;
+      color: #ffffff;
+      box-shadow: 0 0 30px rgba(79, 70, 229, 0.7);
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="glow-cyan"></div>
+  <div class="glow-indigo"></div>
+
+  <div class="hud-badge">⚡ FORGEOS v1.0.9 • WORKSPACE ENGINE</div>
+  <h1 class="main-title">
+    IDENTITY FILTERING.<br>
+    <span>ONE-HANDED THUMB CREATION.</span>
+  </h1>
+
+  <!-- Smartphone Frame -->
+  <div class="phone-container" id="phoneContainer">
+    <div class="phone-camera"></div>
+
+    <!-- App Header -->
+    <div class="app-header">
+      <div class="app-brand">
+        <div class="f-logo">F</div>
+        <span>ForgeOS</span>
+      </div>
+      <div class="app-header-right">
+        <div class="header-pill" style="color: #fbbf24;">🎨 Theme</div>
+        <div class="header-pill" style="color: #fb923c;">🔥 14d</div>
+      </div>
+    </div>
+
+    <!-- Centered Hero -->
+    <div class="hero-center">
+      <div class="hero-stats">48.5 Effective Hrs • 92% Consistency</div>
+      <div class="hero-question">What identity are you building today?</div>
+      
+      <div class="hero-dock">
+        <div class="dock-btn-habit">+ New Habit</div>
+        <div class="dock-btn-id">🧭 New Identity</div>
+      </div>
+    </div>
+
+    <!-- Single Row Horizontal Identity Filter Strip -->
+    <div class="id-filter-strip">
+      <div class="id-pill" id="pillAll">All Habits (9)</div>
+      <div class="id-pill active" id="pillDeepWorker">🧠 Deep Worker (4)</div>
+      <div class="id-pill">💻 Code Architect (3)</div>
+      <div class="id-pill">⚡ Titan Athlete (2)</div>
+    </div>
+
+    <!-- Active Habit Queue -->
+    <div class="queue-title">
+      <span>Active Habit Queue (4)</span>
+      <span style="color: #38bdf8;">Newest First</span>
+    </div>
+
+    <div class="habit-stack-list">
+      <!-- Habit 1 -->
+      <div class="habit-card active-glow" id="hCard1">
+        <div class="card-row-top">
+          <span class="card-h-name">☀️ 2-Min Awakening Protocol</span>
+          <span class="card-flame-tag">🔥 BLAZE (14d)</span>
+        </div>
+        <div class="chain-timeline">
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">M</span></div>
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">T</span></div>
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">W</span></div>
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">T</span></div>
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">F</span></div>
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">S</span></div>
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">S</span></div>
+        </div>
+      </div>
+
+      <!-- Connector -->
+      <div class="conduit-line" id="conduitLine"></div>
+
+      <!-- Habit 2 -->
+      <div class="habit-card" id="hCard2">
+        <div class="card-row-top">
+          <span class="card-h-name">⚡ 90m Core Code Session</span>
+          <span class="card-flame-tag" style="background: rgba(16, 185, 129, 0.2); border-color: #10b981; color: #34d399;">⚡ EMBER (7d)</span>
+        </div>
+        <div class="chain-timeline">
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">M</span></div>
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">T</span></div>
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">W</span></div>
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">T</span></div>
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">F</span></div>
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">S</span></div>
+          <div class="chain-dot-box"><div class="dot-node">✓</div><span class="dot-lbl">S</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ONE-HANDED QUICK-CREATE SPEED-DIAL FAB -->
+    <div class="fab-dock">
+      <div class="fab-expanded-menu" id="fabMenu">
+        <div class="fab-item-pill">
+          <span>New Identity</span>
+          <div class="fab-item-icon" style="background: #f59e0b; color: #fff;">🧭</div>
+        </div>
+        <div class="fab-item-pill">
+          <span>New Habit</span>
+          <div class="fab-item-icon" style="background: #4f46e5; color: #fff;">+</div>
+        </div>
+      </div>
+
+      <div class="fab-main-btn" id="fabBtn">+</div>
+    </div>
+  </div>
+
+  <script type="module">
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+
+    const phoneContainer = document.getElementById('phoneContainer');
+    const fabMenu = document.getElementById('fabMenu');
+    const fabBtn = document.getElementById('fabBtn');
+    const hCard2 = document.getElementById('hCard2');
+    const conduitLine = document.getElementById('conduitLine');
+
+    window.film = {
+      duration: 8.0,
+      ready: document.fonts.ready,
+      frame(t) {
+        // Entrance animation of phone
+        const enterProg = clamp(t / 0.5, 0, 1);
+        const enterEase = easeOutCubic(enterProg);
+        phoneContainer.style.transform = `scale(${0.93 + 0.07 * enterEase})`;
+
+        // Part 1: FAB Expands in Thumb Zone (t: 0s -> 3.5s)
+        if (t < 3.5) {
+          const fabProgress = clamp(t / 0.4, 0, 1);
+          const fabEase = easeOutCubic(fabProgress);
+          fabMenu.style.opacity = `${fabEase}`;
+          fabMenu.style.transform = `translateY(${(1 - fabEase) * 20}px) scale(${0.9 + 0.1 * fabEase})`;
+          fabBtn.style.transform = `rotate(${fabEase * 45}deg)`;
+
+          conduitLine.style.background = '#06b6d4';
+          conduitLine.style.boxShadow = '0 0 12px #06b6d4';
+          hCard2.className = 'habit-card';
+        }
+        // Part 2: Habit Connection Sequence (t: 3.5s -> 8.0s)
+        else {
+          fabMenu.style.opacity = '0';
+          fabMenu.style.transform = 'translateY(20px) scale(0.9)';
+          fabBtn.style.transform = 'rotate(0deg)';
+
+          const tStack = t - 3.5;
+          const isLinked = tStack > 1.0;
+          conduitLine.style.background = isLinked ? '#22d3ee' : '#06b6d4';
+          conduitLine.style.boxShadow = isLinked ? '0 0 18px #22d3ee' : '0 0 12px #06b6d4';
+          hCard2.className = isLinked ? 'habit-card active-glow' : 'habit-card';
+        }
+      }
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scene 4 - Pro Theme Switcher, Google Play Closed Beta & Golden Code</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 30%, #09132c 0%, #040816 70%, #010207 100%);
+      font-family: 'Outfit', sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .grid-bg {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.08) 1px, transparent 1px);
+      background-size: 70px 70px;
+      pointer-events: none;
+    }
+
+    .glow-gold {
+      position: absolute;
+      bottom: 25%;
+      left: 50%;
+      transform: translate(-50%, 50%);
+      width: 750px;
+      height: 750px;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.22) 0%, transparent 65%);
+      filter: blur(80px);
+      pointer-events: none;
+    }
+
+    /* Google Play Beta Live Badge */
+    .beta-live-badge {
+      margin-top: 80px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 28px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      letter-spacing: 3px;
+      color: #34d399;
+      text-transform: uppercase;
+      box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+    }
+    .pulse-dot {
+      width: 14px;
+      height: 14px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 16px #10b981;
+    }
+
+    .main-title {
+      font-size: 68px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-top: 16px;
+      margin-bottom: 20px;
+    }
+    .main-title span {
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Smartphone Frame with 3D perspective */
+    .phone-container {
+      position: relative;
+      width: 740px;
+      height: 1100px;
+      background: #030712;
+      border: 6px solid #1e293b;
+      border-radius: 52px;
+      box-shadow: 
+        0 30px 70px rgba(0, 0, 0, 0.85),
+        0 0 50px rgba(6, 182, 212, 0.3);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 24px;
+    }
+
+    .phone-camera {
+      width: 22px;
+      height: 22px;
+      background: #020617;
+      border: 2px solid #334155;
+      border-radius: 50%;
+      margin: 2px auto 14px;
+    }
+
+    /* ─── REAL FORGEOS PRO THEME SWITCHER MODAL MOCKUP ─── */
+    .theme-modal-mock {
+      background: rgba(15, 23, 42, 0.95);
+      border: 1.5px solid rgba(56, 189, 248, 0.4);
+      border-radius: 28px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      box-shadow: 0 0 35px rgba(6, 182, 212, 0.3);
+    }
+    .theme-modal-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .theme-mode-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    .theme-opt-box {
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .theme-opt-box.active {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.15);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+    }
+    .theme-swatch {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    /* Accent color swatches row */
+    .accents-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 16px;
+      padding: 12px 18px;
+    }
+    .accent-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+    }
+
+    /* Mockup Header inside Phone */
+    .dash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 16px;
+      margin-top: 16px;
+    }
+    .brand-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 19px;
+    }
+    .f-logo-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: #4f46e5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 17px;
+      color: #fff;
+    }
+    .streak-pill {
+      background: rgba(249, 115, 22, 0.15);
+      border: 1px solid rgba(249, 115, 22, 0.4);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fb923c;
+    }
+
+    /* Floating Quick Create FAB in Mockup */
+    .fab-mock {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      width: 60px;
+      height: 60px;
+      border-radius: 20px;
+      background: #4f46e5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 900;
+      color: #ffffff;
+      box-shadow: 0 0 25px rgba(79, 70, 229, 0.7);
+    }
+
+    /* ─── GOLDEN METALLIC PROMO BADGE (APPEARS AT 3.5s) ─── */
+    .golden-card {
+      position: absolute;
+      bottom: 60px;
+      width: 920px;
+      background: linear-gradient(135deg, rgba(30, 24, 10, 0.96) 0%, rgba(15, 12, 5, 0.98) 100%);
+      border: 3px solid #f59e0b;
+      border-radius: 36px;
+      padding: 38px 44px;
+      box-shadow: 
+        0 0 60px rgba(245, 158, 11, 0.5),
+        inset 0 0 35px rgba(245, 158, 11, 0.25);
+      backdrop-filter: blur(25px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      z-index: 50;
+      opacity: 0;
+      transform: translateY(40px) scale(0.95);
+    }
+
+    .gold-shimmer-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      letter-spacing: 4px;
+      color: #fde68a;
+      text-transform: uppercase;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .promo-code-box {
+      background: rgba(245, 158, 11, 0.15);
+      border: 2px dashed #f59e0b;
+      border-radius: 20px;
+      padding: 14px 34px;
+      margin-bottom: 20px;
+    }
+    .promo-code-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #fbbf24;
+      text-shadow: 0 0 25px rgba(251, 191, 36, 0.8);
+    }
+
+    .promo-perk {
+      font-size: 26px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 24px;
+    }
+    .promo-perk span {
+      color: #f59e0b;
+    }
+
+    .cta-download-btn {
+      width: 100%;
+      padding: 22px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      border-radius: 20px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #ffffff;
+      box-shadow: 0 0 40px rgba(16, 185, 129, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="glow-gold"></div>
+
+  <!-- Google Play Beta Live Badge -->
+  <div class="beta-live-badge">
+    <div class="pulse-dot"></div>
+    GOOGLE PLAY CLOSED BETA (v1.0.9)
+  </div>
+
+  <h1 class="main-title">
+    FORGE YOUR IDENTITY.<br>
+    <span>COMMAND YOUR DESTINY.</span>
+  </h1>
+
+  <!-- Smartphone Frame showcasing live dashboard & theme switcher -->
+  <div class="phone-container" id="phoneContainer">
+    <div class="phone-camera"></div>
+
+    <!-- Real ForgeOS Pro Theme & Accent Switcher -->
+    <div class="theme-modal-mock">
+      <div class="theme-modal-title">
+        <span>🎨 Pro Theme Engine</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #38bdf8;">PRO UNLOCKED</span>
+      </div>
+
+      <div class="theme-mode-row">
+        <!-- Obsidian Dark -->
+        <div class="theme-opt-box active" id="themeObsidian">
+          <div class="theme-swatch" style="background: #030712; border: 1px solid #38bdf8;">🌌</div>
+          <span>Obsidian</span>
+        </div>
+        <!-- Warm Sepia -->
+        <div class="theme-opt-box" id="themeSepia">
+          <div class="theme-swatch" style="background: #231d16; border: 1px solid #d97706;">📜</div>
+          <span>Sepia</span>
+        </div>
+        <!-- Pure Light -->
+        <div class="theme-opt-box" id="themeLight">
+          <div class="theme-swatch" style="background: #f8fafc; border: 1px solid #cbd5e1; color: #000;">☀️</div>
+          <span>Light</span>
+        </div>
+      </div>
+
+      <!-- Accent Palettes -->
+      <div class="accents-row">
+        <div class="accent-dot" style="background: #6366f1;"></div>
+        <div class="accent-dot" style="background: #f59e0b;"></div>
+        <div class="accent-dot" style="background: #10b981;"></div>
+        <div class="accent-dot" style="background: #f43f5e;"></div>
+      </div>
+    </div>
+
+    <!-- App Header & Active Queue below -->
+    <div class="dash-header">
+      <div class="brand-pill">
+        <div class="f-logo-badge">F</div>
+        <span>ForgeOS</span>
+      </div>
+      <div class="streak-pill">🔥 14d Resilient Streak</div>
+    </div>
+
+    <!-- Floating Quick Create Speed-Dial FAB in Mockup -->
+    <div class="fab-mock" id="fabMock">+</div>
+  </div>
+
+  <!-- GOLDEN METALLIC PROMO CARD -->
+  <div class="golden-card" id="goldenCard">
+    <div class="gold-shimmer-tag">⭐ LIMITED CLOSED BETA OFFER ⭐</div>
+    <div class="promo-code-box">
+      <div class="promo-code-text">CODE: FORGEBETA</div>
+    </div>
+    <div class="promo-perk">
+      UNLOCK <span>LIFETIME PRO ACCESS</span> FOR FREE
+    </div>
+    <div class="cta-download-btn">
+      <span>▶ DOWNLOAD ON GOOGLE PLAY</span>
+    </div>
+  </div>
+
+  <script type="module">
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+    function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
+
+    const phoneContainer = document.getElementById('phoneContainer');
+    const goldenCard = document.getElementById('goldenCard');
+    const fabMock = document.getElementById('fabMock');
+    const themeObsidian = document.getElementById('themeObsidian');
+    const themeSepia = document.getElementById('themeSepia');
+
+    window.film = {
+      duration: 8.0,
+      ready: document.fonts.ready,
+      frame(t) {
+        // Phone perspective entry
+        const enterProg = clamp(t / 0.5, 0, 1);
+        const enterEase = easeOutCubic(enterProg);
+        phoneContainer.style.transform = `scale(${0.94 + 0.06 * enterEase})`;
+
+        // FAB pulse animation
+        const pulse = 1 + 0.08 * Math.sin(t * 6);
+        fabMock.style.transform = `scale(${pulse})`;
+
+        // Theme switching demonstration (t: 0s -> 3.5s)
+        const isSepia = t > 1.8 && t < 3.5;
+        themeObsidian.className = isSepia ? 'theme-opt-box' : 'theme-opt-box active';
+        themeSepia.className = isSepia ? 'theme-opt-box active' : 'theme-opt-box';
+
+        // Golden Card Entry at 3.5s -> 8.0s
+        if (t >= 3.5) {
+          const tGold = t - 3.5;
+          const goldProg = clamp(tGold / 0.5, 0, 1);
+          const goldEase = easeOutCubic(goldProg);
+
+          goldenCard.style.opacity = `${goldEase}`;
+          goldenCard.style.transform = `translateY(${(1 - goldEase) * 40}px) scale(${0.95 + 0.05 * goldEase})`;
+
+          // Shimmer glow pulse
+          const shimmer = 50 + 20 * Math.sin(tGold * 5);
+          goldenCard.style.boxShadow = `0 0 ${shimmer}px rgba(245, 158, 11, 0.55), inset 0 0 35px rgba(245, 158, 11, 0.25)`;
+        } else {
+          goldenCard.style.opacity = '0';
+          goldenCard.style.transform = 'translateY(40px) scale(0.95)';
+          goldenCard.style.boxShadow = 'none';
+        }
+      }
+    };
+  </script>
+</body>
+</html>
