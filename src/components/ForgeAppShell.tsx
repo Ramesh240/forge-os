@@ -1315,7 +1315,7 @@ export default function ForgeAppShell({
       {/* ========================================================= */}
       {/* MAIN CONTAINER                                            */}
       {/* ========================================================= */}
-      <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-8 space-y-8">
+      <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6 space-y-6">
         {/* Toast Banner */}
         {toastMessage && (
           <div className="glass-panel rounded-2xl p-3.5 px-4 flex items-center justify-between text-xs sm:text-sm">
@@ -1336,45 +1336,64 @@ export default function ForgeAppShell({
         {/* TAB 1: MINIMALISTIC HOME WORKSPACE (HABITS ON TOP)        */}
         {/* ========================================================= */}
         {activeTab === 'WORKSPACE' && (
-          <div className="space-y-8">
-            {/* CENTERED HERO & PRIMARY ACTION DOCK */}
-            <section className="text-center max-w-xl mx-auto space-y-5 pt-1">
-              <div className="space-y-1.5">
-                <span className="text-[11px] font-mono uppercase tracking-widest theme-muted">
-                  {analytics.effectiveHours} Effective Hrs • {analytics.completionRate14d}% Consistency
-                </span>
-                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight theme-text">
-                  What identity are you building today?
-                </h1>
+          <div className="space-y-4">
+            {/* COMPACT WORKSPACE HEADER & ACTIVE HABIT QUEUE ON TOP */}
+            <section className="space-y-3 pt-0">
+              {/* Sleek Top Bar with Title, Stats, and Creation Controls */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[var(--border-subtle)]">
+                <div>
+                  <h1 className="text-xl sm:text-2xl font-black tracking-tight theme-text flex items-center gap-2">
+                    <span>Active Habit Queue</span>
+                    <span
+                      className="text-xs px-2.5 py-0.5 rounded-full font-mono font-bold text-white shadow-xs"
+                      style={{ background: 'var(--accent-primary)' }}
+                    >
+                      {visibleHabits.length}
+                    </span>
+                  </h1>
+                  <p className="text-[11px] theme-muted font-mono mt-0.5 flex items-center gap-2">
+                    <span>⚡ {analytics.effectiveHours} Effective Hrs</span>
+                    <span>•</span>
+                    <span>📈 {analytics.completionRate14d}% Consistency</span>
+                  </p>
+                </div>
+
+                {/* Compact Action Dock */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => openCenteredCreator('HABIT')}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white shadow-xs transition hover:opacity-95 cursor-pointer"
+                    style={{ background: 'var(--accent-primary)' }}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>New Habit</span>
+                  </button>
+
+                  <button
+                    onClick={() => openCenteredCreator('IDENTITY')}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl glass-panel text-xs font-semibold theme-text hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer"
+                  >
+                    <Compass className="w-3.5 h-3.5 text-amber-500" />
+                    <span className="hidden sm:inline">New Identity</span>
+                  </button>
+
+                  <button
+                    onClick={() => setIsWidgetDrawerOpen(true)}
+                    className="p-2 rounded-xl glass-panel text-xs font-semibold theme-subtext hover:opacity-80 transition cursor-pointer"
+                    title="Compact Widget View"
+                  >
+                    <LayoutGrid className="w-4 h-4 text-indigo-400" />
+                  </button>
+                </div>
               </div>
 
-              {/* Centered Creation Command Pill */}
-              <div className="inline-flex items-center gap-2 p-1.5 rounded-2xl glass-nav">
-                <button
-                  onClick={() => openCenteredCreator('HABIT')}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm transition hover:opacity-95 cursor-pointer"
-                  style={{ background: 'var(--accent-primary)' }}
-                >
-                  <Plus className="w-4 h-4" />
-                  New Habit
-                </button>
-
-                <button
-                  onClick={() => openCenteredCreator('IDENTITY')}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold theme-text hover:bg-black/5 dark:hover:bg-white/5 transition cursor-pointer"
-                >
-                  <Compass className="w-4 h-4 text-amber-500" />
-                  New Identity
-                </button>
-              </div>
-
-              {/* Centered Minimal Identity Filter Pills */}
-              <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+              {/* Horizontal Scrollable Single-Row Filter Strip (No multi-line stacking!) */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 -mx-1 px-1">
                 <button
                   onClick={() => setSelectedIdentityFilter('ALL')}
-                  className={`px-3.5 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
+                  className={`px-3.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition cursor-pointer ${
                     selectedIdentityFilter === 'ALL'
-                      ? 'glass-tab-active'
+                      ? 'glass-tab-active shadow-xs'
                       : 'glass-panel theme-subtext hover:opacity-80'
                   }`}
                 >
@@ -1383,9 +1402,9 @@ export default function ForgeAppShell({
                 {identities.map((idObj) => (
                   <div
                     key={idObj.id}
-                    className={`inline-flex items-center gap-1 pl-3 pr-2 py-1 rounded-full text-xs font-medium transition ${
+                    className={`inline-flex items-center gap-1 pl-3 pr-1.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition ${
                       selectedIdentityFilter === idObj.id
-                        ? 'glass-tab-active'
+                        ? 'glass-tab-active shadow-xs'
                         : 'glass-panel theme-subtext'
                     }`}
                   >
@@ -1398,31 +1417,16 @@ export default function ForgeAppShell({
                     <button
                       onClick={() => openEditIdentityModal(idObj)}
                       title="Edit Identity"
-                      className="opacity-60 hover:opacity-100 p-0.5 cursor-pointer"
+                      className="opacity-50 hover:opacity-100 p-0.5 cursor-pointer"
                     >
-                      <Pencil className="w-3 h-3" />
+                      <Pencil className="w-2.5 h-2.5" />
                     </button>
                   </div>
                 ))}
               </div>
-            </section>
 
-            {/* DAILY HABIT QUEUE PLACED DIRECTLY ON TOP FOR IMMEDIATE ACTION */}
-            <section className="space-y-3">
-              <div className="flex items-center justify-between px-1">
-                <span className="text-xs font-bold uppercase tracking-wider theme-muted">
-                  Active Habit Queue ({visibleHabits.length}) — Newest First
-                </span>
-                <button
-                  onClick={() => setIsWidgetDrawerOpen(true)}
-                  className="text-xs font-semibold theme-subtext hover:opacity-80 flex items-center gap-1 cursor-pointer"
-                >
-                  <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
-                  Compact Widget View
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {/* Habit Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
                 {visibleHabits.map((habit) => {
                   const stageMeta =
                     STAGE_LABELS[habit.defaultPhase as SkillStage] ||
