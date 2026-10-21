@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Scene 4 - Pro Theme Switcher, Google Play Closed Beta & Golden Code</title>
+  <title>Scene 4 - Pro Theme Switcher, Google Play Unlock & CTA</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@500;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
@@ -43,8 +43,8 @@
       pointer-events: none;
     }
 
-    /* Google Play Beta Live Badge */
-    .beta-live-badge {
+    /* Google Play Official Badge */
+    .play-badge {
       margin-top: 80px;
       display: flex;
       align-items: center;
@@ -109,7 +109,7 @@
       margin: 2px auto 14px;
     }
 
-    /* ─── REAL FORGEOS PRO THEME SWITCHER MODAL MOCKUP ─── */
+    /* Real ForgeOS Pro Theme & Accent Switcher */
     .theme-modal-mock {
       background: rgba(15, 23, 42, 0.95);
       border: 1.5px solid rgba(56, 189, 248, 0.4);
@@ -159,7 +159,6 @@
       font-size: 18px;
     }
 
-    /* Accent color swatches row */
     .accents-row {
       display: flex;
       align-items: center;
@@ -176,7 +175,7 @@
       box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
     }
 
-    /* Mockup Header inside Phone */
+    /* App Header inside Phone */
     .dash-header {
       display: flex;
       align-items: center;
@@ -216,7 +215,6 @@
       color: #fb923c;
     }
 
-    /* Floating Quick Create FAB in Mockup */
     .fab-mock {
       position: absolute;
       bottom: 24px;
@@ -234,18 +232,18 @@
       box-shadow: 0 0 25px rgba(79, 70, 229, 0.7);
     }
 
-    /* ─── GOLDEN METALLIC PROMO BADGE (APPEARS AT 3.5s) ─── */
-    .golden-card {
+    /* ─── GOOGLE PLAY IN-APP PURCHASE UPGRADE CARD (APPEARS AT 3.5s) ─── */
+    .pro-payment-card {
       position: absolute;
-      bottom: 60px;
-      width: 920px;
-      background: linear-gradient(135deg, rgba(30, 24, 10, 0.96) 0%, rgba(15, 12, 5, 0.98) 100%);
-      border: 3px solid #f59e0b;
+      bottom: 50px;
+      width: 940px;
+      background: linear-gradient(135deg, rgba(20, 24, 40, 0.96) 0%, rgba(10, 12, 22, 0.98) 100%);
+      border: 2px solid rgba(245, 158, 11, 0.6);
       border-radius: 36px;
-      padding: 38px 44px;
+      padding: 34px 40px;
       box-shadow: 
-        0 0 60px rgba(245, 158, 11, 0.5),
-        inset 0 0 35px rgba(245, 158, 11, 0.25);
+        0 0 65px rgba(245, 158, 11, 0.4),
+        inset 0 0 35px rgba(245, 158, 11, 0.15);
       backdrop-filter: blur(25px);
       display: flex;
       flex-direction: column;
@@ -256,40 +254,99 @@
       transform: translateY(40px) scale(0.95);
     }
 
-    .gold-shimmer-tag {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 18px;
-      letter-spacing: 4px;
-      color: #fde68a;
-      text-transform: uppercase;
-      font-weight: 800;
-      margin-bottom: 12px;
-    }
-
-    .promo-code-box {
-      background: rgba(245, 158, 11, 0.15);
-      border: 2px dashed #f59e0b;
-      border-radius: 20px;
-      padding: 14px 34px;
+    .pro-header-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 16px;
       margin-bottom: 20px;
     }
-    .promo-code-text {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 44px;
+    .pro-title-box {
+      text-align: left;
+    }
+    .pro-card-title {
+      font-size: 32px;
       font-weight: 900;
-      letter-spacing: 4px;
-      color: #fbbf24;
-      text-shadow: 0 0 25px rgba(251, 191, 36, 0.8);
+      color: #fff;
+    }
+    .pro-card-sub {
+      font-size: 16px;
+      color: #94a3b8;
     }
 
-    .promo-perk {
-      font-size: 26px;
-      font-weight: 700;
-      color: #ffffff;
+    .pro-price-pill {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1.5px solid rgba(245, 158, 11, 0.5);
+      border-radius: 20px;
+      padding: 10px 22px;
+      text-align: right;
+    }
+    .pro-price-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 32px;
+      font-weight: 900;
+      color: #fbbf24;
+      line-height: 1;
+    }
+    .pro-price-note {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #fde68a;
+      margin-top: 2px;
+    }
+
+    /* 3 Feature Pillars */
+    .pro-pillars-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
       margin-bottom: 24px;
     }
-    .promo-perk span {
-      color: #f59e0b;
+    .pillar-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 16px 14px;
+      text-align: left;
+    }
+    .pillar-icon {
+      font-size: 26px;
+      margin-bottom: 8px;
+    }
+    .pillar-name {
+      font-size: 17px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .pillar-desc {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.3;
+    }
+
+    /* 1-Tap Google Play Billing Pill */
+    .gplay-method-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: 18px;
+      padding: 14px 20px;
+      margin-bottom: 22px;
+    }
+    .gplay-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #34d399;
     }
 
     .cta-download-btn {
@@ -297,14 +354,14 @@
       padding: 22px;
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       border: none;
-      border-radius: 20px;
+      border-radius: 22px;
       font-family: 'Outfit', sans-serif;
       font-size: 28px;
       font-weight: 900;
       letter-spacing: 2px;
       text-transform: uppercase;
       color: #ffffff;
-      box-shadow: 0 0 40px rgba(16, 185, 129, 0.6);
+      box-shadow: 0 0 45px rgba(16, 185, 129, 0.65);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -316,10 +373,10 @@
   <div class="grid-bg"></div>
   <div class="glow-gold"></div>
 
-  <!-- Google Play Beta Live Badge -->
-  <div class="beta-live-badge">
+  <!-- Google Play Official Store Live Badge -->
+  <div class="play-badge">
     <div class="pulse-dot"></div>
-    GOOGLE PLAY CLOSED BETA (v1.0.9)
+    AVAILABLE ON GOOGLE PLAY
   </div>
 
   <h1 class="main-title">
@@ -378,17 +435,49 @@
     <div class="fab-mock" id="fabMock">+</div>
   </div>
 
-  <!-- GOLDEN METALLIC PROMO CARD -->
-  <div class="golden-card" id="goldenCard">
-    <div class="gold-shimmer-tag">⭐ LIMITED CLOSED BETA OFFER ⭐</div>
-    <div class="promo-code-box">
-      <div class="promo-code-text">CODE: FORGEBETA</div>
+  <!-- REAL FORGEOS PRO GOOGLE PLAY UPGRADE CARD -->
+  <div class="pro-payment-card" id="proPaymentCard">
+    <div class="pro-header-row">
+      <div class="pro-title-box">
+        <h2 class="pro-card-title">⚡ Unlock ForgeOS Pro</h2>
+        <p class="pro-card-sub">Lifetime Mastery • Unlimited Identities &amp; Habits</p>
+      </div>
+      <div class="pro-price-pill">
+        <div class="pro-price-num">₹150</div>
+        <div class="pro-price-note">One-time purchase</div>
+      </div>
     </div>
-    <div class="promo-perk">
-      UNLOCK <span>LIFETIME PRO ACCESS</span> FOR FREE
+
+    <div class="pro-pillars-grid">
+      <div class="pillar-box">
+        <div class="pillar-icon">📊</div>
+        <div class="pillar-name">Analytics Hub</div>
+        <div class="pillar-desc">7-day velocity charts &amp; 10,000-hr mastery tracking</div>
+      </div>
+      <div class="pillar-box">
+        <div class="pillar-icon">🎨</div>
+        <div class="pillar-name">Studio Themes</div>
+        <div class="pillar-desc">Obsidian, Sepia Reading Room &amp; Crisp Daylight</div>
+      </div>
+      <div class="pillar-box">
+        <div class="pillar-icon">⚡</div>
+        <div class="pillar-name">Sprint Presets</div>
+        <div class="pillar-desc">25/5 and 50/10 Pomodoro work-rest timers</div>
+      </div>
     </div>
+
+    <!-- Google Play 1-Tap Info -->
+    <div class="gplay-method-bar">
+      <div class="gplay-left">
+        <span>📱 Billed Securely via Google Play</span>
+      </div>
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 14px; color: #a7f3d0; font-weight: 700;">
+        1-Tap Google Pay / UPI
+      </span>
+    </div>
+
     <div class="cta-download-btn">
-      <span>▶ DOWNLOAD ON GOOGLE PLAY</span>
+      <span>▶ DOWNLOAD FORGEOS ON GOOGLE PLAY</span>
     </div>
   </div>
 
@@ -397,7 +486,7 @@
     function easeOutCubic(x) { return 1 - Math.pow(1 - x, 3); }
 
     const phoneContainer = document.getElementById('phoneContainer');
-    const goldenCard = document.getElementById('goldenCard');
+    const proPaymentCard = document.getElementById('proPaymentCard');
     const fabMock = document.getElementById('fabMock');
     const themeObsidian = document.getElementById('themeObsidian');
     const themeSepia = document.getElementById('themeSepia');
@@ -420,22 +509,22 @@
         themeObsidian.className = isSepia ? 'theme-opt-box' : 'theme-opt-box active';
         themeSepia.className = isSepia ? 'theme-opt-box active' : 'theme-opt-box';
 
-        // Golden Card Entry at 3.5s -> 8.0s
+        // Pro Payment Card Entry at 3.5s -> 8.0s
         if (t >= 3.5) {
-          const tGold = t - 3.5;
-          const goldProg = clamp(tGold / 0.5, 0, 1);
-          const goldEase = easeOutCubic(goldProg);
+          const tPro = t - 3.5;
+          const proProg = clamp(tPro / 0.5, 0, 1);
+          const proEase = easeOutCubic(proProg);
 
-          goldenCard.style.opacity = `${goldEase}`;
-          goldenCard.style.transform = `translateY(${(1 - goldEase) * 40}px) scale(${0.95 + 0.05 * goldEase})`;
+          proPaymentCard.style.opacity = `${proEase}`;
+          proPaymentCard.style.transform = `translateY(${(1 - proEase) * 40}px) scale(${0.95 + 0.05 * proEase})`;
 
-          // Shimmer glow pulse
-          const shimmer = 50 + 20 * Math.sin(tGold * 5);
-          goldenCard.style.boxShadow = `0 0 ${shimmer}px rgba(245, 158, 11, 0.55), inset 0 0 35px rgba(245, 158, 11, 0.25)`;
+          // Ambient glow pulse
+          const shimmer = 50 + 20 * Math.sin(tPro * 5);
+          proPaymentCard.style.boxShadow = `0 0 ${shimmer}px rgba(245, 158, 11, 0.45), inset 0 0 35px rgba(245, 158, 11, 0.15)`;
         } else {
-          goldenCard.style.opacity = '0';
-          goldenCard.style.transform = 'translateY(40px) scale(0.95)';
-          goldenCard.style.boxShadow = 'none';
+          proPaymentCard.style.opacity = '0';
+          proPaymentCard.style.transform = 'translateY(40px) scale(0.95)';
+          proPaymentCard.style.boxShadow = 'none';
         }
       }
     };
