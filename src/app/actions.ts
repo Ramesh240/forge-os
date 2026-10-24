@@ -113,6 +113,13 @@ export async function redeemProAccessAction(
  * Resets the Pro status back to false for the active user (convenient for testing paywalls).
  */
 export async function resetProStatusAction(): Promise<{ success: boolean; error?: string }> {
+  if (process.env.NODE_ENV !== 'development') {
+    return {
+      success: false,
+      error: 'Pro status reset is disabled in production.',
+    };
+  }
+
   try {
     const userId = await getActiveUserId();
     await prisma.identityVector.updateMany({
@@ -382,6 +389,8 @@ export async function createStackedHabit(data: {
   reminderTime?: string | null;
   temptationLabel?: string | null;
   temptationBundleUrl?: string | null;
+  dailyGoalMinutes?: number | null;
+  weeklyGoalDays?: number | null;
 }) {
   const userId = await getActiveUserId();
   let targetIdentityId = data.identityId;
@@ -440,7 +449,9 @@ export async function createStackedHabit(data: {
         reminderTime: data.reminderTime?.trim() || null,
         temptationLabel: data.temptationLabel?.trim() || null,
         temptationBundleUrl: data.temptationBundleUrl?.trim() || null,
-      },
+        dailyGoalMinutes: Math.max(0, Math.floor(data.dailyGoalMinutes || 0)),
+        weeklyGoalDays: Math.max(0, Math.floor(data.weeklyGoalDays || 0)),
+      } as any,
     });
 
     if (displacedHabitId) {
@@ -464,6 +475,8 @@ export async function updateStackedHabit(data: {
   reminderTime?: string | null;
   temptationLabel?: string | null;
   temptationBundleUrl?: string | null;
+  dailyGoalMinutes?: number | null;
+  weeklyGoalDays?: number | null;
 }) {
   const newAnchorId =
     data.anchorHabitId && data.anchorHabitId !== 'NONE' && data.anchorHabitId !== data.id
@@ -537,11 +550,35 @@ export async function updateStackedHabit(data: {
         reminderTime: data.reminderTime?.trim() || null,
         temptationLabel: data.temptationLabel?.trim() || null,
         temptationBundleUrl: data.temptationBundleUrl?.trim() || null,
-      },
+        dailyGoalMinutes:
+          data.dailyGoalMinutes !== undefined
+            ? Math.max(0, Math.floor(data.dailyGoalMinutes || 0))
+            : undefined,
+        weeklyGoalDays:
+          data.weeklyGoalDays !== undefined
+            ? Math.max(0, Math.floor(data.weeklyGoalDays || 0))
+            : undefined,
+      } as any,
     });
   });
 
   revalidatePath('/');
+}
+
+/**
+ * Server-side verified Pro status checker (Audit #21).
+ * Validates authentic Google session and database IdentityVector.isPro
+ * to eliminate client-side localStorage DevTools tampering.
+ */
+export async function verifyUserProStatusAction(): Promise<{ isPro: boolean }> {
+  try {
+    const userId = await getActiveUserId();
+    const isPro = await checkUserProStatus(userId);
+    return { isPro };
+  } catch (err) {
+    console.error('Error verifying Pro status server-side:', err);
+    return { isPro: false };
+  }
 }
 
 export async function deleteStackedHabit(id: string) {
@@ -584,6 +621,10 @@ export async function deleteStackedHabit(id: string) {
 }
 
 export async function seedSampleChainHistory() {
+  if (process.env.NODE_ENV !== 'development') {
+    return;
+  }
+
   const userId = await getActiveUserId();
   const habits = await prisma.habit.findMany({
     where: { identity: { userId } },
@@ -643,13 +684,25 @@ export async function seedSampleChainHistory() {
 }
 
 export async function runMidnightGuardrailAudit() {
-  const userId = await getActiveUserId();
-  const habits = await prisma.habit.findMany({
-    where: { identity: { userId } },
-  });
+  const habits = await prisma.habit.findMany();
+  if (habits.length === 0) return { success: true, count: 0 };
+
+  const todayStr = new Date().toISOString().split('T')[0];
 
   await prisma.$transaction(
     habits.map((h) => {
+      // If completed today, streak is safe and not missed
+      if (h.lastCompletedDate === todayStr) {
+        return prisma.habit.update({
+          where: { id: h.id },
+          data: {
+            missedYesterday: false,
+            isReboundPriority: false,
+          },
+        });
+      }
+
+      // Not completed today: evaluate "Never Miss Twice"
       const missedTwice = h.missedYesterday;
       return prisma.habit.update({
         where: { id: h.id },
@@ -658,11 +711,79 @@ export async function runMidnightGuardrailAudit() {
           missedYesterday: true,
           isReboundPriority: true,
           downscaledDaysRemaining: missedTwice ? 3 : h.downscaledDaysRemaining,
-          lastCompletedDate: null,
         },
       });
     })
   );
 
+  try {
+    revalidatePath('/');
+  } catch {
+    // safe outside request context
+  }
+  return { success: true, count: habits.length };
+}
+
+export async function toggleArchiveHabitAction(id: string, isArchived: boolean) {
+  const userId = await getActiveUserId();
+  const habit = await prisma.habit.findFirst({
+    where: { id, identity: { userId } },
+  });
+
+  if (!habit) {
+    throw new Error('Habit not found or unauthorized');
+  }
+
+  await prisma.habit.update({
+    where: { id },
+    data: { isArchived },
+  });
+
   revalidatePath('/');
+}
+
+export async function togglePinHabitAction(id: string, isPinned: boolean) {
+  const userId = await getActiveUserId();
+  const habit = await prisma.habit.findFirst({
+    where: { id, identity: { userId } },
+  });
+
+  if (!habit) {
+    throw new Error('Habit not found or unauthorized');
+  }
+
+  await prisma.habit.update({
+    where: { id },
+    data: { isPinned },
+  });
+
+  revalidatePath('/');
+}
+
+export async function exportUserDataAction() {
+  const userId = await getActiveUserId();
+
+  const [identities, habits, sessions] = await Promise.all([
+    prisma.identityVector.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+    }),
+    prisma.habit.findMany({
+      where: { identity: { userId } },
+      orderBy: { createdAt: 'asc' },
+    }),
+    prisma.sessionLog.findMany({
+      where: { identity: { userId } },
+      orderBy: { loggedAt: 'asc' },
+    }),
+  ]);
+
+  return {
+    exportedAt: new Date().toISOString(),
+    version: '1.0.9',
+    userId,
+    identities,
+    habits,
+    sessions,
+  };
 }

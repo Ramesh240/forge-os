@@ -53,8 +53,11 @@ async function ForgeOSDataLayer() {
           identity: { select: { title: true } },
           nextStackedHabit: { select: { id: true, title: true } },
         },
-        // Rebound habits & newest created habits always show at the very top!
-        orderBy: [{ isReboundPriority: 'desc' }, { createdAt: 'desc' }],
+        // Order by rebound priority and creation date in database; pinned habits sorted in memory
+        orderBy: [
+          { isReboundPriority: 'desc' },
+          { createdAt: 'desc' },
+        ],
       }),
       prisma.sessionLog.findMany({
         where: { identity: { userId: activeUserId } },
@@ -128,10 +131,17 @@ async function ForgeOSDataLayer() {
       missedYesterday: h.missedYesterday,
       isReboundPriority: h.isReboundPriority,
       downscaledDaysRemaining: h.downscaledDaysRemaining ?? 0,
+      isArchived: Boolean((h as { isArchived?: boolean }).isArchived),
+      isPinned: Boolean((h as { isPinned?: boolean }).isPinned),
+      dailyGoalMinutes: Number((h as { dailyGoalMinutes?: number }).dailyGoalMinutes ?? 0),
+      weeklyGoalDays: Number((h as { weeklyGoalDays?: number }).weeklyGoalDays ?? 0),
       identityTitle: h.identity.title,
       nextStackedHabitTitle: h.nextStackedHabit?.title ?? null,
       nextStackedHabitId: h.nextStackedHabit?.id ?? null,
     }));
+
+    // Lock pinned habits to the top of the queue
+    habits.sort((a, b) => (b.isPinned ? 1 : 0) - (a.isPinned ? 1 : 0));
 
     sessions = rawSessions.map((s) => ({
       id: s.id,

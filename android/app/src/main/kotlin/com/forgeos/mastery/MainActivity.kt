@@ -43,6 +43,7 @@ class  MainActivity : ComponentActivity() {
         splashScreen.setKeepOnScreenCondition { viewModel.isLoading.value }
 
         com.forgeos.mastery.notifications.HabitReminderReceiver.createNotificationChannel(this)
+        com.forgeos.mastery.notifications.StreakDangerReceiver.createNotificationChannel(this)
 
         // Edge-to-edge: content renders behind system bars with insets handled safely
         enableEdgeToEdge()

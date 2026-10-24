@@ -52,6 +52,10 @@ model Habit {
 
   // Daily Reminder & Sorting
   reminderTime            String?        // Format: "HH:MM" (24h, e.g. "09:00" or "20:30")
+  isArchived              Boolean        @default(false)
+  isPinned                Boolean        @default(false)
+  dailyGoalMinutes        Int            @default(0)    // 0 = flexible/open, >0 = target minutes (Audit #24)
+  weeklyGoalDays          Int            @default(0)    // 0 = daily/unrestricted, >0 = target days/wk (Audit #24)
   createdAt               DateTime       @default(now())
 
   sessions            SessionLog[]
@@ -72,4 +76,7 @@ model SessionLog {
   tacitInsight         String?        // Mental model or intuition unlocked post-session
   votesEarned          Float
   loggedAt             DateTime       @default(now())
+
+  @@index([identityId, loggedAt])
+  @@index([habitId, loggedAt])
 }

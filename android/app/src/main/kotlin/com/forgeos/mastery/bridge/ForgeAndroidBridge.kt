@@ -11,7 +11,9 @@ import android.webkit.JavascriptInterface
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import com.forgeos.mastery.billing.PlayBillingManager
+import com.forgeos.mastery.notifications.FocusTimerService
 import com.forgeos.mastery.notifications.HabitReminderReceiver
+import com.forgeos.mastery.notifications.StreakDangerReceiver
 import java.util.Calendar
 
 class ForgeAndroidBridge(
@@ -43,6 +45,7 @@ class ForgeAndroidBridge(
     fun requestNotificationPermission() {
         activity.runOnUiThread {
             HabitReminderReceiver.createNotificationChannel(activity)
+            StreakDangerReceiver.createNotificationChannel(activity)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 ActivityCompat.requestPermissions(
                     activity,
@@ -100,7 +103,6 @@ class ForgeAndroidBridge(
                 )
             }
         } catch (_: SecurityException) {
-            // Alarm permission not granted; fallback to standard repeating alarm
             alarmManager.set(
                 AlarmManager.RTC_WAKEUP,
                 calendar.timeInMillis,
@@ -126,6 +128,72 @@ class ForgeAndroidBridge(
     }
 
     @JavascriptInterface
+    fun scheduleStreakDangerAlert(habitId: String, title: String, streakCount: Int) {
+        val alarmManager = activity.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+
+        val intent = Intent(activity, StreakDangerReceiver::class.java).apply {
+            putExtra(StreakDangerReceiver.EXTRA_HABIT_ID, habitId)
+            putExtra(StreakDangerReceiver.EXTRA_HABIT_TITLE, title)
+            putExtra(StreakDangerReceiver.EXTRA_STREAK_COUNT, streakCount)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            activity,
+            (habitId + "_danger").hashCode(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 20)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+            if (before(Calendar.getInstance())) {
+                add(Calendar.DAY_OF_YEAR, 1)
+            }
+        }
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.set(
+                    AlarmManager.RTC_WAKEUP,
+                    calendar.timeInMillis,
+                    pendingIntent
+                )
+            }
+        } catch (_: SecurityException) {
+            alarmManager.set(
+                AlarmManager.RTC_WAKEUP,
+                calendar.timeInMillis,
+                pendingIntent
+            )
+        }
+    }
+
+    @JavascriptInterface
+    fun cancelStreakDangerAlert(habitId: String) {
+        val alarmManager = activity.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val intent = Intent(activity, StreakDangerReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            activity,
+            (habitId + "_danger").hashCode(),
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel()
+        }
+    }
+
+    @JavascriptInterface
     fun setSystemBarTheme(theme: String?, isDark: Boolean) {
         activity.runOnUiThread {
             try {
@@ -135,6 +203,43 @@ class ForgeAndroidBridge(
                 }
             } catch (_: Exception) {
                 // Fallback gracefully
+            }
+        }
+    }
+
+    @JavascriptInterface
+    fun startFocusTimerService(title: String, subtitle: String, baseTimeMillis: Long, isCountdown: Boolean) {
+        activity.runOnUiThread {
+            try {
+                FocusTimerService.createNotificationChannel(activity)
+                val intent = Intent(activity, FocusTimerService::class.java).apply {
+                    action = FocusTimerService.ACTION_START
+                    putExtra(FocusTimerService.EXTRA_TITLE, title)
+                    putExtra(FocusTimerService.EXTRA_SUBTITLE, subtitle)
+                    putExtra(FocusTimerService.EXTRA_BASE_TIME, baseTimeMillis)
+                    putExtra(FocusTimerService.EXTRA_IS_COUNTDOWN, isCountdown)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    activity.startForegroundService(intent)
+                } else {
+                    activity.startService(intent)
+                }
+            } catch (_: Exception) {
+                // Safely handle security or background service start exceptions
+            }
+        }
+    }
+
+    @JavascriptInterface
+    fun stopFocusTimerService() {
+        activity.runOnUiThread {
+            try {
+                val intent = Intent(activity, FocusTimerService::class.java).apply {
+                    action = FocusTimerService.ACTION_STOP
+                }
+                activity.startService(intent)
+            } catch (_: Exception) {
+                // Safely handle service stop
             }
         }
     }

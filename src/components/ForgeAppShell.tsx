@@ -23,7 +23,9 @@ import {
   signInWithGoogleAction,
   signOutAction,
   deleteUserAccountAndData,
-  resetProStatusAction,
+  toggleArchiveHabitAction,
+  togglePinHabitAction,
+  verifyUserProStatusAction,
 } from '@/app/actions';
 import ProUpgradeCard from '@/components/ProUpgradeCard';
 import FeatureWalkthrough from '@/components/FeatureWalkthrough';
@@ -34,6 +36,11 @@ import ThemePaletteModal, {
   applyThemeAndAccentToDocument,
 } from '@/components/ThemePaletteModal';
 import QuickCreateFab from '@/components/QuickCreateFab';
+import DailyRetentionBanner from '@/components/DailyRetentionBanner';
+import HabitChainTransitionModal from '@/components/HabitChainTransitionModal';
+import { WeeklyReviewCard } from '@/components/WeeklyReviewCard';
+import { SessionHistoryFeed } from '@/components/SessionHistoryFeed';
+import { FocusTimerModal } from '@/components/modals/FocusTimerModal';
 import {
   HelpCircle,
   Zap,
@@ -50,7 +57,6 @@ import {
   Swords,
   Lock,
   ArrowRight,
-  ArrowLeft,
   X,
   Pencil,
   Trash2,
@@ -68,8 +74,15 @@ import {
   BellRing,
   LayoutGrid,
   ChevronDown,
+  ChevronUp,
   Check,
   ExternalLink,
+  SunMedium,
+  MoreHorizontal,
+  Pin,
+  Archive,
+  ArchiveRestore,
+  Target,
 } from 'lucide-react';
 
 export interface UserProfile {
@@ -103,6 +116,10 @@ export interface SerializedHabit {
   missedYesterday: boolean;
   isReboundPriority: boolean;
   downscaledDaysRemaining: number;
+  isArchived?: boolean;
+  isPinned?: boolean;
+  dailyGoalMinutes?: number;
+  weeklyGoalDays?: number;
   identityTitle: string;
   nextStackedHabitTitle: string | null;
   nextStackedHabitId: string | null;
@@ -126,6 +143,26 @@ export interface SerializedSession {
 }
 
 type TabType = 'WORKSPACE' | 'ANALYTICS' | 'HEATMAP' | 'VAULT' | 'ACCOUNT';
+
+interface ForgeAndroidBridgeInterface {
+  isNativeApp?: () => boolean;
+  isGooglePlayBillingSupported?: () => boolean;
+  restoreGooglePlayPurchases?: () => void;
+  requestNotificationPermission?: () => void;
+  scheduleHabitReminder?: (habitId: string, title: string, hour: number, minute: number) => void;
+  cancelHabitReminder?: (habitId: string) => void;
+  scheduleStreakDangerAlert?: (habitId: string, title: string, streakCount: number) => void;
+  cancelStreakDangerAlert?: (habitId: string) => void;
+  setSystemBarTheme?: (theme: string, isDark: boolean) => void;
+  startFocusTimerService?: (title: string, subtitle: string, baseTimeMillis: number, isCountdown: boolean) => void;
+  stopFocusTimerService?: () => void;
+  showToast?: (message: string) => void;
+}
+
+const getAndroidBridge = (): ForgeAndroidBridgeInterface | undefined => {
+  if (typeof window === 'undefined') return undefined;
+  return (window as unknown as { ForgeAndroidBridge?: ForgeAndroidBridgeInterface }).ForgeAndroidBridge;
+};
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -157,25 +194,21 @@ export default function ForgeAppShell({
 }) {
   // ── Reactive Local State (Enables Instant 0ms Optimistic UI Updates) ─────────
   const [identities, setIdentities] = useState<SerializedIdentity[]>(initialIdentities);
-  const [prevIdentities, setPrevIdentities] = useState(initialIdentities);
-  if (initialIdentities !== prevIdentities) {
-    setPrevIdentities(initialIdentities);
-    setIdentities(initialIdentities);
-  }
-
   const [habits, setHabits] = useState<SerializedHabit[]>(initialHabits);
-  const [prevHabits, setPrevHabits] = useState(initialHabits);
-  if (initialHabits !== prevHabits) {
-    setPrevHabits(initialHabits);
-    setHabits(initialHabits);
-  }
-
   const [sessions, setSessions] = useState<SerializedSession[]>(initialSessions);
-  const [prevSessions, setPrevSessions] = useState(initialSessions);
-  if (initialSessions !== prevSessions) {
-    setPrevSessions(initialSessions);
+
+  // Synchronize state when server props update without discarding render passes (Audit #20)
+  useEffect(() => {
+    setIdentities(initialIdentities);
+  }, [initialIdentities]);
+
+  useEffect(() => {
+    setHabits(initialHabits);
+  }, [initialHabits]);
+
+  useEffect(() => {
     setSessions(initialSessions);
-  }
+  }, [initialSessions]);
 
   const [userUnlockedPro, setUserUnlockedPro] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -184,6 +217,25 @@ export default function ForgeAppShell({
     return false;
   });
   const userIsPro = isPro || userUnlockedPro;
+
+  // Server-side verified Pro status (Audit #21)
+  // Validates with database/session so localStorage cannot be spoofed via DevTools
+  useEffect(() => {
+    if (userUnlockedPro && !isPro) {
+      verifyUserProStatusAction()
+        .then((res) => {
+          if (!res.isPro) {
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('forge_pro_unlocked');
+            }
+            setUserUnlockedPro(false);
+          }
+        })
+        .catch(() => {
+          // Network failure fallback
+        });
+    }
+  }, [userUnlockedPro, isPro]);
 
   // Pro Modal Trigger State
   const [showProModal, setShowProModal] = useState(false);
@@ -294,49 +346,240 @@ export default function ForgeAppShell({
   const [insightNote, setInsightNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isWakeLockActive, setIsWakeLockActive] = useState<boolean>(false);
+  const [chainTransitionData, setChainTransitionData] = useState<{
+    habit: SerializedHabit;
+    votesEarned: number;
+    durationMinutes: number;
+    isPerfectDayNow: boolean;
+    nextHabit: SerializedHabit | null;
+  } | null>(null);
+  const [isQuickToolsMenuOpen, setIsQuickToolsMenuOpen] = useState(false);
+  const [expandedHabitIds, setExpandedHabitIds] = useState<Set<string>>(new Set());
+
+  const toggleHabitExpand = useCallback((habitId: string) => {
+    setExpandedHabitIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(habitId)) {
+        next.delete(habitId);
+      } else {
+        next.add(habitId);
+      }
+      return next;
+    });
+  }, []);
+
+  // Evening streak risk calculation (7:00 PM onwards / hours >= 19)
+  const isEvening = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return new Date().getHours() >= 19;
+  }, []);
+
+  const atRiskStreakHabits = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    return habits.filter(
+      (h) => h.currentStreak > 0 && h.lastCompletedDate !== todayStr
+    );
+  }, [habits]);
+
+  // Auto-dismiss toast after 4.5 seconds
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = setTimeout(() => {
+      setToastMessage(null);
+    }, 4500);
+    return () => clearTimeout(timer);
+  }, [toastMessage]);
 
   // --- Pomodoro Extension State ---
   const [timerMode, setTimerMode] = useState<'FLOW' | 'POMO_25_5' | 'POMO_50_10'>('FLOW');
   const [pomoPhase, setPomoPhase] = useState<'WORK' | 'BREAK'>('WORK');
   const [pomoSecondsLeft, setPomoSecondsLeft] = useState<number>(23 * 60);
   const [pomoCyclesCompleted, setPomoCyclesCompleted] = useState<number>(0);
+
+  // Wall-Clock Time Synchronization Refs (Zero-drift, background & lock-screen resilient)
+  const sessionStartTimeRef = useRef<number | null>(null);
+  const accumulatedSecondsRef = useRef<number>(0);
+  const phaseStartTimeRef = useRef<number | null>(null);
+  const basePomoSecondsLeftRef = useRef<number>(23 * 60);
+
+  const saveActiveSessionSnapshot = useCallback((overrides?: {
+    habit?: SerializedHabit;
+    stage?: SkillStage;
+    timerMode?: 'FLOW' | 'POMO_25_5' | 'POMO_50_10';
+    pomoPhase?: 'WORK' | 'BREAK';
+    pomoCyclesCompleted?: number;
+    isChallenge?: boolean;
+    difficulty?: number;
+    sessionStartTime?: number | null;
+    accumulatedSeconds?: number;
+    phaseStartTime?: number | null;
+    basePomoSecondsLeft?: number;
+    isRunning?: boolean;
+  }) => {
+    if (typeof window === 'undefined') return;
+    const targetHabit = overrides?.habit || activeHabit;
+    if (!targetHabit) {
+      localStorage.removeItem('forge_active_focus_session');
+      return;
+    }
+    try {
+      const data = {
+        habit: targetHabit,
+        stage: overrides?.stage ?? stage,
+        timerMode: overrides?.timerMode ?? timerMode,
+        pomoPhase: overrides?.pomoPhase ?? pomoPhase,
+        pomoCyclesCompleted: overrides?.pomoCyclesCompleted ?? pomoCyclesCompleted,
+        isChallenge: overrides?.isChallenge ?? isChallenge,
+        difficulty: overrides?.difficulty ?? difficulty,
+        sessionStartTime: overrides?.sessionStartTime !== undefined ? overrides.sessionStartTime : sessionStartTimeRef.current,
+        accumulatedSeconds: overrides?.accumulatedSeconds !== undefined ? overrides.accumulatedSeconds : accumulatedSecondsRef.current,
+        phaseStartTime: overrides?.phaseStartTime !== undefined ? overrides.phaseStartTime : phaseStartTimeRef.current,
+        basePomoSecondsLeft: overrides?.basePomoSecondsLeft !== undefined ? overrides.basePomoSecondsLeft : basePomoSecondsLeftRef.current,
+        isRunning: overrides?.isRunning !== undefined ? overrides.isRunning : isRunning,
+      };
+      localStorage.setItem('forge_active_focus_session', JSON.stringify(data));
+    } catch {
+      // ignore
+    }
+  }, [activeHabit, stage, timerMode, pomoPhase, pomoCyclesCompleted, isChallenge, difficulty, isRunning]);
+
+  const clearActiveSessionSnapshot = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('forge_active_focus_session');
+    }
+    sessionStartTimeRef.current = null;
+    accumulatedSecondsRef.current = 0;
+    phaseStartTimeRef.current = null;
+    basePomoSecondsLeftRef.current = 23 * 60;
+    getAndroidBridge()?.stopFocusTimerService?.();
+  }, []);
+
   // Switch from 2-Min Micro-Start / Open Flow into a Pomodoro preset
-  const activatePomodoroMode = (mode: 'FLOW' | 'POMO_25_5' | 'POMO_50_10') => {
+  const activatePomodoroMode = useCallback((mode: 'FLOW' | 'POMO_25_5' | 'POMO_50_10') => {
     soundEngine.playTactileClick(soundEnabled);
     if ((mode === 'POMO_25_5' || mode === 'POMO_50_10') && !userIsPro) {
       setShowProModal(true);
       return;
     }
+    const now = Date.now();
     setTimerMode(mode);
     setPomoPhase('WORK');
 
+    let initialSecondsLeft = 25 * 60;
     if (mode === 'POMO_25_5') {
       // Credit up to 2 minutes already spent in the micro-start!
       const credited = Math.min(120, secondsElapsed);
-      setPomoSecondsLeft(25 * 60 - credited);
+      initialSecondsLeft = 25 * 60 - credited;
     } else if (mode === 'POMO_50_10') {
       const credited = Math.min(120, secondsElapsed);
-      setPomoSecondsLeft(50 * 60 - credited);
+      initialSecondsLeft = 50 * 60 - credited;
+    }
+
+    phaseStartTimeRef.current = now;
+    basePomoSecondsLeftRef.current = initialSecondsLeft;
+    setPomoSecondsLeft(initialSecondsLeft);
+    if (!sessionStartTimeRef.current) {
+      sessionStartTimeRef.current = now;
     }
     setIsRunning(true);
-  };
+
+    if (activeHabit) {
+      saveActiveSessionSnapshot({
+        timerMode: mode,
+        pomoPhase: 'WORK',
+        phaseStartTime: now,
+        basePomoSecondsLeft: initialSecondsLeft,
+        isRunning: true,
+      });
+
+      if (mode === 'FLOW') {
+        const virtualStart = now - (accumulatedSecondsRef.current * 1000);
+        getAndroidBridge()?.startFocusTimerService?.(
+          activeHabit.title,
+          '∞ Open Flow Active',
+          virtualStart,
+          false
+        );
+      } else {
+        const targetEnd = now + initialSecondsLeft * 1000;
+        getAndroidBridge()?.startFocusTimerService?.(
+          activeHabit.title,
+          `🍅 Pomodoro Work (${mode === 'POMO_25_5' ? '25m' : '50m'})`,
+          targetEnd,
+          true
+        );
+      }
+    }
+  }, [soundEnabled, userIsPro, secondsElapsed, activeHabit, saveActiveSessionSnapshot]);
 
   // Skip current Work or Break phase (or transition when countdown hits 0)
   const transitionPomodoroPhase = useCallback(() => {
     const breakMins = timerMode === 'POMO_50_10' ? 10 : 5;
     const workMins = timerMode === 'POMO_50_10' ? 50 : 25;
+    const now = Date.now();
 
     if (pomoPhase === 'WORK') {
       soundEngine.playBreakStartChime(soundEnabled);
-      setPomoCyclesCompleted((c) => c + 1);
+      const newCycles = pomoCyclesCompleted + 1;
+      setPomoCyclesCompleted(newCycles);
       setPomoPhase('BREAK');
-      setPomoSecondsLeft(breakMins * 60);
+      const breakSecs = breakMins * 60;
+      phaseStartTimeRef.current = now;
+      basePomoSecondsLeftRef.current = breakSecs;
+      setPomoSecondsLeft(breakSecs);
+
+      // Bank elapsed focus time up to this transition
+      if (sessionStartTimeRef.current) {
+        accumulatedSecondsRef.current += Math.max(0, Math.floor((now - sessionStartTimeRef.current) / 1000));
+        sessionStartTimeRef.current = null;
+      }
+
+      saveActiveSessionSnapshot({
+        pomoPhase: 'BREAK',
+        pomoCyclesCompleted: newCycles,
+        phaseStartTime: now,
+        basePomoSecondsLeft: breakSecs,
+        accumulatedSeconds: accumulatedSecondsRef.current,
+        sessionStartTime: null,
+      });
+
+      if (activeHabit) {
+        const targetEnd = now + breakSecs * 1000;
+        getAndroidBridge()?.startFocusTimerService?.(
+          activeHabit.title,
+          '☕ Rest & Recharge Break',
+          targetEnd,
+          true
+        );
+      }
     } else {
       soundEngine.playBreakOverChime(soundEnabled);
       setPomoPhase('WORK');
-      setPomoSecondsLeft(workMins * 60);
+      const workSecs = workMins * 60;
+      phaseStartTimeRef.current = now;
+      basePomoSecondsLeftRef.current = workSecs;
+      setPomoSecondsLeft(workSecs);
+      sessionStartTimeRef.current = now;
+
+      saveActiveSessionSnapshot({
+        pomoPhase: 'WORK',
+        phaseStartTime: now,
+        basePomoSecondsLeft: workSecs,
+        sessionStartTime: now,
+      });
+
+      if (activeHabit) {
+        const targetEnd = now + workSecs * 1000;
+        getAndroidBridge()?.startFocusTimerService?.(
+          activeHabit.title,
+          `🍅 Cycle #${pomoCyclesCompleted + 1} Work Block`,
+          targetEnd,
+          true
+        );
+      }
     }
-  }, [timerMode, pomoPhase, soundEnabled]);
+  }, [timerMode, pomoPhase, pomoCyclesCompleted, soundEnabled, activeHabit, saveActiveSessionSnapshot]);
 
   // Create Modal State + Custom Popover States
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
@@ -353,6 +596,8 @@ export default function ForgeAppShell({
   const [newHabitStage, setNewHabitStage] = useState<SkillStage>('PRACTICE');
   const [newHabitAnchorId, setNewHabitAnchorId] = useState('NONE');
   const [newHabitReminder, setNewHabitReminder] = useState('');
+  const [newHabitGoalMins, setNewHabitGoalMins] = useState<number>(0);
+  const [newHabitGoalDays, setNewHabitGoalDays] = useState<number>(0);
   const [isChainPickerOpen, setIsChainPickerOpen] = useState(false);
   const [showAdvancedHabitOptions, setShowAdvancedHabitOptions] = useState(false);
   const [isIdentityPickerOpen, setIsIdentityPickerOpen] = useState(false);
@@ -375,6 +620,8 @@ export default function ForgeAppShell({
   const [editHabitStage, setEditHabitStage] = useState<SkillStage>('PRACTICE');
   const [editHabitAnchorId, setEditHabitAnchorId] = useState('NONE');
   const [editHabitReminder, setEditHabitReminder] = useState('');
+  const [editHabitGoalMins, setEditHabitGoalMins] = useState<number>(0);
+  const [editHabitGoalDays, setEditHabitGoalDays] = useState<number>(0);
   const [isEditChainPickerOpen, setIsEditChainPickerOpen] = useState(false);
   const [confirmDeleteHabit, setConfirmDeleteHabit] = useState(false);
 
@@ -446,6 +693,7 @@ export default function ForgeAppShell({
           return;
         }
         if (activeHabit) {
+          clearActiveSessionSnapshot();
           setActiveHabit(null);
           setIsRunning(false);
           return;
@@ -471,6 +719,7 @@ export default function ForgeAppShell({
     editingIdentity,
     activeHabit,
     activeTab,
+    clearActiveSessionSnapshot,
   ]);
 
   const startFocusSession = useCallback((habit: SerializedHabit) => {
@@ -478,7 +727,8 @@ export default function ForgeAppShell({
     chimePlayedRef.current = false;
     setIsWidgetDrawerOpen(false);
     setActiveHabit(habit);
-    setStage((habit.defaultPhase as SkillStage) || 'PRACTICE');
+    const initialStage = (habit.defaultPhase as SkillStage) || 'PRACTICE';
+    setStage(initialStage);
     setSecondsElapsed(0);
     setTimerMode('FLOW');
     setPomoPhase('WORK');
@@ -488,8 +738,115 @@ export default function ForgeAppShell({
     setShowDebrief(false);
     setBottleneckNote('');
     setInsightNote('');
+
+    const now = Date.now();
+    sessionStartTimeRef.current = now;
+    accumulatedSecondsRef.current = 0;
+    phaseStartTimeRef.current = now;
+    basePomoSecondsLeftRef.current = 23 * 60;
     setIsRunning(true);
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(
+          'forge_active_focus_session',
+          JSON.stringify({
+            habit,
+            stage: initialStage,
+            timerMode: 'FLOW',
+            pomoPhase: 'WORK',
+            pomoCyclesCompleted: 0,
+            isChallenge: false,
+            difficulty: 3,
+            sessionStartTime: now,
+            accumulatedSeconds: 0,
+            phaseStartTime: now,
+            basePomoSecondsLeft: 23 * 60,
+            isRunning: true,
+          })
+        );
+      } catch {
+        // ignore
+      }
+    }
+
+    getAndroidBridge()?.startFocusTimerService?.(
+      habit.title,
+      '∞ Open Flow Active',
+      now,
+      false
+    );
   }, [soundEnabled]);
+
+  const toggleTimerRunning = useCallback(() => {
+    const now = Date.now();
+    soundEngine.playTactileClick(soundEnabled);
+    if (isRunning) {
+      // PAUSING
+      if (sessionStartTimeRef.current) {
+        accumulatedSecondsRef.current += Math.max(0, Math.floor((now - sessionStartTimeRef.current) / 1000));
+        sessionStartTimeRef.current = null;
+      }
+      if (timerMode !== 'FLOW' && phaseStartTimeRef.current) {
+        const spentInPhase = Math.floor((now - phaseStartTimeRef.current) / 1000);
+        basePomoSecondsLeftRef.current = Math.max(0, basePomoSecondsLeftRef.current - spentInPhase);
+        phaseStartTimeRef.current = null;
+      }
+      setIsRunning(false);
+      getAndroidBridge()?.stopFocusTimerService?.();
+      saveActiveSessionSnapshot({ isRunning: false });
+    } else {
+      // RESUMING
+      sessionStartTimeRef.current = now;
+      if (timerMode !== 'FLOW') {
+        phaseStartTimeRef.current = now;
+      }
+      setIsRunning(true);
+      if (activeHabit) {
+        saveActiveSessionSnapshot({
+          sessionStartTime: now,
+          phaseStartTime: now,
+          isRunning: true,
+        });
+
+        if (timerMode === 'FLOW') {
+          const virtualStart = now - (accumulatedSecondsRef.current * 1000);
+          getAndroidBridge()?.startFocusTimerService?.(
+            activeHabit.title,
+            '∞ Open Flow Active',
+            virtualStart,
+            false
+          );
+        } else {
+          const targetEnd = now + basePomoSecondsLeftRef.current * 1000;
+          getAndroidBridge()?.startFocusTimerService?.(
+            activeHabit.title,
+            `🍅 Pomodoro ${pomoPhase === 'WORK' ? 'Work' : 'Break'}`,
+            targetEnd,
+            true
+          );
+        }
+      }
+    }
+  }, [isRunning, activeHabit, timerMode, pomoPhase, soundEnabled, saveActiveSessionSnapshot]);
+
+  const fastForwardMicroStart = useCallback(() => {
+    soundEngine.playTactileClick(soundEnabled);
+    accumulatedSecondsRef.current += 30;
+    setSecondsElapsed((s) => s + 30);
+    saveActiveSessionSnapshot({ accumulatedSeconds: accumulatedSecondsRef.current });
+    if (activeHabit && isRunning && timerMode === 'FLOW') {
+      const now = Date.now();
+      const currentRun = sessionStartTimeRef.current ? Math.floor((now - sessionStartTimeRef.current) / 1000) : 0;
+      const virtualStart = now - (accumulatedSecondsRef.current + currentRun) * 1000;
+      getAndroidBridge()?.startFocusTimerService?.(
+        activeHabit.title,
+        '∞ Open Flow Active',
+        virtualStart,
+        false
+      );
+    }
+  }, [activeHabit, isRunning, timerMode, soundEnabled, saveActiveSessionSnapshot]);
 
   const MICRO_THRESHOLD = 120;
   const microCleared = secondsElapsed >= MICRO_THRESHOLD;
@@ -513,6 +870,8 @@ export default function ForgeAppShell({
 
       const params = new URLSearchParams(window.location.search);
       const startHabitId = params.get('startHabit');
+      const action = params.get('action');
+
       if (startHabitId) {
         const target = habits.find((h) => h.id === startHabitId);
         if (target) {
@@ -521,6 +880,26 @@ export default function ForgeAppShell({
             startFocusSession(target);
           }, 0);
         }
+      } else if (action === 'stop_and_log') {
+        window.history.replaceState({}, '', '/');
+        setTimeout(() => {
+          const now = Date.now();
+          if (sessionStartTimeRef.current) {
+            accumulatedSecondsRef.current += Math.max(0, Math.floor((now - sessionStartTimeRef.current) / 1000));
+            sessionStartTimeRef.current = null;
+          }
+          setIsRunning(false);
+          getAndroidBridge()?.stopFocusTimerService?.();
+          saveActiveSessionSnapshot({ isRunning: false });
+          setShowDebrief(true);
+        }, 50);
+      } else if (action === 'extend_5m') {
+        window.history.replaceState({}, '', '/');
+        setTimeout(() => {
+          basePomoSecondsLeftRef.current += 300;
+          setPomoSecondsLeft((prev) => prev + 300);
+          setToastMessage('+5 minutes added to focus session.');
+        }, 50);
       }
     }
 
@@ -570,6 +949,32 @@ export default function ForgeAppShell({
           };
         }
       });
+
+      // 2. Evening Streak Danger Alert (8:00 PM / 20:00 onwards)
+      if (now.getHours() >= 20) {
+        habits.forEach((h) => {
+          if (h.currentStreak > 0 && h.lastCompletedDate !== dStr) {
+            const dangerKey = `danger-${h.id}-${dStr}`;
+            if (firedRemindersRef.current.has(dangerKey)) return;
+            firedRemindersRef.current.add(dangerKey);
+
+            if (
+              typeof window !== 'undefined' &&
+              'Notification' in window &&
+              Notification.permission === 'granted'
+            ) {
+              const n = new Notification(`⚡ Streak at Risk: ${h.title}`, {
+                body: `Your ${h.currentStreak}-day streak is on the line. 2-min micro-start before midnight saves it!`,
+                icon: '/icon',
+              });
+              n.onclick = () => {
+                window.focus();
+                startFocusSession(h);
+              };
+            }
+          }
+        });
+      }
     };
 
     const interval = setInterval(checkReminders, 20000);
@@ -579,14 +984,10 @@ export default function ForgeAppShell({
   // Sync habit reminders with native Android AlarmManager if available
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const bridge = (window as unknown as {
-      ForgeAndroidBridge?: {
-        scheduleHabitReminder: (id: string, title: string, hh: number, mm: number) => void;
-        cancelHabitReminder: (id: string) => void;
-      };
-    }).ForgeAndroidBridge;
-
+    const bridge = getAndroidBridge();
     if (!bridge) return;
+
+    const todayStr = new Date().toISOString().split('T')[0];
 
     habits.forEach((h) => {
       if (h.reminderTime) {
@@ -594,10 +995,17 @@ export default function ForgeAppShell({
         const hh = parseInt(parts[0], 10);
         const mm = parseInt(parts[1], 10);
         if (!isNaN(hh) && !isNaN(mm)) {
-          bridge.scheduleHabitReminder(h.id, h.title, hh, mm);
+          bridge.scheduleHabitReminder?.(h.id, h.title, hh, mm);
         }
       } else {
-        bridge.cancelHabitReminder(h.id);
+        bridge.cancelHabitReminder?.(h.id);
+      }
+
+      // Sync 8:00 PM evening streak danger reminder
+      if (h.currentStreak > 0 && h.lastCompletedDate !== todayStr) {
+        bridge.scheduleStreakDangerAlert?.(h.id, h.title, h.currentStreak);
+      } else {
+        bridge.cancelStreakDangerAlert?.(h.id);
       }
     });
   }, [habits]);
@@ -693,29 +1101,177 @@ export default function ForgeAppShell({
     setIsCreatorOpen(true);
   };
 
+  const syncTimerFromWallClock = useCallback(() => {
+    if (!isRunning || !activeHabit) return;
+    const now = Date.now();
+
+    // 1. Calculate focus elapsed seconds (in FLOW or POMO WORK)
+    if (timerMode === 'FLOW' || pomoPhase === 'WORK') {
+      if (sessionStartTimeRef.current) {
+        const deltaSecs = Math.max(0, Math.floor((now - sessionStartTimeRef.current) / 1000));
+        const total = accumulatedSecondsRef.current + deltaSecs;
+        setSecondsElapsed(total);
+      }
+    }
+
+    // 2. Calculate Pomodoro countdown if in POMO mode
+    if (timerMode !== 'FLOW' && phaseStartTimeRef.current) {
+      const phaseDeltaSecs = Math.max(0, Math.floor((now - phaseStartTimeRef.current) / 1000));
+      const remaining = basePomoSecondsLeftRef.current - phaseDeltaSecs;
+
+      if (remaining <= 0) {
+        setPomoSecondsLeft(0);
+        transitionPomodoroPhase();
+      } else {
+        setPomoSecondsLeft(remaining);
+      }
+    }
+  }, [isRunning, activeHabit, timerMode, pomoPhase, transitionPomodoroPhase]);
+
+  // Synchronize timer with wall-clock: runs on interval and instant browser events (visibility/focus/pageshow)
+  // Maintains active Screen Wake Lock so mobile & desktop displays don't sleep mid-focus session
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isRunning && activeHabit) {
-      timer = setInterval(() => {
-        if (timerMode === 'FLOW') {
-          setSecondsElapsed((s) => s + 1);
-        } else {
-          // In Pomodoro mode: only add to total focus seconds during WORK phase
-          if (pomoPhase === 'WORK') {
-            setSecondsElapsed((s) => s + 1);
-          }
-          setPomoSecondsLeft((rem) => {
-            if (rem <= 1) {
-              setTimeout(() => transitionPomodoroPhase(), 50);
-              return 0;
-            }
-            return rem - 1;
+    let interval: NodeJS.Timeout | null = null;
+    let wakeLockSentinel: any = null;
+
+    const acquireWakeLock = async () => {
+      try {
+        if (
+          typeof navigator !== 'undefined' &&
+          'wakeLock' in navigator &&
+          document.visibilityState === 'visible'
+        ) {
+          wakeLockSentinel = await (navigator as any).wakeLock.request('screen');
+          setIsWakeLockActive(true);
+          wakeLockSentinel.addEventListener('release', () => {
+            setIsWakeLockActive(false);
           });
         }
+      } catch {
+        // WakeLock may fail if system is on ultra battery saver or permissions denied
+        setIsWakeLockActive(false);
+      }
+    };
+
+    if (isRunning && activeHabit) {
+      // Sync immediately on run state change
+      syncTimerFromWallClock();
+      acquireWakeLock();
+
+      interval = setInterval(() => {
+        syncTimerFromWallClock();
       }, 1000);
+
+      // Event listeners for instant zero-drift recovery when returning from background / lock screen
+      const handleSync = () => {
+        syncTimerFromWallClock();
+      };
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          syncTimerFromWallClock();
+          // Web wake locks automatically release when page loses visibility; reacquire on resume
+          acquireWakeLock();
+        }
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('focus', handleSync);
+      window.addEventListener('pageshow', handleSync);
+
+      return () => {
+        if (interval) clearInterval(interval);
+        if (wakeLockSentinel) {
+          try {
+            wakeLockSentinel.release();
+          } catch {
+            // ignore
+          }
+          wakeLockSentinel = null;
+        }
+        setIsWakeLockActive(false);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('focus', handleSync);
+        window.removeEventListener('pageshow', handleSync);
+      };
+    } else {
+      setIsWakeLockActive(false);
     }
-    return () => clearInterval(timer);
-  }, [isRunning, activeHabit, timerMode, pomoPhase, transitionPomodoroPhase]);
+  }, [isRunning, activeHabit, syncTimerFromWallClock]);
+
+  // ── Restore Active Focus Session across App Reclaim / Cold Boot ─────────────
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const restoreTimer = setTimeout(() => {
+      try {
+        const savedSessionRaw = localStorage.getItem('forge_active_focus_session');
+        if (!savedSessionRaw) return;
+        const saved = JSON.parse(savedSessionRaw);
+        if (!saved || !saved.habit || !saved.sessionStartTime) return;
+
+        const now = Date.now();
+        const maxAgeMs = 12 * 60 * 60 * 1000; // 12 hours max session age
+        if (now - saved.sessionStartTime > maxAgeMs) {
+          localStorage.removeItem('forge_active_focus_session');
+          return;
+        }
+
+        setActiveHabit(saved.habit);
+        setStage(saved.stage || 'PRACTICE');
+        setTimerMode(saved.timerMode || 'FLOW');
+        setPomoPhase(saved.pomoPhase || 'WORK');
+        setPomoCyclesCompleted(saved.pomoCyclesCompleted || 0);
+        setIsChallenge(Boolean(saved.isChallenge));
+        setDifficulty(saved.difficulty || 3);
+
+        const accSecs = saved.accumulatedSeconds || 0;
+        accumulatedSecondsRef.current = accSecs;
+
+        if (saved.isRunning) {
+          sessionStartTimeRef.current = saved.sessionStartTime;
+          phaseStartTimeRef.current = saved.phaseStartTime || saved.sessionStartTime;
+          basePomoSecondsLeftRef.current = saved.basePomoSecondsLeft ?? (23 * 60);
+
+          const runSecs = Math.max(0, Math.floor((now - saved.sessionStartTime) / 1000));
+          const total = accSecs + runSecs;
+          setSecondsElapsed(total);
+
+          if (saved.timerMode !== 'FLOW') {
+            const phaseDelta = Math.floor((now - (saved.phaseStartTime || saved.sessionStartTime)) / 1000);
+            const rem = Math.max(0, (saved.basePomoSecondsLeft ?? (23 * 60)) - phaseDelta);
+            setPomoSecondsLeft(rem);
+          }
+
+          setIsRunning(true);
+
+          // Resume native Android Foreground Service
+          if (saved.timerMode === 'FLOW') {
+            getAndroidBridge()?.startFocusTimerService?.(
+              saved.habit.title,
+              '∞ Open Flow Active',
+              now - (total * 1000),
+              false
+            );
+          } else {
+            getAndroidBridge()?.startFocusTimerService?.(
+              saved.habit.title,
+              `🍅 Pomodoro ${saved.pomoPhase === 'WORK' ? 'Work' : 'Break'}`,
+              now + (Math.max(0, (saved.basePomoSecondsLeft ?? 1500) - Math.floor((now - (saved.phaseStartTime || now)) / 1000)) * 1000),
+              true
+            );
+          }
+        } else {
+          setSecondsElapsed(accSecs);
+          setPomoSecondsLeft(saved.basePomoSecondsLeft ?? (23 * 60));
+          setIsRunning(false);
+        }
+      } catch (e) {
+        console.warn('Failed to restore active focus session:', e);
+        localStorage.removeItem('forge_active_focus_session');
+      }
+    }, 0);
+
+    return () => clearTimeout(restoreTimer);
+  }, []);
 
   useEffect(() => {
     if (
@@ -728,6 +1284,30 @@ export default function ForgeAppShell({
     }
   }, [secondsElapsed, activeHabit, soundEnabled]);
 
+  // Pre-index sessions by habitId: O(M) once instead of O(N x M) per-card scan
+  const sessionsByHabitId = useMemo(() => {
+    const map: Record<string, SerializedSession[]> = {};
+    for (let i = 0; i < sessions.length; i++) {
+      const s = sessions[i];
+      if (!map[s.habitId]) {
+        map[s.habitId] = [];
+      }
+      map[s.habitId].push(s);
+    }
+    return map;
+  }, [sessions]);
+
+  // Global 84-day system analytics: computed once on session/identity change (Audit #5)
+  const totalSystemHours = useMemo(
+    () => identities.reduce((acc, i) => acc + i.totalHoursLogged, 0),
+    [identities]
+  );
+
+  const globalAnalytics = useMemo(
+    () => buildSystemAnalytics(sessions, totalSystemHours, 84),
+    [sessions, totalSystemHours]
+  );
+
   const filteredSessions = useMemo(() => {
     if (selectedIdentityFilter === 'ALL') return sessions;
     return sessions.filter((s) => s.identityId === selectedIdentityFilter);
@@ -735,17 +1315,18 @@ export default function ForgeAppShell({
 
   const baselineHours = useMemo(() => {
     if (selectedIdentityFilter === 'ALL') {
-      return identities.reduce((acc, i) => acc + i.totalHoursLogged, 0);
+      return totalSystemHours;
     }
     return (
       identities.find((i) => i.id === selectedIdentityFilter)?.totalHoursLogged || 0
     );
-  }, [identities, selectedIdentityFilter]);
+  }, [identities, selectedIdentityFilter, totalSystemHours]);
 
-  const analytics = useMemo(
-    () => buildSystemAnalytics(filteredSessions, baselineHours, 84),
-    [filteredSessions, baselineHours]
-  );
+  // If filter is ALL, return precomputed global analytics (0ms latency, zero re-calculation of 84-day grid!)
+  const analytics = useMemo(() => {
+    if (selectedIdentityFilter === 'ALL') return globalAnalytics;
+    return buildSystemAnalytics(filteredSessions, baselineHours, 84);
+  }, [selectedIdentityFilter, globalAnalytics, filteredSessions, baselineHours]);
 
   const liveScorePreview = useMemo(() => {
     if (!activeHabit) return 1.0;
@@ -789,6 +1370,8 @@ export default function ForgeAppShell({
     setEditHabitStage((habit.defaultPhase as SkillStage) || 'PRACTICE');
     setEditHabitAnchorId(habit.anchorHabitId || 'NONE');
     setEditHabitReminder(habit.reminderTime || '');
+    setEditHabitGoalMins(habit.dailyGoalMinutes || 0);
+    setEditHabitGoalDays(habit.weeklyGoalDays || 0);
     setIsEditChainPickerOpen(false);
     setConfirmDeleteHabit(false);
   };
@@ -874,18 +1457,35 @@ export default function ForgeAppShell({
     const targetBottleneck = bottleneckNote;
     const targetInsight = insightNote;
 
+    clearActiveSessionSnapshot();
+    setActiveHabit(null);
+    setIsRunning(false);
+
+    // Calculate if all daily habits have now been forged (Perfect Day)
+    const remainingUnfinished = habits.filter(
+      (h) => h.id !== targetHabit.id && h.lastCompletedDate !== todayStr
+    );
+    const isPerfectDayNow = habits.length > 0 && remainingUnfinished.length === 0;
+
+    let nextHabitToPrompt: SerializedHabit | null = null;
     if (nextId) {
-      const nextHabit = habits.find((h) => h.id === nextId) || null;
-      if (nextHabit) {
-        startFocusSession(nextHabit);
-      } else {
-        setActiveHabit(null);
-        setIsRunning(false);
-      }
-    } else {
-      setActiveHabit(null);
-      setIsRunning(false);
+      nextHabitToPrompt = habits.find((h) => h.id === nextId) || null;
     }
+    if (!nextHabitToPrompt && remainingUnfinished.length > 0) {
+      nextHabitToPrompt = remainingUnfinished[0];
+    }
+
+    if (isPerfectDayNow) {
+      soundEngine.playPerfectDayFanfare(soundEnabled);
+    }
+
+    setChainTransitionData({
+      habit: targetHabit,
+      votesEarned,
+      durationMinutes: durMins,
+      isPerfectDayNow,
+      nextHabit: nextHabitToPrompt,
+    });
 
     // 7. Background sync to server without freezing the UI
     try {
@@ -1030,6 +1630,8 @@ export default function ForgeAppShell({
       defaultPhase: newHabitStage,
       anchorHabitId: anchorId,
       reminderTime: reminder,
+      dailyGoalMinutes: newHabitGoalMins || undefined,
+      weeklyGoalDays: newHabitGoalDays || undefined,
       lastCompletedDate: null,
       temptationBundleUrl: null,
       temptationLabel: null,
@@ -1052,6 +1654,8 @@ export default function ForgeAppShell({
         defaultPhase: newHabitStage,
         anchorHabitId: anchorId,
         reminderTime: reminder,
+        dailyGoalMinutes: newHabitGoalMins || null,
+        weeklyGoalDays: newHabitGoalDays || null,
       });
     } catch (err) {
       console.error('Failed to create habit on server:', err);
@@ -1069,6 +1673,8 @@ export default function ForgeAppShell({
     const updatedStage = editHabitStage;
     const updatedAnchorId = editHabitAnchorId === 'NONE' ? null : editHabitAnchorId;
     const updatedReminder = editHabitReminder || null;
+    const updatedGoalMins = editHabitGoalMins || 0;
+    const updatedGoalDays = editHabitGoalDays || 0;
     const targetIdId = editHabitIdentityId;
     const targetIdentity = identities.find((i) => i.id === targetIdId);
 
@@ -1086,6 +1692,8 @@ export default function ForgeAppShell({
           defaultPhase: updatedStage,
           anchorHabitId: updatedAnchorId,
           reminderTime: updatedReminder,
+          dailyGoalMinutes: updatedGoalMins || undefined,
+          weeklyGoalDays: updatedGoalDays || undefined,
           identityId: targetIdId,
           identityTitle: targetIdentity?.title || h.identityTitle,
         };
@@ -1101,6 +1709,8 @@ export default function ForgeAppShell({
         defaultPhase: updatedStage,
         anchorHabitId: updatedAnchorId,
         reminderTime: updatedReminder,
+        dailyGoalMinutes: updatedGoalMins || null,
+        weeklyGoalDays: updatedGoalDays || null,
       });
     } catch (err) {
       console.error('Failed to update habit on server:', err);
@@ -1168,12 +1778,58 @@ export default function ForgeAppShell({
     { id: 'ACCOUNT', label: 'Account', icon: User },
   ] as const;
 
-  const visibleHabits = habits.filter(
-    (h) => selectedIdentityFilter === 'ALL' || h.identityId === selectedIdentityFilter
-  );
+  const [showArchivedHabits, setShowArchivedHabits] = useState(false);
+
+  const handleTogglePin = async (habit: SerializedHabit) => {
+    soundEngine.playTactileClick(soundEnabled);
+    const nextPinned = !habit.isPinned;
+    setHabits((prev) =>
+      prev.map((h) => (h.id === habit.id ? { ...h, isPinned: nextPinned } : h))
+    );
+    setToastMessage(nextPinned ? `Pinned "${habit.title}" to top.` : `Unpinned "${habit.title}".`);
+    try {
+      await togglePinHabitAction(habit.id, nextPinned);
+    } catch (err) {
+      console.error('Failed to pin habit:', err);
+    }
+  };
+
+  const handleToggleArchive = async (habit: SerializedHabit) => {
+    soundEngine.playTactileClick(soundEnabled);
+    const nextArchived = !habit.isArchived;
+    setHabits((prev) =>
+      prev.map((h) => (h.id === habit.id ? { ...h, isArchived: nextArchived } : h))
+    );
+    setToastMessage(
+      nextArchived
+        ? `Archived "${habit.title}". Past session history preserved.`
+        : `Restored "${habit.title}" to active queue.`
+    );
+    try {
+      await toggleArchiveHabitAction(habit.id, nextArchived);
+    } catch (err) {
+      console.error('Failed to toggle archive habit:', err);
+    }
+  };
+
+  const visibleHabits = useMemo(() => {
+    return habits
+      .filter((h) => {
+        if (selectedIdentityFilter !== 'ALL' && h.identityId !== selectedIdentityFilter) return false;
+        if (showArchivedHabits) return Boolean(h.isArchived);
+        return !h.isArchived;
+      })
+      .sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        if (a.isReboundPriority && !b.isReboundPriority) return -1;
+        if (!a.isReboundPriority && b.isReboundPriority) return 1;
+        return 0;
+      });
+  }, [habits, selectedIdentityFilter, showArchivedHabits]);
 
   return (
-    <div className="relative min-h-screen theme-surface pb-36 md:pb-16">
+    <div className="relative min-h-screen theme-surface pb-28 md:pb-16">
       {/* Subtle Ambient Light Orbs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
         <div
@@ -1232,43 +1888,116 @@ export default function ForgeAppShell({
             })}
           </nav>
 
-          {/* Right Status: Guide + Widget Launcher + Streak + Account Pill */}
+          {/* Right Status: Clean Mobile Overflow Menu + Streak + Account Pill */}
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <button
-              onClick={() => {
-                soundEngine.playTactileClick(soundEnabled);
-                setShowWalkthrough(true);
-              }}
-              title="How ForgeOS Works (Walkthrough)"
-              className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-xl glass-panel text-xs font-semibold text-indigo-400 hover:opacity-90 cursor-pointer"
-            >
-              <HelpCircle className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Guide</span>
-            </button>
+            {/* Quick Tools Overflow Menu (Mobile) */}
+            <div className="relative md:hidden">
+              <button
+                onClick={() => setIsQuickToolsMenuOpen((prev) => !prev)}
+                title="Quick Tools (Guide, Widget, Theme)"
+                className="flex items-center justify-center p-2 rounded-xl glass-panel text-xs font-semibold theme-text hover:opacity-90 cursor-pointer"
+                aria-label="More quick tools"
+              >
+                <MoreHorizontal className="w-4 h-4 text-indigo-400" />
+              </button>
 
-            <button
-              onClick={() => {
-                soundEngine.playTactileClick(soundEnabled);
-                setIsWidgetDrawerOpen(true);
-              }}
-              title="Open Quick Habit Widget"
-              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl glass-panel text-xs font-semibold theme-text hover:opacity-90 cursor-pointer"
-            >
-              <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="hidden sm:inline">Widget</span>
-            </button>
+              {isQuickToolsMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsQuickToolsMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-2 w-52 glass-panel rounded-2xl p-1.5 z-50 border border-white/10 shadow-2xl space-y-0.5 animate-in fade-in zoom-in-95 duration-150">
+                    <button
+                      onClick={() => {
+                        setIsQuickToolsMenuOpen(false);
+                        setShowWalkthrough(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold theme-text hover:bg-white/10 transition cursor-pointer text-left"
+                    >
+                      <HelpCircle className="w-4 h-4 text-indigo-400" />
+                      <span>How ForgeOS Works</span>
+                    </button>
 
-            <button
-              onClick={() => {
-                soundEngine.playTactileClick(soundEnabled);
-                setIsThemeModalOpen(true);
-              }}
-              title="Theme & Accent Palette"
-              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl glass-panel text-xs font-semibold theme-text hover:opacity-90 cursor-pointer"
-            >
-              <Palette className="w-3.5 h-3.5 text-amber-400" />
-              <span className="hidden sm:inline">Theme</span>
-            </button>
+                    <button
+                      onClick={() => {
+                        setIsQuickToolsMenuOpen(false);
+                        setIsWidgetDrawerOpen(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold theme-text hover:bg-white/10 transition cursor-pointer text-left"
+                    >
+                      <LayoutGrid className="w-4 h-4 text-indigo-400" />
+                      <span>Quick Habit Widget</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setIsQuickToolsMenuOpen(false);
+                        setIsThemeModalOpen(true);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold theme-text hover:bg-white/10 transition cursor-pointer text-left"
+                    >
+                      <Palette className="w-4 h-4 text-amber-400" />
+                      <span>Theme & Accent</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setIsQuickToolsMenuOpen(false);
+                        setSoundEnabled((prev) => !prev);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold theme-text hover:bg-white/10 transition cursor-pointer text-left"
+                    >
+                      {soundEnabled ? (
+                        <Volume2 className="w-4 h-4 text-emerald-400" />
+                      ) : (
+                        <VolumeX className="w-4 h-4 text-rose-400" />
+                      )}
+                      <span>Sound FX: {soundEnabled ? 'ON' : 'OFF'}</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Desktop Direct Tool Buttons */}
+            <div className="hidden md:flex items-center gap-1.5">
+              <button
+                onClick={() => {
+                  soundEngine.playTactileClick(soundEnabled);
+                  setShowWalkthrough(true);
+                }}
+                title="How ForgeOS Works (Walkthrough)"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl glass-panel text-xs font-semibold text-indigo-400 hover:opacity-90 cursor-pointer"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>Guide</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  soundEngine.playTactileClick(soundEnabled);
+                  setIsWidgetDrawerOpen(true);
+                }}
+                title="Open Quick Habit Widget"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl glass-panel text-xs font-semibold theme-text hover:opacity-90 cursor-pointer"
+              >
+                <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Widget</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  soundEngine.playTactileClick(soundEnabled);
+                  setIsThemeModalOpen(true);
+                }}
+                title="Theme & Accent Palette"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl glass-panel text-xs font-semibold theme-text hover:opacity-90 cursor-pointer"
+              >
+                <Palette className="w-3.5 h-3.5 text-amber-400" />
+                <span>Theme</span>
+              </button>
+            </div>
 
             <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl glass-panel text-xs font-bold text-orange-500">
               <Flame className="w-3.5 h-3.5 fill-orange-500" />
@@ -1319,14 +2048,17 @@ export default function ForgeAppShell({
       <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6 space-y-6">
         {/* Toast Banner */}
         {toastMessage && (
-          <div className="glass-panel rounded-2xl p-3.5 px-4 flex items-center justify-between text-xs sm:text-sm">
-            <span className="flex items-center gap-2 font-medium theme-text">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-              {toastMessage}
+          <div className="glass-panel rounded-2xl p-3.5 px-4 flex items-center justify-between text-xs sm:text-sm border border-emerald-500/25 shadow-lg shadow-emerald-500/5 transition-all duration-300">
+            <span className="flex items-center gap-2.5 font-medium theme-text">
+              <span className="p-1 rounded-lg bg-emerald-500/15 text-emerald-400 shrink-0">
+                <CheckCircle2 className="w-4 h-4" />
+              </span>
+              <span>{toastMessage}</span>
             </span>
             <button
               onClick={() => setToastMessage(null)}
-              className="theme-muted hover:opacity-80 p-1 cursor-pointer"
+              className="theme-muted hover:opacity-80 p-1.5 rounded-lg hover:bg-white/5 transition cursor-pointer ml-3 shrink-0"
+              aria-label="Dismiss notification"
             >
               <X className="w-4 h-4" />
             </button>
@@ -1338,6 +2070,53 @@ export default function ForgeAppShell({
         {/* ========================================================= */}
         {activeTab === 'WORKSPACE' && (
           <div className="space-y-6">
+            {/* Daily Streak Retention & Quick-Action Banner */}
+            <DailyRetentionBanner
+              habits={habits}
+              sessions={sessions}
+              strictStreak={analytics.strictStreak}
+              resilientStreak={analytics.resilientStreak}
+              onStartHabit={startFocusSession}
+            />
+
+            {/* Evening Streak Danger Warning Banner (7:00 PM onwards if streak habits remain uncompleted) */}
+            {isEvening && atRiskStreakHabits.length > 0 && (
+              <div
+                className="p-3.5 sm:p-4 rounded-2xl border border-rose-500/35 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg"
+                style={{
+                  backgroundColor: 'rgba(244, 63, 94, 0.08)',
+                  backdropFilter: 'blur(12px)',
+                }}
+              >
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <div className="w-8 h-8 rounded-xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center shrink-0">
+                    <Flame className="w-4 h-4 text-rose-400 fill-rose-400 animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs sm:text-sm font-bold text-rose-300">
+                        Streak Alert: {atRiskStreakHabits.length} {atRiskStreakHabits.length === 1 ? 'Habit' : 'Habits'} at Risk
+                      </h4>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-semibold">
+                        Before Midnight
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-zinc-300 mt-0.5">
+                      {atRiskStreakHabits.map((h) => `${h.title} (${h.currentStreak}d)`).join(' • ')}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => startFocusSession(atRiskStreakHabits[0])}
+                  className="w-full sm:w-auto shrink-0 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+                >
+                  <Play className="w-3.5 h-3.5 fill-white" />
+                  <span>Save Streak: 2m Micro-Start →</span>
+                </button>
+              </div>
+            )}
             {/* CENTERED HERO & CREATION COMMAND DOCK */}
             <section className="text-center max-w-xl mx-auto space-y-3 pt-1">
               <div className="space-y-1">
@@ -1381,73 +2160,134 @@ export default function ForgeAppShell({
                 >
                   All Habits ({habits.length})
                 </button>
-                {identities.map((idObj) => (
-                  <div
-                    key={idObj.id}
-                    className={`inline-flex items-center gap-1 pl-3 pr-1.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition ${
-                      selectedIdentityFilter === idObj.id
-                        ? 'glass-tab-active shadow-xs'
-                        : 'glass-panel theme-subtext'
-                    }`}
-                  >
+                {identities.map((idObj) => {
+                  const isSelected = selectedIdentityFilter === idObj.id;
+                  return (
                     <button
+                      key={idObj.id}
                       onClick={() => setSelectedIdentityFilter(idObj.id)}
-                      className="cursor-pointer"
+                      onDoubleClick={() => openEditIdentityModal(idObj)}
+                      className={`px-3.5 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition cursor-pointer ${
+                        isSelected
+                          ? 'glass-tab-active shadow-xs font-semibold'
+                          : 'glass-panel theme-subtext hover:opacity-80'
+                      }`}
                     >
                       {idObj.title}
                     </button>
-                    <button
-                      onClick={() => openEditIdentityModal(idObj)}
-                      title="Edit Identity"
-                      className="opacity-50 hover:opacity-100 p-0.5 cursor-pointer"
-                    >
-                      <Pencil className="w-2.5 h-2.5" />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
+
+                {/* Contextual Identity Edit Action (Audit #17) */}
+                {selectedIdentityFilter !== 'ALL' && (
+                  <button
+                    onClick={() => {
+                      const cur = identities.find((i) => i.id === selectedIdentityFilter);
+                      if (cur) openEditIdentityModal(cur);
+                    }}
+                    title="Edit selected identity"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium glass-panel theme-subtext hover:theme-text shrink-0 cursor-pointer transition border border-white/10 hover:border-white/20"
+                  >
+                    <Pencil className="w-2.5 h-2.5 text-amber-400" />
+                    <span>Edit Identity</span>
+                  </button>
+                )}
               </div>
             </section>
 
             {/* ACTIVE HABIT QUEUE */}
             <section className="space-y-3">
               <div className="flex items-center justify-between px-1">
-                <span className="text-xs font-bold uppercase tracking-wider theme-muted">
-                  Active Habit Queue ({visibleHabits.length}) — Newest First
-                </span>
-                <button
-                  onClick={() => setIsWidgetDrawerOpen(true)}
-                  className="text-xs font-semibold theme-subtext hover:opacity-80 flex items-center gap-1 cursor-pointer"
-                >
-                  <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
-                  Compact Widget View
-                </button>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider theme-muted">
+                    {showArchivedHabits ? 'Archived Habits' : 'Active Habit Queue'} ({visibleHabits.length})
+                  </span>
+                  <button
+                    onClick={() => setShowArchivedHabits((prev) => !prev)}
+                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-xl transition flex items-center gap-1 cursor-pointer ${
+                      showArchivedHabits
+                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                        : 'glass-panel theme-subtext hover:theme-text'
+                    }`}
+                  >
+                    {showArchivedHabits ? (
+                      <ArchiveRestore className="w-3 h-3" />
+                    ) : (
+                      <Archive className="w-3 h-3" />
+                    )}
+                    <span>
+                      {showArchivedHabits
+                        ? 'Show Active'
+                        : `Archived (${habits.filter((h) => h.isArchived).length})`}
+                    </span>
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      if (expandedHabitIds.size > 0) {
+                        setExpandedHabitIds(new Set());
+                      } else {
+                        setExpandedHabitIds(new Set(visibleHabits.map((h) => h.id)));
+                      }
+                    }}
+                    className="text-xs font-semibold theme-subtext hover:opacity-80 flex items-center gap-1 cursor-pointer transition"
+                  >
+                    <span>{expandedHabitIds.size > 0 ? 'Collapse All' : 'Expand All'}</span>
+                  </button>
+                  <button
+                    onClick={() => setIsWidgetDrawerOpen(true)}
+                    className="hidden sm:flex text-xs font-semibold theme-subtext hover:opacity-80 items-center gap-1 cursor-pointer"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5 text-indigo-400" />
+                    Widget View
+                  </button>
+                </div>
               </div>
 
-              {/* Habit Cards Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {/* Compact & Expandable Habit Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {visibleHabits.map((habit) => {
                   const stageMeta =
                     STAGE_LABELS[habit.defaultPhase as SkillStage] ||
                     STAGE_LABELS.PRACTICE;
                   const doneToday = habit.lastCompletedDate === todayStr;
+                  const isExpanded = expandedHabitIds.has(habit.id);
+
+                  // Daily Goal Target Metrics (Audit #24)
+                  const habitDailyGoal = habit.dailyGoalMinutes || 0;
+                  const habitSessions = sessionsByHabitId[habit.id] || [];
+                  const todayMins = habitSessions
+                    .filter((s) => s.loggedAt.startsWith(todayStr))
+                    .reduce((acc, s) => acc + (s.durationMinutes || 0), 0);
+                  const goalMet = habitDailyGoal > 0 && todayMins >= habitDailyGoal;
+                  const goalPct =
+                    habitDailyGoal > 0
+                      ? Math.min(100, Math.round((todayMins / habitDailyGoal) * 100))
+                      : 0;
 
                   return (
                     <div
                       key={habit.id}
-                      className={`glass-panel glass-panel-hover p-5 rounded-2xl flex flex-col justify-between gap-4 ${
-                        habit.isReboundPriority ? 'ring-1 ring-amber-500/50' : ''
+                      className={`glass-panel glass-panel-hover p-4 sm:p-4.5 rounded-2xl flex flex-col justify-between gap-3 transition-all duration-200 ${
+                        habit.isPinned
+                          ? 'border-amber-500/40 shadow-sm'
+                          : habit.isReboundPriority
+                          ? 'ring-1 ring-amber-500/50'
+                          : ''
                       }`}
                     >
                       <div className="space-y-2">
+                        {/* Top Metadata Row */}
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-lg glass-panel theme-text">
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-lg glass-panel theme-text">
                               {habit.identityTitle}
                             </span>
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md glass-panel theme-muted">
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-md glass-panel theme-muted">
                               {stageMeta.name.split(' ')[0]}
                             </span>
-                            {habit.reminderTime && (
+                            {habit.reminderTime && isExpanded && (
                               <span className="inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-md glass-panel text-indigo-400">
                                 <Bell className="w-2.5 h-2.5" />
                                 {habit.reminderTime}
@@ -1455,10 +2295,11 @@ export default function ForgeAppShell({
                             )}
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             {doneToday && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500">
-                                Done Today
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 flex items-center gap-1">
+                                <CheckCircle2 className="w-2.5 h-2.5" />
+                                Done
                               </span>
                             )}
                             <span className="flex items-center gap-1 text-xs font-bold text-orange-500">
@@ -1466,59 +2307,137 @@ export default function ForgeAppShell({
                               {habit.currentStreak}d
                             </span>
                             <button
-                              onClick={() => openEditHabitModal(habit)}
-                              className="p-1.5 rounded-lg theme-muted hover:opacity-80 cursor-pointer"
-                              title="Edit Habit"
+                              onClick={() => handleTogglePin(habit)}
+                              className={`p-1 rounded-lg transition cursor-pointer ${
+                                habit.isPinned
+                                  ? 'text-amber-400 bg-amber-500/15'
+                                  : 'theme-muted hover:text-amber-400'
+                              }`}
+                              title={habit.isPinned ? 'Unpin habit' : 'Pin habit to top'}
                             >
-                              <Pencil className="w-3.5 h-3.5" />
+                              <Pin className="w-3 h-3" />
                             </button>
+                            {showArchivedHabits ? (
+                              <button
+                                onClick={() => handleToggleArchive(habit)}
+                                className="p-1 rounded-lg text-amber-400 hover:text-amber-300 transition cursor-pointer"
+                                title="Restore habit to active queue"
+                              >
+                                <ArchiveRestore className="w-3 h-3" />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => openEditHabitModal(habit)}
+                                className="p-1 rounded-lg theme-muted hover:opacity-80 cursor-pointer"
+                                title="Edit Habit"
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </button>
+                            )}
                           </div>
                         </div>
 
-                        {habit.isReboundPriority && (
-                          <div className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-amber-500/15 text-amber-500">
-                            <ShieldAlert className="w-3.5 h-3.5" />
-                            Streak Shield Active (+1.25x Bonus)
+                        {/* Title and 2-min Gateway preview */}
+                        <div>
+                          <h3 className="text-sm sm:text-base font-bold theme-text leading-snug">
+                            {habit.title}
+                          </h3>
+                          <p className="text-xs theme-subtext mt-0.5">
+                            <strong className="text-emerald-500 dark:text-emerald-400">
+                              2m:
+                            </strong>{' '}
+                            {habit.gatewayVersion}
+                          </p>
+
+                          {/* Daily Goal Target Indicator (Audit #24) */}
+                          {habitDailyGoal > 0 && (
+                            <div className="pt-2 space-y-1">
+                              <div className="flex items-center justify-between text-[11px] font-mono">
+                                <span
+                                  className={
+                                    goalMet
+                                      ? 'text-emerald-400 font-bold flex items-center gap-1'
+                                      : 'theme-subtext flex items-center gap-1'
+                                  }
+                                >
+                                  <Target className="w-3 h-3 text-indigo-400" />
+                                  {goalMet ? 'Daily Goal Met! ✓' : 'Daily Goal Target'}
+                                </span>
+                                <span className={goalMet ? 'text-emerald-400 font-bold' : 'theme-text'}>
+                                  {todayMins} / {habitDailyGoal}m ({goalPct}%)
+                                </span>
+                              </div>
+                              <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-300 ${
+                                    goalMet
+                                      ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                                      : 'bg-indigo-500'
+                                  }`}
+                                  style={{ width: `${goalPct}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Expandable Accordion Body (7-Day Chain & Stack details) */}
+                        {isExpanded && (
+                          <div className="space-y-2.5 pt-2 border-t border-white/5 animate-in fade-in duration-200">
+                            {habit.isReboundPriority && (
+                              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-amber-500/15 text-amber-500">
+                                <ShieldAlert className="w-3.5 h-3.5" />
+                                Streak Shield Active (+1.25x Bonus)
+                              </div>
+                            )}
+
+                            {habit.nextStackedHabitTitle && (
+                              <p className="text-[11px] theme-muted flex items-center gap-1">
+                                <ArrowRight className="w-3 h-3 text-amber-400" />
+                                Next in chain: {habit.nextStackedHabitTitle}
+                              </p>
+                            )}
+
+                            {/* 7-Day Visual Node Chain Timeline & Milestone Flame */}
+                            <HabitVisualChain
+                              habitId={habit.id}
+                              sessions={sessionsByHabitId[habit.id] || []}
+                              currentStreak={habit.currentStreak}
+                              missedYesterday={habit.missedYesterday}
+                              downscaledDaysRemaining={habit.downscaledDaysRemaining}
+                              lastCompletedDate={habit.lastCompletedDate}
+                            />
                           </div>
                         )}
-
-                        <h3 className="text-base font-bold theme-text leading-snug">
-                          {habit.title}
-                        </h3>
-
-                        <p className="text-xs theme-subtext">
-                          <strong className="text-emerald-600 dark:text-emerald-400">
-                            2m Start:
-                          </strong>{' '}
-                          {habit.gatewayVersion}
-                        </p>
-
-                        {habit.nextStackedHabitTitle && (
-                          <p className="text-[11px] theme-muted flex items-center gap-1 pt-0.5">
-                            <ArrowRight className="w-3 h-3" />
-                            Next: {habit.nextStackedHabitTitle}
-                          </p>
-                        )}
-
-                        {/* 7-Day Visual Node Chain Timeline & Milestone Flame */}
-                        <HabitVisualChain
-                          habitId={habit.id}
-                          sessions={sessions}
-                          currentStreak={habit.currentStreak}
-                          missedYesterday={habit.missedYesterday}
-                          downscaledDaysRemaining={habit.downscaledDaysRemaining}
-                          lastCompletedDate={habit.lastCompletedDate}
-                        />
                       </div>
 
-                      <button
-                        onClick={() => startFocusSession(habit)}
-                        className="w-full py-2.5 rounded-xl text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm hover:opacity-95 transition cursor-pointer"
-                        style={{ background: 'var(--accent-primary)' }}
-                      >
-                        <Play className="w-3.5 h-3.5 fill-white" />
-                        Start 2-Min Session
-                      </button>
+                      {/* Card Action Footer */}
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/5">
+                        <button
+                          type="button"
+                          onClick={() => toggleHabitExpand(habit.id)}
+                          className="flex items-center gap-1 text-[11px] font-medium theme-subtext hover:theme-text py-1.5 px-2 rounded-lg hover:bg-white/5 transition cursor-pointer"
+                        >
+                          <span>{isExpanded ? 'Hide Chain' : '7-Day Chain'}</span>
+                          {isExpanded ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => startFocusSession(habit)}
+                          className="px-3.5 py-1.5 rounded-xl text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm hover:opacity-95 hover:scale-[1.01] active:scale-[0.99] transition cursor-pointer"
+                          style={{
+                            background: doneToday ? 'rgba(16, 185, 129, 0.85)' : 'var(--accent-primary)',
+                          }}
+                        >
+                          <Play className="w-3 h-3 fill-white" />
+                          <span>{doneToday ? 'Forge Again' : 'Start (2m)'}</span>
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -1567,6 +2486,16 @@ export default function ForgeAppShell({
         {activeTab === 'ANALYTICS' && (
           userIsPro ? (
             <div className="space-y-6">
+            {/* Weekly Consistency & Progress Review Card */}
+            <WeeklyReviewCard
+              sessions={sessions}
+              habits={habits}
+              onStartGateway={(habitSummary) => {
+                const target = habits.find((h) => h.id === habitSummary.id);
+                if (target) startFocusSession(target);
+              }}
+            />
+
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
               <div className="glass-panel p-5 rounded-2xl">
                 <span className="text-xs theme-subtext block">Effective Hours</span>
@@ -1819,52 +2748,15 @@ export default function ForgeAppShell({
         )}
 
         {/* ========================================================= */}
-        {/* TAB 4: INSIGHT VAULT                                      */}
+        {/* TAB 4: INSIGHT VAULT & SESSION ACTIVITY FEED              */}
         {/* ========================================================= */}
         {activeTab === 'VAULT' && (
-          <div className="glass-panel p-6 rounded-2xl space-y-4">
-            <div>
-              <h2 className="text-lg font-bold theme-text">Insight &amp; Bottleneck Vault</h2>
-              <p className="text-xs theme-subtext">
-                Breakthroughs and weak spots recorded after focus sessions.
-              </p>
-            </div>
-
-            {filteredSessions.filter((s) => s.bottleneckAttacked || s.tacitInsight).length ===
-            0 ? (
-              <div className="p-8 rounded-xl glass-panel text-center space-y-1">
-                <p className="text-sm font-semibold theme-text">No notes recorded yet.</p>
-                <p className="text-xs theme-subtext">
-                  Finish any session to log a takeaway.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredSessions
-                  .filter((s) => s.bottleneckAttacked || s.tacitInsight)
-                  .slice()
-                  .reverse()
-                  .map((s) => (
-                    <div key={s.id} className="p-4 rounded-xl glass-panel space-y-2">
-                      <div className="flex justify-between text-xs theme-muted font-mono">
-                        <span>{s.identityTitle}</span>
-                        <span>{s.loggedAt.split('T')[0]}</span>
-                      </div>
-                      <h4 className="text-sm font-bold theme-text">{s.habitTitle}</h4>
-                      {s.bottleneckAttacked && (
-                        <p className="text-xs theme-subtext">
-                          <strong>Challenge:</strong> {s.bottleneckAttacked}
-                        </p>
-                      )}
-                      {s.tacitInsight && (
-                        <p className="text-xs theme-subtext">
-                          <strong>Insight:</strong> {s.tacitInsight}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-              </div>
-            )}
+          <div className="glass-panel p-5 sm:p-6 rounded-2xl space-y-4">
+            <SessionHistoryFeed
+              sessions={filteredSessions}
+              habits={habits}
+              onToast={(msg) => setToastMessage(msg)}
+            />
           </div>
         )}
 
@@ -1900,18 +2792,6 @@ export default function ForgeAppShell({
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={async () => {
-                      if (confirm('Reset account to Free Tier to test upgrade experience?')) {
-                        await resetProStatusAction();
-                        setUserUnlockedPro(false);
-                        window.location.reload();
-                      }
-                    }}
-                    className="text-[11px] px-3 py-1.5 rounded-lg border border-rose-500/30 text-rose-300 hover:bg-rose-500/10 cursor-pointer self-start sm:self-auto transition-colors"
-                  >
-                    Reset to Free Tier (Test)
-                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-[var(--border-subtle)] text-xs theme-subtext">
@@ -2286,12 +3166,10 @@ export default function ForgeAppShell({
                 }}
                 className="group flex-1 flex flex-col items-center justify-center py-1 transition-transform active:scale-95 cursor-pointer select-none relative"
               >
-                {/* Material 3 Fluid Indicator Pill */}
+                {/* Native 5-Icon Navigation Item (Audit #18) */}
                 <div
-                  className={`w-14 h-8 rounded-full flex items-center justify-center transition-all duration-300 ease-out relative ${
-                    active
-                      ? 'shadow-[0_2px_12px_var(--accent-glow)] scale-100'
-                      : 'bg-transparent scale-95 group-hover:scale-100'
+                  className={`w-12 h-7 rounded-xl flex items-center justify-center transition-all duration-200 relative ${
+                    active ? 'scale-105' : 'opacity-60 hover:opacity-100'
                   }`}
                   style={{
                     backgroundColor: active ? 'var(--accent-glow)' : 'transparent',
@@ -2311,17 +3189,16 @@ export default function ForgeAppShell({
                   )}
                 </div>
 
-                {/* Material 3 Navigation Label */}
-                <span
-                  className={`text-[11px] mt-1 tracking-tight transition-colors duration-200 ${
-                    active ? 'font-bold' : 'font-medium'
+                {/* Active Indicator Glow Dot (Audit #18) */}
+                <div
+                  className={`w-1 h-1 rounded-full mt-0.5 transition-all duration-300 ${
+                    active ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
                   }`}
                   style={{
-                    color: active ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                    backgroundColor: 'var(--accent-primary)',
+                    boxShadow: '0 0 6px var(--accent-primary)',
                   }}
-                >
-                  {item.label}
-                </span>
+                />
               </button>
             );
           })}
@@ -2828,6 +3705,41 @@ export default function ForgeAppShell({
                             ))}
                           </div>
                         </div>
+
+                        {/* Daily Target Focus Goal Selector (Audit #24) */}
+                        <div className="space-y-1.5 pt-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-semibold theme-subtext flex items-center gap-1">
+                              <Target className="w-3.5 h-3.5 text-indigo-400" />
+                              Daily Target Goal (Minutes)
+                            </label>
+                            <span className="text-[11px] font-mono theme-muted">
+                              {newHabitGoalMins > 0 ? `${newHabitGoalMins}m / day` : 'Flexible (Open-ended)'}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {[
+                              { label: 'Flexible', val: 0 },
+                              { label: '15m', val: 15 },
+                              { label: '25m', val: 25 },
+                              { label: '45m', val: 45 },
+                              { label: '60m', val: 60 },
+                            ].map((g) => (
+                              <button
+                                key={g.label}
+                                type="button"
+                                onClick={() => setNewHabitGoalMins(g.val)}
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer ${
+                                  newHabitGoalMins === g.val
+                                    ? 'glass-tab-active font-semibold'
+                                    : 'glass-panel theme-subtext hover:opacity-80'
+                                }`}
+                              >
+                                {g.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -3168,6 +4080,41 @@ export default function ForgeAppShell({
                 />
               </div>
 
+              {/* Daily Target Focus Goal Selector (Audit #24) */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs theme-subtext flex items-center gap-1">
+                    <Target className="w-3.5 h-3.5 text-indigo-400" />
+                    Daily Target Goal (Minutes)
+                  </label>
+                  <span className="text-[11px] font-mono theme-muted">
+                    {editHabitGoalMins > 0 ? `${editHabitGoalMins}m / day` : 'Flexible (Open-ended)'}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: 'Flexible', val: 0 },
+                    { label: '15m', val: 15 },
+                    { label: '25m', val: 25 },
+                    { label: '45m', val: 45 },
+                    { label: '60m', val: 60 },
+                  ].map((g) => (
+                    <button
+                      key={g.label}
+                      type="button"
+                      onClick={() => setEditHabitGoalMins(g.val)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition cursor-pointer ${
+                        editHabitGoalMins === g.val
+                          ? 'glass-tab-active font-semibold'
+                          : 'glass-panel theme-subtext hover:opacity-80'
+                      }`}
+                    >
+                      {g.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between">
                 {!confirmDeleteHabit ? (
                   <button
@@ -3295,227 +4242,56 @@ export default function ForgeAppShell({
       {/* FOCUS TIMER & POMODORO EXTENSION MODAL                    */}
       {/* ========================================================= */}
       {activeHabit && (
-        <div className="fixed inset-0 z-50 theme-surface p-4 sm:p-8 flex flex-col justify-between overflow-y-auto">
-          <div className="max-w-xl w-full mx-auto flex items-center justify-between border-b border-[var(--border-subtle)] pb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono uppercase theme-muted">
-                  {activeHabit.identityTitle}
-                </span>
-                {pomoCyclesCompleted > 0 && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-500">
-                    🍅 {pomoCyclesCompleted} {pomoCyclesCompleted === 1 ? 'Cycle' : 'Cycles'} Done
-                  </span>
-                )}
-              </div>
-              <h3 className="text-base font-bold theme-text mt-0.5">
-                {microCleared ? activeHabit.title : activeHabit.gatewayVersion}
-              </h3>
-            </div>
-            <button
-              onClick={() => {
-                setIsRunning(false);
-                setActiveHabit(null);
-              }}
-              className="p-2 rounded-xl glass-panel theme-subtext cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {!showDebrief ? (
-            <div className="max-w-xl w-full mx-auto my-auto space-y-5 py-6 text-center">
-              {/* Pomodoro Extension Bar (Appears once 2-Min Micro-Start clears, or anytime) */}
-              {microCleared && (
-                <div className="p-1.5 rounded-2xl glass-nav inline-flex flex-wrap items-center justify-center gap-1.5">
-                  {[
-                    { id: 'FLOW', label: '∞ Open Flow', locked: false },
-                    { id: 'POMO_25_5', label: '🍅 Pomodoro 25m / 5m', locked: !userIsPro },
-                    { id: 'POMO_50_10', label: '⚡ Deep 50m / 10m', locked: !userIsPro },
-                  ].map((m) => {
-                    const active = timerMode === m.id;
-                    return (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => {
-                          if (m.locked) {
-                            setShowProModal(true);
-                            return;
-                          }
-                          activatePomodoroMode(
-                            m.id as 'FLOW' | 'POMO_25_5' | 'POMO_50_10'
-                          );
-                        }}
-                        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                          active ? 'glass-tab-active' : 'theme-subtext hover:opacity-80'
-                        }`}
-                      >
-                        <span>{m.label}</span>
-                        {m.locked && <Lock className="w-3 h-3 text-amber-400 shrink-0" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Main Clock Card */}
-              <div
-                className={`glass-nav p-8 rounded-3xl space-y-5 transition-all ${
-                  timerMode !== 'FLOW' && pomoPhase === 'BREAK'
-                    ? 'ring-2 ring-emerald-500/50'
-                    : ''
-                }`}
-              >
-                <span
-                  className={`text-xs font-bold uppercase tracking-wider px-3.5 py-1 rounded-full inline-block ${
-                    timerMode !== 'FLOW' && pomoPhase === 'BREAK'
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : microCleared
-                      ? 'glass-panel theme-text'
-                      : 'glass-panel text-indigo-400'
-                  }`}
-                >
-                  {timerMode === 'FLOW'
-                    ? microCleared
-                      ? '✓ 2m Cleared — Open Flow Active (Pick Pomodoro Above)'
-                      : 'Stage 1: 2-Minute Micro-Start'
-                    : pomoPhase === 'WORK'
-                    ? `🍅 Cycle #${pomoCyclesCompleted + 1} Focus Block`
-                    : '☕ Rest & Recharge Break (Focus Paused)'}
-                </span>
-
-                {/* Clock Readout: Stopwatch in FLOW, Countdown in POMODORO */}
-                <div className="text-6xl sm:text-7xl font-mono font-black theme-text">
-                  {timerMode === 'FLOW'
-                    ? formatClock(secondsElapsed)
-                    : formatClock(pomoSecondsLeft)}
-                </div>
-
-                {timerMode !== 'FLOW' && (
-                  <p className="text-xs font-mono theme-muted">
-                    Total Net Focus Time Logged: {formatClock(secondsElapsed)} ({sessionMins}m)
-                  </p>
-                )}
-
-                <div className="flex flex-wrap justify-center gap-2.5">
-                  <button
-                    onClick={() => setIsRunning((r) => !r)}
-                    className="px-5 py-2.5 rounded-xl glass-panel theme-text text-xs font-bold flex items-center gap-2 cursor-pointer"
-                  >
-                    {isRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                    {isRunning ? 'Pause' : 'Resume'}
-                  </button>
-
-                  {/* Fast-Forward / Skip Phase Helpers */}
-                  {!microCleared && timerMode === 'FLOW' && (
-                    <button
-                      type="button"
-                      onClick={() => setSecondsElapsed((s) => s + 30)}
-                      className="px-4 py-2.5 rounded-xl glass-panel theme-subtext text-xs font-semibold flex items-center gap-1 cursor-pointer"
-                    >
-                      <FastForward className="w-3.5 h-3.5" /> +30s
-                    </button>
-                  )}
-
-                  {timerMode !== 'FLOW' && (
-                    <button
-                      type="button"
-                      onClick={transitionPomodoroPhase}
-                      className="px-4 py-2.5 rounded-xl glass-panel theme-subtext text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <FastForward className="w-3.5 h-3.5 text-emerald-500" />
-                      {pomoPhase === 'WORK' ? 'Start Break Now' : 'Skip Break → Next Cycle'}
-                    </button>
-                  )}
-
-                  <button
-                    onClick={() => {
-                      setIsRunning(false);
-                      setShowDebrief(true);
-                    }}
-                    className="px-5 py-2.5 rounded-xl text-white text-xs font-bold cursor-pointer"
-                    style={{ background: 'var(--accent-primary)' }}
-                  >
-                    Finish &amp; Bank (+{liveScorePreview} pts)
-                  </button>
-                </div>
-              </div>
-
-              {/* Challenge & Difficulty Controls */}
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsChallenge((c) => !c)}
-                  className={`p-3.5 rounded-2xl glass-panel text-xs font-bold flex items-center justify-between cursor-pointer ${
-                    isChallenge ? 'ring-2 ring-rose-500 text-rose-500' : 'theme-subtext'
-                  }`}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <Swords className="w-4 h-4" /> Challenge
-                  </span>
-                  <span>{isChallenge ? '1.5x ON' : 'OFF'}</span>
-                </button>
-
-                <div className="p-3.5 rounded-2xl glass-panel flex items-center justify-between text-xs">
-                  <span className="theme-subtext font-bold">Difficulty</span>
-                  <input
-                    type="range"
-                    min={1}
-                    max={5}
-                    value={difficulty}
-                    onChange={(e) => setDifficulty(Number(e.target.value))}
-                    className="w-24 accent-amber-500"
-                  />
-                  <span className="font-mono font-bold theme-text">{difficulty}/5</span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="max-w-md w-full mx-auto my-auto glass-nav rounded-3xl p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold theme-text">Session Summary</h3>
-                {pomoCyclesCompleted > 0 && (
-                  <span className="text-xs font-bold text-emerald-500">
-                    🍅 {pomoCyclesCompleted} Pomodoro Cycles
-                  </span>
-                )}
-              </div>
-              <input
-                type="text"
-                placeholder="Challenge or bottleneck tackled (Optional)"
-                value={bottleneckNote}
-                onChange={(e) => setBottleneckNote(e.target.value)}
-                className="w-full theme-input rounded-xl p-3 text-sm"
-              />
-              <textarea
-                rows={3}
-                placeholder="Key insight or takeaway (Optional)"
-                value={insightNote}
-                onChange={(e) => setInsightNote(e.target.value)}
-                className="w-full theme-input rounded-xl p-3 text-sm"
-              />
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                <button
-                  disabled={isSubmitting}
-                  onClick={() => handleFinishSession(true)}
-                  className="py-3 rounded-xl bg-emerald-600 text-white font-bold text-xs cursor-pointer"
-                >
-                  Log 2m Save
-                </button>
-                <button
-                  disabled={isSubmitting}
-                  onClick={() => handleFinishSession(false)}
-                  className="py-3 rounded-xl text-white font-bold text-xs cursor-pointer"
-                  style={{ background: 'var(--accent-primary)' }}
-                >
-                  Log Focus ({sessionMins}m)
-                </button>
-              </div>
-            </div>
-          )}
-          <div />
-        </div>
+        <FocusTimerModal
+          activeHabit={activeHabit}
+          microCleared={microCleared}
+          pomoCyclesCompleted={pomoCyclesCompleted}
+          isWakeLockActive={isWakeLockActive}
+          timerMode={timerMode}
+          pomoPhase={pomoPhase}
+          userIsPro={userIsPro}
+          secondsElapsed={secondsElapsed}
+          pomoSecondsLeft={pomoSecondsLeft}
+          sessionMins={sessionMins}
+          isRunning={isRunning}
+          showDebrief={showDebrief}
+          isChallenge={isChallenge}
+          difficulty={difficulty}
+          liveScorePreview={liveScorePreview}
+          bottleneckNote={bottleneckNote}
+          insightNote={insightNote}
+          isSubmitting={isSubmitting}
+          formatClock={formatClock}
+          onClose={() => {
+            clearActiveSessionSnapshot();
+            setIsRunning(false);
+            setActiveHabit(null);
+          }}
+          onActivatePomodoroMode={(mode) => activatePomodoroMode(mode)}
+          onOpenProModal={() => setShowProModal(true)}
+          onToggleRunning={toggleTimerRunning}
+          onFastForwardMicroStart={fastForwardMicroStart}
+          onTransitionPomodoroPhase={transitionPomodoroPhase}
+          onOpenDebrief={() => {
+            const now = Date.now();
+            if (sessionStartTimeRef.current) {
+              accumulatedSecondsRef.current += Math.max(
+                0,
+                Math.floor((now - sessionStartTimeRef.current) / 1000)
+              );
+              sessionStartTimeRef.current = null;
+            }
+            setIsRunning(false);
+            getAndroidBridge()?.stopFocusTimerService?.();
+            saveActiveSessionSnapshot({ isRunning: false });
+            setShowDebrief(true);
+          }}
+          onToggleChallenge={() => setIsChallenge((c) => !c)}
+          onChangeDifficulty={(d) => setDifficulty(d)}
+          onChangeBottleneck={(b) => setBottleneckNote(b)}
+          onChangeInsight={(i) => setInsightNote(i)}
+          onFinishSession={handleFinishSession}
+        />
       )}
 
       {/* ========================================================= */}
@@ -3602,9 +4378,29 @@ export default function ForgeAppShell({
           showProModal ||
           showWalkthrough ||
           isWidgetDrawerOpen ||
-          isThemeModalOpen
+          isThemeModalOpen ||
+          Boolean(chainTransitionData)
         }
       />
+
+      {/* ========================================================= */}
+      {/* POST-SESSION CHAIN CONTINUATION & PERFECT DAY CELEBRATION */}
+      {/* ========================================================= */}
+      {chainTransitionData && (
+        <HabitChainTransitionModal
+          isOpen={true}
+          habit={chainTransitionData.habit}
+          votesEarned={chainTransitionData.votesEarned}
+          durationMinutes={chainTransitionData.durationMinutes}
+          isPerfectDayNow={chainTransitionData.isPerfectDayNow}
+          nextHabit={chainTransitionData.nextHabit}
+          onContinueChain={(nextH) => {
+            setChainTransitionData(null);
+            startFocusSession(nextH);
+          }}
+          onClose={() => setChainTransitionData(null)}
+        />
+      )}
     </div>
   );
 }

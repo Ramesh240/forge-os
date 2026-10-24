@@ -14,6 +14,9 @@
     <uses-permission android:name="com.android.vending.BILLING" />
     <!-- Android 13+ runtime notification permission -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Foreground Service permissions for continuous background focus session timers -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <!-- Exact alarms for habit micro-start reminders -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
@@ -36,6 +39,25 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <!-- Streak danger evening reminder broadcast receiver -->
+        <receiver
+            android:name=".notifications.StreakDangerReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Focus Timer ongoing foreground service for background execution & lock-screen chronometer -->
+        <service
+            android:name=".notifications.FocusTimerService"
+            android:foregroundServiceType="specialUse"
+            android:exported="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-facing focus stopwatch and Pomodoro countdown timer during active habit sessions." />
+        </service>
 
         <activity
             android:name=".MainActivity"

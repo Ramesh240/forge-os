@@ -77,7 +77,7 @@ export function getStreakMilestoneTier(streak: number): {
   };
 }
 
-export default function HabitVisualChain({
+function HabitVisualChain({
   habitId,
   sessions,
   currentStreak,
@@ -251,3 +251,5 @@ export default function HabitVisualChain({
     </div>
   );
 }
+
+export default React.memo(HabitVisualChain);

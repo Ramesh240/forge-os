@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "modern-web-guidance": {
+      "source": "GoogleChrome/modern-web-guidance",
+      "sourceType": "github",
+      "skillPath": "skills/modern-web-guidance/SKILL.md",
+      "computedHash": "25ff9239b06a01ebff4cb0bba6d3d11bc5e4c21b19029fd81aa765e03f5c2da6"
+    },
     "openfilm": {
       "source": "openfilm/openfilm",
       "sourceType": "github",

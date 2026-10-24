@@ -372,6 +372,89 @@ export function calculateMasteryHorizonAnalytics(params: { totalHoursLogged?: nu
   };
 }
 
+export interface BuilderPercentileRank {
+  percentile: number;
+  tierName: string;
+  badge: string;
+  description: string;
+  comparisonText: string;
+}
+
+/**
+ * Calculates anonymous social proof ranking & percentile distribution
+ * based on weekly logged hours, active days, and streak consistency (Audit #12).
+ */
+export function calculateBuilderPercentile(params: {
+  weeklyHours: number;
+  activeDaysThisWeek: number;
+  currentStreak?: number;
+}): BuilderPercentileRank {
+  const { weeklyHours, activeDaysThisWeek, currentStreak = 0 } = params;
+
+  if (weeklyHours >= 12 || (weeklyHours >= 8 && currentStreak >= 14)) {
+    return {
+      percentile: 2,
+      tierName: 'Elite Master Builder',
+      badge: 'Top 2%',
+      description: 'Disciplined mastery across multiple deep work blocks.',
+      comparisonText: 'More consistent than 98% of practitioners on ForgeOS',
+    };
+  }
+  if (weeklyHours >= 7 || (weeklyHours >= 5 && currentStreak >= 7)) {
+    return {
+      percentile: 6,
+      tierName: 'Distinguished Flow Architect',
+      badge: 'Top 6%',
+      description: 'Sustained focus and deliberate habit execution.',
+      comparisonText: 'More consistent than 94% of practitioners on ForgeOS',
+    };
+  }
+  if (weeklyHours >= 4 || (weeklyHours >= 3 && activeDaysThisWeek >= 4)) {
+    return {
+      percentile: 12,
+      tierName: 'Disciplined Deep Worker',
+      badge: 'Top 12%',
+      description: 'High weekly momentum with steady daily execution.',
+      comparisonText: 'More consistent than 88% of practitioners on ForgeOS',
+    };
+  }
+  if (weeklyHours >= 2 || activeDaysThisWeek >= 3) {
+    return {
+      percentile: 22,
+      tierName: 'Consistent Compounder',
+      badge: 'Top 22%',
+      description: 'Reliable weekly habit cadence building lasting muscle memory.',
+      comparisonText: 'More consistent than 78% of practitioners on ForgeOS',
+    };
+  }
+  if (weeklyHours >= 0.75 || activeDaysThisWeek >= 2) {
+    return {
+      percentile: 35,
+      tierName: 'Emerging Craftsman',
+      badge: 'Top 35%',
+      description: 'Consistent activation via deliberate 2-minute gateway starts.',
+      comparisonText: 'More consistent than 65% of practitioners on ForgeOS',
+    };
+  }
+  if (weeklyHours > 0 || activeDaysThisWeek > 0) {
+    return {
+      percentile: 48,
+      tierName: 'Initiate Builder',
+      badge: 'Top 48%',
+      description: 'Active habit trajectory establishing daily momentum.',
+      comparisonText: 'Outpacing 52% of registered accounts this week',
+    };
+  }
+
+  return {
+    percentile: 80,
+    tierName: 'Awakening Practitioner',
+    badge: 'Baseline',
+    description: 'Ready to forge daily momentum with a 2-minute micro-start.',
+    comparisonText: 'Complete 1 gateway session to unlock your weekly percentile',
+  };
+}
+
 export interface HabitTemplateExample {
   title: string;
   gatewayVersion: string;

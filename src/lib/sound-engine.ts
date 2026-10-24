@@ -197,6 +197,43 @@ class ForgeSoundEngine {
       navigator.vibrate([70, 40, 120]);
     }
   }
+
+  /**
+   * Triumphant harmonic fanfare for Perfect Day unlock (All daily habits completed)
+   * Chord sequence: C Major -> G Major -> C6 arpeggio burst
+   */
+  playPerfectDayFanfare(enabled = true) {
+    if (!enabled) return;
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    const fanfareNotes = [523.25, 659.25, 783.99, 1046.5, 1318.51, 1567.98];
+    const now = ctx.currentTime;
+
+    fanfareNotes.forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = idx >= 3 ? 'triangle' : 'sine';
+      const startTime = now + idx * 0.08;
+      const duration = 0.95;
+
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0.001, startTime);
+      gain.gain.linearRampToValueAtTime(0.18, startTime + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0004, startTime + duration);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration + 0.05);
+    });
+
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([100, 50, 100, 50, 250]);
+    }
+  }
 }
 
 export const soundEngine = new ForgeSoundEngine();

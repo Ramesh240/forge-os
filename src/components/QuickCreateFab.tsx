@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Compass, Sparkles, Check } from 'lucide-react';
+import { Plus, Compass } from 'lucide-react';
 import { soundEngine } from '@/lib/sound-engine';
 
 interface QuickCreateFabProps {
@@ -18,7 +18,16 @@ export default function QuickCreateFab({
   hidden = false,
 }: QuickCreateFabProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [prevHidden, setPrevHidden] = useState(hidden);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Sync state if hidden prop changes without cascading effect renders
+  if (hidden !== prevHidden) {
+    setPrevHidden(hidden);
+    if (hidden && isOpen) {
+      setIsOpen(false);
+    }
+  }
 
   // Close on Escape key
   useEffect(() => {
@@ -31,13 +40,6 @@ export default function QuickCreateFab({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, soundEnabled]);
-
-  // Close when hidden changes (e.g. session started or modal opened)
-  useEffect(() => {
-    if (hidden && isOpen) {
-      setIsOpen(false);
-    }
-  }, [hidden, isOpen]);
 
   const toggleOpen = () => {
     soundEngine.playTactileClick(soundEnabled);
