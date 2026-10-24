@@ -13,8 +13,8 @@ android {
         applicationId   = "com.forgeos.mastery"
         minSdk          = 26        // Android 8.0 — covers 97%+ of active devices
         targetSdk       = 36        // Android 16 — required by Play Store Aug 2026
-        versionCode     = 9         // Bumped for Habit Chain, Theme Engine & Quick Create FAB release
-        versionName     = "1.0.9"
+        versionCode     = 10        // Bumped for v1.0.10 release: Daily retention, lock-screen chronometer, goals & UI polish
+        versionName     = "1.0.10"
 
         // Your deployed Vercel URL
         buildConfigField("String", "APP_URL", "\"https://forge-os-eta-five.vercel.app\"")

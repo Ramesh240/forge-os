@@ -1903,19 +1903,28 @@ export default function ForgeAppShell({
 
               {isQuickToolsMenuOpen && (
                 <>
+                  {/* Subtle backdrop dimming overlay that ensures tap-outside dismissal */}
                   <div
-                    className="fixed inset-0 z-40"
+                    className="fixed inset-0 z-40 bg-black/60 backdrop-blur-[2px]"
                     onClick={() => setIsQuickToolsMenuOpen(false)}
                   />
-                  <div className="absolute right-0 top-full mt-2 w-52 glass-panel rounded-2xl p-1.5 z-50 border border-white/10 shadow-2xl space-y-0.5 animate-in fade-in zoom-in-95 duration-150">
+                  {/* Fully opaque, high-contrast elevated card */}
+                  <div className="absolute right-0 top-full mt-2 w-60 bg-[#0d0f18] rounded-2xl p-2 z-50 border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.95)] space-y-1 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400 border-b border-white/10 mb-1 flex items-center justify-between">
+                      <span className="font-semibold text-slate-300">Quick Tools</span>
+                      <span className="text-[9px] text-indigo-400 font-mono">v1.0.10</span>
+                    </div>
+
                     <button
                       onClick={() => {
                         setIsQuickToolsMenuOpen(false);
                         setShowWalkthrough(true);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold theme-text hover:bg-white/10 transition cursor-pointer text-left"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-100 hover:text-white hover:bg-white/10 transition cursor-pointer text-left"
                     >
-                      <HelpCircle className="w-4 h-4 text-indigo-400" />
+                      <div className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 shrink-0">
+                        <HelpCircle className="w-4 h-4" />
+                      </div>
                       <span>How ForgeOS Works</span>
                     </button>
 
@@ -1924,9 +1933,11 @@ export default function ForgeAppShell({
                         setIsQuickToolsMenuOpen(false);
                         setIsWidgetDrawerOpen(true);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold theme-text hover:bg-white/10 transition cursor-pointer text-left"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-100 hover:text-white hover:bg-white/10 transition cursor-pointer text-left"
                     >
-                      <LayoutGrid className="w-4 h-4 text-indigo-400" />
+                      <div className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 shrink-0">
+                        <LayoutGrid className="w-4 h-4" />
+                      </div>
                       <span>Quick Habit Widget</span>
                     </button>
 
@@ -1935,9 +1946,11 @@ export default function ForgeAppShell({
                         setIsQuickToolsMenuOpen(false);
                         setIsThemeModalOpen(true);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold theme-text hover:bg-white/10 transition cursor-pointer text-left"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-100 hover:text-white hover:bg-white/10 transition cursor-pointer text-left"
                     >
-                      <Palette className="w-4 h-4 text-amber-400" />
+                      <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
+                        <Palette className="w-4 h-4" />
+                      </div>
                       <span>Theme & Accent</span>
                     </button>
 
@@ -1946,14 +1959,21 @@ export default function ForgeAppShell({
                         setIsQuickToolsMenuOpen(false);
                         setSoundEnabled((prev) => !prev);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold theme-text hover:bg-white/10 transition cursor-pointer text-left"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-100 hover:text-white hover:bg-white/10 transition cursor-pointer text-left"
                     >
-                      {soundEnabled ? (
-                        <Volume2 className="w-4 h-4 text-emerald-400" />
-                      ) : (
-                        <VolumeX className="w-4 h-4 text-rose-400" />
-                      )}
-                      <span>Sound FX: {soundEnabled ? 'ON' : 'OFF'}</span>
+                      <div className={`p-1.5 rounded-lg shrink-0 ${soundEnabled ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                        {soundEnabled ? (
+                          <Volume2 className="w-4 h-4" />
+                        ) : (
+                          <VolumeX className="w-4 h-4" />
+                        )}
+                      </div>
+                      <div className="flex flex-col text-left">
+                        <span>Sound FX</span>
+                        <span className="text-[10px] text-slate-400 font-normal">
+                          {soundEnabled ? 'Audio feedback: ON' : 'Audio feedback: OFF'}
+                        </span>
+                      </div>
                     </button>
                   </div>
                 </>
