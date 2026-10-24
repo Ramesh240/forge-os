@@ -209,39 +209,12 @@ class ForgeAndroidBridge(
 
     @JavascriptInterface
     fun startFocusTimerService(title: String, subtitle: String, baseTimeMillis: Long, isCountdown: Boolean) {
-        activity.runOnUiThread {
-            try {
-                FocusTimerService.createNotificationChannel(activity)
-                val intent = Intent(activity, FocusTimerService::class.java).apply {
-                    action = FocusTimerService.ACTION_START
-                    putExtra(FocusTimerService.EXTRA_TITLE, title)
-                    putExtra(FocusTimerService.EXTRA_SUBTITLE, subtitle)
-                    putExtra(FocusTimerService.EXTRA_BASE_TIME, baseTimeMillis)
-                    putExtra(FocusTimerService.EXTRA_IS_COUNTDOWN, isCountdown)
-                }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    activity.startForegroundService(intent)
-                } else {
-                    activity.startService(intent)
-                }
-            } catch (_: Exception) {
-                // Safely handle security or background service start exceptions
-            }
-        }
+        // Timers are synchronized accurately via Web Wall-Clock Date.now() timestamps; no foreground service required
     }
 
     @JavascriptInterface
     fun stopFocusTimerService() {
-        activity.runOnUiThread {
-            try {
-                val intent = Intent(activity, FocusTimerService::class.java).apply {
-                    action = FocusTimerService.ACTION_STOP
-                }
-                activity.startService(intent)
-            } catch (_: Exception) {
-                // Safely handle service stop
-            }
-        }
+        // No-op
     }
 
     @JavascriptInterface
