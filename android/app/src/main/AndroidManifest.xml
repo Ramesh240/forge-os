@@ -10,6 +10,8 @@
 
     <!-- Required to load the Next.js web app -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Required to detect network status for smart WebView caching -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Required for Google Play Store In-App Purchases & Licensing -->
     <uses-permission android:name="com.android.vending.BILLING" />
     <!-- Android 13+ runtime notification permission -->
@@ -43,6 +45,16 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Daily motivation 9:00 AM broadcast receiver -->
+        <receiver
+            android:name=".notifications.DailyMotivationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="com.forgeos.mastery.DAILY_MOTIVATION" />
             </intent-filter>
         </receiver>
 

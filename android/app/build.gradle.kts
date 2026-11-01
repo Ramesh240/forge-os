@@ -13,8 +13,8 @@ android {
         applicationId   = "com.forgeos.mastery"
         minSdk          = 26        // Android 8.0 — covers 97%+ of active devices
         targetSdk       = 36        // Android 16 — required by Play Store Aug 2026
-        versionCode     = 11        // Bumped for v1.0.11 release: Streamlined Play Console permissions
-        versionName     = "1.0.11"
+        versionCode     = 12        // Bumped for v1.0.12 release: Updated fragment SDK to modern 1.8.6 & instant skeleton UI
+        versionName     = "1.0.12"
 
         // Your deployed Vercel URL
         buildConfigField("String", "APP_URL", "\"https://forge-os-eta-five.vercel.app\"")
@@ -69,6 +69,14 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.lifecycle.viewmodel)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.fragment)
+
+    // Override outdated transitive fragment:1.1.0 flagged by Google Play Console
+    constraints {
+        implementation(libs.androidx.fragment) {
+            because("Overrides outdated fragment:1.1.0 flagged by Google Play Console")
+        }
+    }
 
     // Splash screen — holds native splash until WebView is ready
     implementation(libs.splashscreen)

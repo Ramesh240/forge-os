@@ -7,6 +7,7 @@ import {
   calculateSessionScore,
   IDENTITY_PRESETS,
   SkillStage,
+  FORGE_APP_VERSION,
 } from '@/lib/forge-engine';
 import { revalidatePath } from 'next/cache';
 
@@ -780,7 +781,7 @@ export async function exportUserDataAction() {
 
   return {
     exportedAt: new Date().toISOString(),
-    version: '1.0.9',
+    version: FORGE_APP_VERSION,
     userId,
     identities,
     habits,

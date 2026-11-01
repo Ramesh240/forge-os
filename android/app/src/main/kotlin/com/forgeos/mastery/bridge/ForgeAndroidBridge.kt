@@ -11,7 +11,6 @@ import android.webkit.JavascriptInterface
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import com.forgeos.mastery.billing.PlayBillingManager
-import com.forgeos.mastery.notifications.FocusTimerService
 import com.forgeos.mastery.notifications.HabitReminderReceiver
 import com.forgeos.mastery.notifications.StreakDangerReceiver
 import java.util.Calendar
@@ -19,10 +18,25 @@ import java.util.Calendar
 class ForgeAndroidBridge(
     private val activity: Activity,
     private val playBillingManager: PlayBillingManager? = null,
+    private val onAppContentReady: (() -> Unit)? = null,
 ) {
 
     @JavascriptInterface
     fun isNativeApp(): Boolean = true
+
+    /**
+     * Returns the exact version name configured in build.gradle.kts (e.g., "1.0.12").
+     * Allows the Web UI (Quick Tools, Settings) to dynamically display the matching native version.
+     */
+    @JavascriptInterface
+    fun getAppVersion(): String {
+        return try {
+            val pInfo = activity.packageManager.getPackageInfo(activity.packageName, 0)
+            pInfo.versionName ?: "1.0.12"
+        } catch (_: Exception) {
+            "1.0.12"
+        }
+    }
 
     @JavascriptInterface
     fun isGooglePlayBillingSupported(): Boolean = true
@@ -46,6 +60,8 @@ class ForgeAndroidBridge(
         activity.runOnUiThread {
             HabitReminderReceiver.createNotificationChannel(activity)
             StreakDangerReceiver.createNotificationChannel(activity)
+            com.forgeos.mastery.notifications.DailyMotivationReceiver.createNotificationChannel(activity)
+            com.forgeos.mastery.notifications.DailyMotivationReceiver.scheduleDailyAlarm(activity)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 ActivityCompat.requestPermissions(
                     activity,
@@ -59,6 +75,21 @@ class ForgeAndroidBridge(
                     Toast.LENGTH_SHORT
                 ).show()
             }
+        }
+    }
+
+    @JavascriptInterface
+    fun scheduleAllDailyNotifications() {
+        activity.runOnUiThread {
+            com.forgeos.mastery.notifications.DailyMotivationReceiver.createNotificationChannel(activity)
+            com.forgeos.mastery.notifications.DailyMotivationReceiver.scheduleDailyAlarm(activity)
+        }
+    }
+
+    @JavascriptInterface
+    fun onAppContentReady() {
+        activity.runOnUiThread {
+            onAppContentReady?.invoke()
         }
     }
 
@@ -202,19 +233,16 @@ class ForgeAndroidBridge(
                     controller.isAppearanceLightNavigationBars = !isDark
                 }
             } catch (_: Exception) {
-                // Fallback gracefully
             }
         }
     }
 
     @JavascriptInterface
     fun startFocusTimerService(title: String, subtitle: String, baseTimeMillis: Long, isCountdown: Boolean) {
-        // Timers are synchronized accurately via Web Wall-Clock Date.now() timestamps; no foreground service required
     }
 
     @JavascriptInterface
     fun stopFocusTimerService() {
-        // No-op
     }
 
     @JavascriptInterface
@@ -228,4 +256,6 @@ class ForgeAndroidBridge(
         const val REQUEST_CODE_POST_NOTIFICATIONS = 1001
     }
 }
-// Source: https://developer.android.com/develop/ui/views/notifications/notification-permission
+
+// Source: https://developer.android.com/reference/android/webkit/JavascriptInterface
+// Source: https://developer.android.com/reference/android/content/pm/PackageManager

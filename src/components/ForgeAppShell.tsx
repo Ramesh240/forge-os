@@ -10,6 +10,7 @@ import {
   STAGE_LABELS,
   SkillStage,
   ContinuityDay,
+  FORGE_APP_VERSION,
 } from '@/lib/forge-engine';
 import { soundEngine } from '@/lib/sound-engine';
 import {
@@ -146,9 +147,12 @@ type TabType = 'WORKSPACE' | 'ANALYTICS' | 'HEATMAP' | 'VAULT' | 'ACCOUNT';
 
 interface ForgeAndroidBridgeInterface {
   isNativeApp?: () => boolean;
+  getAppVersion?: () => string;
   isGooglePlayBillingSupported?: () => boolean;
   restoreGooglePlayPurchases?: () => void;
   requestNotificationPermission?: () => void;
+  scheduleAllDailyNotifications?: () => void;
+  onAppContentReady?: () => void;
   scheduleHabitReminder?: (habitId: string, title: string, hour: number, minute: number) => void;
   cancelHabitReminder?: (habitId: string) => void;
   scheduleStreakDangerAlert?: (habitId: string, title: string, streakCount: number) => void;
@@ -282,6 +286,14 @@ export default function ForgeAppShell({
     }
   }, []);
 
+  // ── Native Skeleton Dismissal Signal ──────────────────────────────────────────
+  // Called once on mount (after React hydration). Notifies the Android native
+  // layer that real app content is visible, dismissing the native skeleton screen.
+  // This is the primary signal; the Kotlin fallback fires after 5 s as a safety net.
+  useEffect(() => {
+    getAndroidBridge()?.onAppContentReady?.();
+  }, []);
+
   const [activeTab, setActiveTab] = useState<TabType>('WORKSPACE');
   const [selectedIdentityFilter, setSelectedIdentityFilter] = useState<string>('ALL');
   const [theme, setTheme] = useState<ThemeMode>(() => {
@@ -311,6 +323,15 @@ export default function ForgeAppShell({
   });
 
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [appVersion, setAppVersion] = useState(FORGE_APP_VERSION);
+
+  // Dynamically sync version with Android native layer (falls back to FORGE_APP_VERSION)
+  useEffect(() => {
+    const nativeVer = getAndroidBridge()?.getAppVersion?.();
+    if (nativeVer) {
+      setAppVersion(nativeVer);
+    }
+  }, []);
 
   // Quick Widget Drawer State
   const [isWidgetDrawerOpen, setIsWidgetDrawerOpen] = useState(false);
@@ -1008,6 +1029,8 @@ export default function ForgeAppShell({
         bridge.cancelStreakDangerAlert?.(h.id);
       }
     });
+
+    bridge.scheduleAllDailyNotifications?.();
   }, [habits]);
 
   const requestNotificationAccess = async () => {
@@ -1912,7 +1935,7 @@ export default function ForgeAppShell({
                   <div className="absolute right-0 top-full mt-2 w-60 bg-[#0d0f18] rounded-2xl p-2 z-50 border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.95)] space-y-1 animate-in fade-in zoom-in-95 duration-150">
                     <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400 border-b border-white/10 mb-1 flex items-center justify-between">
                       <span className="font-semibold text-slate-300">Quick Tools</span>
-                      <span className="text-[9px] text-indigo-400 font-mono">v1.0.10</span>
+                      <span className="text-[9px] text-indigo-400 font-mono">v{appVersion}</span>
                     </div>
 
                     <button

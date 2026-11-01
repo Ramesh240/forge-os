@@ -1,5 +1,5 @@
 // WebAppViewModel.kt
-// Manages the WebView loading state using a lifecycle-aware StateFlow.
+// Manages the WebView loading state and error states using lifecycle-aware StateFlows.
 // Pattern: stateflow-ui (https://developer.android.com/kotlin/flow/stateflow-and-sharedflow)
 package com.forgeos.mastery
 
@@ -11,24 +11,35 @@ import kotlinx.coroutines.flow.asStateFlow
 class WebAppViewModel : ViewModel() {
 
     /**
-     * true  → page is still loading → keep the native SplashScreen visible
-     * false → WebView has finished painting → dismiss splash, reveal the app
-     *
-     * Using MutableStateFlow instead of MutableLiveData — StateFlow is the
-     * current best practice for Compose (no LiveData observer needed).
+     * true  → page is actively loading → show native Compose skeleton shimmer
+     * false → page has completed initial paint → smoothly fade out skeleton
      */
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    /** Called by ForgeWebView once WebViewClient.onPageFinished fires. */
+    /**
+     * true  → fatal load/network error occurred → display offline retry screen
+     * false → normal operation
+     */
+    private val _isOfflineError = MutableStateFlow(false)
+    val isOfflineError: StateFlow<Boolean> = _isOfflineError.asStateFlow()
+
+    /** Called once WebViewClient reports page finished. */
     fun onPageFinished() {
+        _isOfflineError.value = false
         _isLoading.value = false
     }
 
-    /** Called if the page fails to load (network error, etc.). */
+    /** Called if the main page fails to load (e.g. no internet and no cache). */
     fun onPageError() {
-        // Even on error, dismiss the splash so we don't hang forever.
+        _isOfflineError.value = true
         _isLoading.value = false
+    }
+
+    /** Called when the user clicks 'Retry' on the offline screen. */
+    fun retry() {
+        _isOfflineError.value = false
+        _isLoading.value = true
     }
 }
 

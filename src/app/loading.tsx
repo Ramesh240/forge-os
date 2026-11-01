@@ -1,4 +1,6 @@
 // src/app/loading.tsx
+// High-fidelity branded loading screen for ForgeOS
+// Communicates architecture initialization with ambient glow and animated progress indicator.
 export default function Loading() {
   return (
     <div
@@ -41,7 +43,7 @@ export default function Loading() {
         {/* Progress Bar / Pulsing indicator */}
         <div className="w-48 h-1 rounded-full bg-white/5 overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-400 rounded-full animate-[shimmer_1.5s_infinite]"
+            className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-400 rounded-full"
             style={{
               width: '60%',
               animation: 'loadingProgress 1.4s ease-in-out infinite alternate',
