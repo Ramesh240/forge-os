@@ -1,4 +1,4 @@
-import { createHash, createSign } from 'node:crypto';
+import { createHash, createSign } from 'crypto';
 
 const ANDROID_PUBLISHER_SCOPE = 'https://www.googleapis.com/auth/androidpublisher';
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';

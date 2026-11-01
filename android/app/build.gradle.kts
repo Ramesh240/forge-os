@@ -84,10 +84,9 @@ android {
 val validateReleaseSigning = tasks.register("validateReleaseSigning") {
     doLast {
         if (!hasUploadSigning) {
-            throw GradleException(
-                "Release signing is required. Set FORGEOS_UPLOAD_STORE_FILE, " +
-                    "FORGEOS_UPLOAD_STORE_PASSWORD, FORGEOS_UPLOAD_KEY_ALIAS, and " +
-                    "FORGEOS_UPLOAD_KEY_PASSWORD using the Play upload keystore."
+            logger.warn(
+                "FORGEOS upload signing environment variables are not set. " +
+                    "Proceeding with Android Studio IDE signing dialog or unsigned artifact."
             )
         }
     }

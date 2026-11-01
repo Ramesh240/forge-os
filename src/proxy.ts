@@ -1,4 +1,3 @@
-import { randomUUID } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 
 const GUEST_COOKIE = 'forge_guest_id';
@@ -10,7 +9,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const guestId = randomUUID();
+  const guestId = crypto.randomUUID();
   request.cookies.set(GUEST_COOKIE, guestId);
   const response = NextResponse.next({ request: { headers: request.headers } });
   response.cookies.set(GUEST_COOKIE, guestId, {
