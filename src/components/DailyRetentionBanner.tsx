@@ -3,7 +3,6 @@
 import React, { useMemo } from 'react';
 import {
   Flame,
-  CheckCircle2,
   Clock,
   ArrowRight,
   Sparkles,
@@ -16,6 +15,7 @@ import { calculateBuilderPercentile } from '@/lib/forge-engine';
 interface DailyRetentionBannerProps {
   habits: SerializedHabit[];
   sessions: SerializedSession[];
+  referenceTime: number;
   strictStreak: number;
   resilientStreak: number;
   onStartHabit: (habit: SerializedHabit) => void;
@@ -24,14 +24,15 @@ interface DailyRetentionBannerProps {
 export default function DailyRetentionBanner({
   habits,
   sessions,
+  referenceTime,
   strictStreak,
   resilientStreak,
   onStartHabit,
 }: DailyRetentionBannerProps) {
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayStr = useMemo(() => new Date(referenceTime).toISOString().split('T')[0], [referenceTime]);
 
   // Compute daily habits completion
-  const { completedCount, totalCount, remainingHabits, nextHabit, isPerfectDay, progressPct } =
+  const { completedCount, totalCount, nextHabit, isPerfectDay, progressPct } =
     useMemo(() => {
       const completed = habits.filter((h) => h.lastCompletedDate === todayStr);
       const remaining = habits.filter((h) => h.lastCompletedDate !== todayStr);
@@ -40,7 +41,6 @@ export default function DailyRetentionBanner({
       return {
         completedCount: completed.length,
         totalCount: total,
-        remainingHabits: remaining,
         nextHabit: remaining[0] || null,
         isPerfectDay: total > 0 && completed.length === total,
         progressPct: pct,
@@ -98,7 +98,7 @@ export default function DailyRetentionBanner({
     const latest = sorted[0];
     if (!latest?.loggedAt) return 'Ready for today';
 
-    const diffMs = Date.now() - new Date(latest.loggedAt).getTime();
+    const diffMs = referenceTime - new Date(latest.loggedAt).getTime();
     const diffMins = Math.floor(diffMs / 60000);
     if (diffMins < 2) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
@@ -107,12 +107,12 @@ export default function DailyRetentionBanner({
     const diffDays = Math.floor(diffHours / 24);
     if (diffDays === 1) return 'Yesterday';
     return `${diffDays}d ago`;
-  }, [sessions]);
+  }, [sessions, referenceTime]);
 
   // Social Proof & Percentile calculation (Audit #12)
   const percentileRank = useMemo(() => {
     const msInDay = 24 * 60 * 60 * 1000;
-    const sevenDaysAgo = Date.now() - 7 * msInDay;
+    const sevenDaysAgo = referenceTime - 7 * msInDay;
     let weeklyMins = 0;
     const activeDays = new Set<string>();
     sessions.forEach((s) => {
@@ -127,7 +127,7 @@ export default function DailyRetentionBanner({
       activeDaysThisWeek: activeDays.size,
       currentStreak: maxStreak,
     });
-  }, [sessions, maxStreak]);
+  }, [sessions, maxStreak, referenceTime]);
 
   if (totalCount === 0) return null;
 

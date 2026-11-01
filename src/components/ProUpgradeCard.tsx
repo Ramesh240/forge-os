@@ -57,7 +57,7 @@ export default function ProUpgradeCard({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Detect Google Play Billing support via Native Android Bridge
-  const [isPlayBillingAvailable, setIsPlayBillingAvailable] = useState(() => {
+  const [isPlayBillingAvailable] = useState(() => {
     if (typeof window === 'undefined') return false;
     const bridge = (window as unknown as {
       ForgeAndroidBridge?: {
@@ -70,49 +70,10 @@ export default function ProUpgradeCard({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const bridge = (window as unknown as {
-      ForgeAndroidBridge?: {
-        isGooglePlayBillingSupported?: () => boolean;
-        launchGooglePlayPurchase?: (productId?: string) => void;
-        restoreGooglePlayPurchases?: () => void;
-      };
-    }).ForgeAndroidBridge;
-
     // Google Play Billing native callbacks
     const win = window as unknown as {
-      onGooglePlayPurchaseSuccess?: (orderId: string) => void;
       onGooglePlayPurchaseError?: (error: string) => void;
       onGooglePlayPurchaseCancelled?: () => void;
-    };
-
-    win.onGooglePlayPurchaseSuccess = async (orderId: string) => {
-      setIsProcessingCheckout(true);
-      try {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('forge_pro_unlocked', 'true');
-        }
-        await fetch('/api/verify-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            razorpay_order_id: `gplay_${orderId}`,
-            razorpay_payment_id: orderId,
-            razorpay_signature: 'gplay_verified',
-            source: 'google_play',
-          }),
-        });
-        setSuccessMessage('🎉 Google Play purchase successful! ForgeOS Pro lifetime pass unlocked.');
-        onUnlocked?.();
-        router.refresh();
-      } catch {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('forge_pro_unlocked', 'true');
-        }
-        setSuccessMessage('🎉 Google Play purchase verified! ForgeOS Pro unlocked.');
-        onUnlocked?.();
-      } finally {
-        setIsProcessingCheckout(false);
-      }
     };
 
     win.onGooglePlayPurchaseError = (error: string) => {
@@ -125,11 +86,10 @@ export default function ProUpgradeCard({
     };
 
     return () => {
-      delete win.onGooglePlayPurchaseSuccess;
       delete win.onGooglePlayPurchaseError;
       delete win.onGooglePlayPurchaseCancelled;
     };
-  }, [onUnlocked, router]);
+  }, []);
 
   const handleGooglePlayPayment = () => {
     setIsProcessingCheckout(true);
@@ -168,7 +128,7 @@ export default function ProUpgradeCard({
       const res = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: 15000, currency: 'INR' }),
+        body: JSON.stringify({}),
       });
       const data = await res.json();
 

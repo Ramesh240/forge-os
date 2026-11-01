@@ -6,8 +6,17 @@ export const isGoogleAuthConfigured = Boolean(
   process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
 );
 
+const authSecret = process.env.AUTH_SECRET;
+
+if (
+  process.env.NODE_ENV === 'production' &&
+  (!authSecret || authSecret.trim().length < 32 || authSecret.startsWith('replace-with-'))
+) {
+  throw new Error('AUTH_SECRET must be configured in production.');
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  secret: process.env.AUTH_SECRET || 'forge-os-dev-auth-secret-change-in-prod-32c',
+  secret: authSecret || 'forge-os-development-only-auth-secret',
   trustHost: true,
   providers: isGoogleAuthConfigured
     ? [

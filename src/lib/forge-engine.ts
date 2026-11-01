@@ -1,4 +1,4 @@
-export const FORGE_APP_VERSION = '1.0.12';
+export const FORGE_APP_VERSION = '1.0.13';
 // src/lib/forge-engine.ts
 
 export type SkillStage = 'PASSIVE' | 'PRACTICE' | 'ACTIVE';

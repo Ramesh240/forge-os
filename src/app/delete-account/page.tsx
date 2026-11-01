@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default function DeleteAccountPage() {
-  const lastUpdated = 'October 19, 2026';
+  const lastUpdated = 'November 1, 2026';
 
   return (
     <div className="min-h-screen theme-surface relative px-4 sm:px-6 py-10 text-zinc-100 antialiased">
@@ -115,7 +115,7 @@ export default function DeleteAccountPage() {
                   Subject: ForgeOS Account &amp; Data Deletion Request
                 </code>
                 <p className="theme-subtext pt-1">
-                  <strong>To:</strong> <a href="mailto:privacy@forgeos.app" className="text-indigo-400 underline">privacy@forgeos.app</a>
+                  <strong>To:</strong> <a href="mailto:rameshmapps45@gmail.com" className="text-indigo-400 underline">rameshmapps45@gmail.com</a>
                 </p>
                 <p className="theme-subtext">
                   <strong>Content:</strong> Please state your registered Google account email address associated with ForgeOS.
@@ -123,7 +123,7 @@ export default function DeleteAccountPage() {
               </div>
 
               <a
-                href="mailto:privacy@forgeos.app?subject=ForgeOS%20Account%20%26%20Data%20Deletion%20Request&body=Please%20permanently%20delete%20my%20ForgeOS%20account%20and%20all%20associated%20data.%0A%0ARegistered%20Google%20Email%20Address%3A%20"
+                href="mailto:rameshmapps45@gmail.com?subject=ForgeOS%20Account%20%26%20Data%20Deletion%20Request&body=Please%20permanently%20delete%20my%20ForgeOS%20account%20and%20all%20associated%20data.%0A%0ARegistered%20Google%20Email%20Address%3A%20"
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 transition shadow-sm cursor-pointer"
               >
                 <Mail className="w-4 h-4" /> Send Deletion Email Now
@@ -179,7 +179,7 @@ export default function DeleteAccountPage() {
                 <tr>
                   <td className="py-3 px-3 font-medium theme-text">Payment Order IDs (Only for Pro users)</td>
                   <td className="py-3 px-3 text-amber-400 font-semibold">Retained by Payment Gateway</td>
-                  <td className="py-3 px-3 theme-subtext">Up to 180 days solely for statutory tax and financial accounting compliance via Razorpay. No card numbers or payment credentials are ever stored.</td>
+                  <td className="py-3 px-3 theme-subtext">Payment providers may retain their own transaction records under their policies or legal obligations. ForgeOS does not store card numbers or payment credentials.</td>
                 </tr>
               </tbody>
             </table>
@@ -190,9 +190,9 @@ export default function DeleteAccountPage() {
         <div className="glass-panel rounded-3xl p-6 sm:p-8 space-y-3">
           <h2 className="text-base font-bold theme-text">Retention Period &amp; Deletion SLA</h2>
           <p className="text-xs sm:text-sm theme-subtext leading-relaxed">
-            • <strong>In-App Deletion:</strong> Executed in real-time. All database records (Identity Vectors, Habit records, and Session Logs) cascadingly delete immediately.<br />
-            • <strong>Email / Web Requests:</strong> Processed and permanently confirmed within <strong>48 hours</strong> of receipt.<br />
-            • <strong>Backups:</strong> System backups purge soft-deleted records within 30 days automatically.
+            • <strong>In-App Deletion:</strong> ForgeOS removes workspace and purchase-link records when the deletion request completes.<br />
+            • <strong>Email / Web Requests:</strong> We will verify the request and confirm when deletion is complete.<br />
+            • <strong>Backups:</strong> Backup retention depends on the database provider&apos;s configured retention period.
           </p>
         </div>
 

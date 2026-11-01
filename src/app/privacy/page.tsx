@@ -8,7 +8,7 @@ export const metadata = {
 };
 
 export default function PrivacyPolicyPage() {
-  const lastUpdated = 'October 14, 2026';
+  const lastUpdated = 'November 1, 2026';
 
   return (
     <div className="min-h-screen theme-surface relative px-4 sm:px-6 py-10 text-zinc-100 antialiased">
@@ -36,14 +36,14 @@ export default function PrivacyPolicyPage() {
           </Link>
           <div className="flex items-center gap-2 text-xs font-mono theme-muted">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>Policy Version 2.0</span>
+            <span>ForgeOS Privacy Policy</span>
           </div>
         </div>
 
         {/* Hero Section */}
         <div className="space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-panel text-[11px] font-mono text-emerald-400">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Google Play Store & OAuth 2.0 Compliant
+            <CheckCircle2 className="w-3.5 h-3.5" /> Your data and privacy choices
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight theme-text">
             Privacy Policy &amp; Data Deletion Instructions
@@ -89,7 +89,10 @@ export default function PrivacyPolicyPage() {
                 <strong className="theme-text">Habit &amp; Focus Telemetry:</strong> Titles of the identities and habits you create, 2-minute micro-start descriptions, completed session durations (minutes), difficulty ratings, cognitive friction notes, and timestamps. This data is stored solely to calculate your consistency streaks, 10,000-hour mastery milestones, and visual chains.
               </li>
               <li>
-                <strong className="theme-text">Device &amp; Local Preferences:</strong> Your selected visual theme (Obsidian, Sepia, or Daylight) and audio preferences (sound chime toggle) are stored locally on your device via <code>localStorage</code>.
+                <strong className="theme-text">Device &amp; Local Preferences:</strong> Your selected theme and accent, sound preference, walkthrough status, and active focus timer snapshot are stored locally on your device. Guest workspaces also use a random first-party cookie to keep data scoped to that installation.
+              </li>
+              <li>
+                <strong className="theme-text">Pro Purchase Records:</strong> To verify purchases and prevent the same payment from being linked to multiple accounts, ForgeOS stores a hashed Google Play purchase token, product and order identifiers, or a Razorpay payment and order identifier with your workspace. ForgeOS does not receive or store card numbers or payment credentials.
               </li>
             </ul>
           </div>
@@ -103,12 +106,12 @@ export default function PrivacyPolicyPage() {
             </div>
             <div>
               <h2 className="text-lg font-bold theme-text">3. Data Deletion Instructions (Account Deletion)</h2>
-              <span className="text-xs text-rose-400 font-mono">Google Play Store &amp; GDPR / CCPA Compliant</span>
+              <span className="text-xs text-rose-400 font-mono">You can request deletion at any time</span>
             </div>
           </div>
 
           <p className="text-sm theme-subtext leading-relaxed">
-            In compliance with Google Play Store policies and global privacy regulations, all users have the absolute right to request the permanent and irreversible deletion of their account and all associated data at any time.
+            You can request deletion of your ForgeOS account and associated app data at any time. Some payment records may be retained separately by payment providers under their own policies or legal obligations.
           </p>
 
           <div className="space-y-4 pt-1">
@@ -118,7 +121,7 @@ export default function PrivacyPolicyPage() {
                 Option A: Instant In-App Deletion (Recommended)
               </h3>
               <p className="text-xs theme-subtext leading-relaxed pl-8">
-                You can delete your entire account and all associated data directly within ForgeOS in under 5 seconds:
+                You can delete your ForgeOS workspace and associated app data directly within ForgeOS:
               </p>
               <ol className="text-xs theme-subtext space-y-1 pl-12 list-decimal">
                 <li>Open <strong>ForgeOS</strong> on your phone or browser.</li>
@@ -127,7 +130,7 @@ export default function PrivacyPolicyPage() {
                 <li>Confirm the 2-step prompt (&ldquo;Yes, Delete Forever&rdquo;).</li>
               </ol>
               <p className="text-xs text-emerald-400 pl-8 pt-1">
-                ✓ This immediately and permanently purges all your Identity Vectors, Habit Chains, Focus Sessions, and Google profile links from our production database and signs you out.
+                ForgeOS deletes the workspace records associated with your account and signs you out when the request completes.
               </p>
             </div>
 
@@ -141,12 +144,12 @@ export default function PrivacyPolicyPage() {
               </p>
               <div className="pl-8 pt-1 space-y-1 text-xs">
                 <p className="theme-text font-mono">
-                  Email: <a href="mailto:privacy@forgeos.app" className="underline text-indigo-400">privacy@forgeos.app</a> (or repository administrator)
+                  Email: <a href="mailto:rameshmapps45@gmail.com" className="underline text-indigo-400">rameshmapps45@gmail.com</a>
                 </p>
                 <p className="theme-subtext">Subject: <code>ForgeOS Account &amp; Data Deletion Request</code></p>
                 <p className="theme-subtext">Required details: Include the Google Account email associated with your ForgeOS workspace.</p>
                 <p className="text-emerald-400 pt-1">
-                  ✓ Manual requests are permanently processed within 48 hours of verification.
+                  We will verify the request and confirm when deletion is complete.
                 </p>
               </div>
             </div>
@@ -195,7 +198,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <div className="p-4 rounded-2xl glass-panel text-xs space-y-1 font-mono">
             <p className="theme-text font-bold">ForgeOS Security &amp; Privacy Operations</p>
-            <p className="theme-subtext">Email: privacy@forgeos.app</p>
+            <p className="theme-subtext">Email: rameshmapps45@gmail.com</p>
             <p className="theme-subtext">GitHub: https://github.com/Ramesh240/forge-os</p>
           </div>
         </div>

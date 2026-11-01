@@ -3,7 +3,6 @@ package com.forgeos.mastery.billing
 import android.app.Activity
 import android.util.Log
 import android.webkit.WebView
-import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
@@ -31,7 +30,7 @@ class PlayBillingManager(
         .build()
 
     private var isConnected = false
-    private var cachedProductDetails: ProductDetails? = null
+    private var cachedProductDetails: Map<String, ProductDetails> = emptyMap()
 
     init {
         startConnection()
@@ -80,19 +79,23 @@ class PlayBillingManager(
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 val detailsList = productDetailsResult.productDetailsList
                 if (!detailsList.isNullOrEmpty()) {
-                    cachedProductDetails = detailsList.firstOrNull()
-                    Log.d(TAG, "Loaded in-app product: ${cachedProductDetails?.productId}")
+                    cachedProductDetails = detailsList.associateBy { it.productId }
+                    Log.d(TAG, "Loaded in-app products: ${cachedProductDetails.keys.joinToString()}")
                 }
             }
         }
     }
 
     fun launchPurchaseFlow(customProductId: String? = null) {
-        val targetProduct = cachedProductDetails
+        val targetProduct = customProductId?.let(cachedProductDetails::get)
+            ?: cachedProductDetails[PRODUCT_ID_PRIMARY]
+            ?: cachedProductDetails[PRODUCT_ID_FALLBACK]
         if (targetProduct == null) {
             // If details not cached yet, reconnect and query
             startConnection {
-                val product = cachedProductDetails
+                val product = customProductId?.let(cachedProductDetails::get)
+                    ?: cachedProductDetails[PRODUCT_ID_PRIMARY]
+                    ?: cachedProductDetails[PRODUCT_ID_FALLBACK]
                 if (product != null) {
                     executeLaunchFlow(product)
                 } else {
@@ -143,22 +146,13 @@ class PlayBillingManager(
 
     private fun handlePurchase(purchase: Purchase) {
         if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
-            if (!purchase.isAcknowledged) {
-                val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
-                    .setPurchaseToken(purchase.purchaseToken)
-                    .build()
-
-                billingClient.acknowledgePurchase(acknowledgePurchaseParams) { billingResult ->
-                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                        Log.d(TAG, "Purchase acknowledged successfully.")
-                        notifyWebPurchaseSuccess(purchase.orderId ?: purchase.purchaseToken)
-                    } else {
-                        Log.e(TAG, "Failed to acknowledge purchase: ${billingResult.debugMessage}")
-                    }
-                }
-            } else {
-                notifyWebPurchaseSuccess(purchase.orderId ?: purchase.purchaseToken)
+            val productId = purchase.products.firstOrNull()
+            if (productId.isNullOrBlank()) {
+                notifyWebPurchaseError("Google Play did not return a product identifier.")
+                return
             }
+            // The server verifies and acknowledges the purchase with Google before granting Pro.
+            notifyWebPurchaseSuccess(purchase.purchaseToken, productId)
         }
     }
 
@@ -183,10 +177,10 @@ class PlayBillingManager(
         }
     }
 
-    private fun notifyWebPurchaseSuccess(orderId: String) {
+    private fun notifyWebPurchaseSuccess(purchaseToken: String, productId: String) {
         activity.runOnUiThread {
             webViewProvider()?.evaluateJavascript(
-                "if (window.onGooglePlayPurchaseSuccess) { window.onGooglePlayPurchaseSuccess('$orderId'); }",
+                "if (window.onGooglePlayPurchaseSuccess) { window.onGooglePlayPurchaseSuccess(${org.json.JSONObject.quote(purchaseToken)}, ${org.json.JSONObject.quote(productId)}); }",
                 null
             )
         }
@@ -194,9 +188,8 @@ class PlayBillingManager(
 
     private fun notifyWebPurchaseError(message: String) {
         activity.runOnUiThread {
-            val safeMessage = message.replace("'", "\\'")
             webViewProvider()?.evaluateJavascript(
-                "if (window.onGooglePlayPurchaseError) { window.onGooglePlayPurchaseError('$safeMessage'); }",
+                "if (window.onGooglePlayPurchaseError) { window.onGooglePlayPurchaseError(${org.json.JSONObject.quote(message)}); }",
                 null
             )
         }

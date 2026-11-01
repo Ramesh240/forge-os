@@ -11,6 +11,7 @@
 package com.forgeos.mastery
 
 import android.os.Bundle
+import android.content.pm.PackageManager
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,6 +35,17 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: WebAppViewModel by viewModels()
     private var webViewRef: WebView? = null
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == com.forgeos.mastery.bridge.ForgeAndroidBridge.REQUEST_CODE_POST_NOTIFICATIONS) {
+            val granted = grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED
+            webViewRef?.evaluateJavascript(
+                "window.onForgeNotificationPermissionResult?.($granted)",
+                null,
+            )
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // ── STEP 1: Install splash screen ─────────────────────────────────────

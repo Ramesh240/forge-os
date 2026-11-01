@@ -17,6 +17,7 @@ interface HabitChainTransitionModalProps {
   isOpen: boolean;
   habit: SerializedHabit;
   votesEarned: number;
+  identityVotesThisWeek: number;
   durationMinutes: number;
   isPerfectDayNow: boolean;
   nextHabit: SerializedHabit | null;
@@ -28,6 +29,7 @@ export default function HabitChainTransitionModal({
   isOpen,
   habit,
   votesEarned,
+  identityVotesThisWeek,
   durationMinutes,
   isPerfectDayNow,
   nextHabit,
@@ -70,6 +72,20 @@ export default function HabitChainTransitionModal({
   }, [isOpen, isPerfectDayNow]);
 
   if (!isOpen) return null;
+
+  const ordinal = (value: number) => {
+    const lastTwoDigits = value % 100;
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 13) return `${value}th`;
+    if (value % 10 === 1) return `${value}st`;
+    if (value % 10 === 2) return `${value}nd`;
+    if (value % 10 === 3) return `${value}rd`;
+    return `${value}th`;
+  };
+  const identityName = habit.identityTitle.trim().toLocaleLowerCase();
+  const identityArticle = /^[aeiou]/i.test(identityName) ? 'an' : 'a';
+  const identityVoteMessage = identityVotesThisWeek === 1
+    ? `You cast your first vote toward becoming ${identityArticle} ${identityName} this week.`
+    : `You cast your ${ordinal(identityVotesThisWeek)} vote toward becoming ${identityArticle} ${identityName} this week.`;
 
   return (
     /* Completely opaque, high-contrast dark overlay to prevent background bleed-through */
@@ -128,6 +144,9 @@ export default function HabitChainTransitionModal({
               <p className="text-xs sm:text-sm text-zinc-300 max-w-sm mx-auto leading-relaxed">
                 You completed every single habit in your identity queue today. Your continuity chain is rock solid.
               </p>
+              <p className="text-sm font-semibold text-emerald-300 max-w-sm mx-auto leading-relaxed">
+                {identityVoteMessage}
+              </p>
             </div>
 
             {/* Reward Stats Pill */}
@@ -179,6 +198,9 @@ export default function HabitChainTransitionModal({
               </h2>
               <p className="text-xs text-zinc-400">
                 Completed &quot;{habit.title}&quot; • {durationMinutes} min focus session
+              </p>
+              <p className="text-sm font-semibold text-emerald-300 max-w-sm mx-auto leading-relaxed">
+                {identityVoteMessage}
               </p>
             </div>
 

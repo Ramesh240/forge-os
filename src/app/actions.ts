@@ -10,14 +10,23 @@ import {
   FORGE_APP_VERSION,
 } from '@/lib/forge-engine';
 import { revalidatePath } from 'next/cache';
+import { cookies } from 'next/headers';
+import { randomUUID } from 'node:crypto';
 
 export async function getActiveUserId(): Promise<string> {
+  const cookieStore = await cookies();
+  const guestId = cookieStore.get('forge_guest_id')?.value;
+  const isValidGuestId = guestId && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(guestId);
+
   try {
     const session = await auth();
-    return session?.user?.email || 'demo-user';
+    if (session?.user?.email) return session.user.email.toLowerCase();
   } catch {
-    return 'demo-user';
+    // Continue with the per-install guest identity when OAuth is unavailable.
   }
+
+  if (isValidGuestId) return `guest:${guestId.toLowerCase()}`;
+  throw new Error('Guest identity is missing. Reload the app and try again.');
 }
 
 /**
@@ -28,6 +37,9 @@ export async function getActiveUserId(): Promise<string> {
 export async function checkUserProStatus(userId: string): Promise<boolean> {
   try {
     if (!userId) return false;
+
+    // Local development has Pro enabled so developers never need to purchase it.
+    if (process.env.NODE_ENV === 'development') return true;
 
     // Check environment variable beta tester list
     const betaTestersRaw = process.env.BETA_TESTER_EMAILS || '';
@@ -58,7 +70,7 @@ export async function checkUserProStatus(userId: string): Promise<boolean> {
 
 /**
  * Redeems ForgeOS Pro lifetime access using a Play Store Beta Tester code
- * (e.g. "FORGEBETA" or configured in process.env.BETA_ACCESS_CODE).
+ * using the configured process.env.BETA_ACCESS_CODE.
  */
 export async function redeemProAccessAction(
   code: string
@@ -66,12 +78,16 @@ export async function redeemProAccessAction(
   try {
     const userId = await getActiveUserId();
     const cleanCode = (code || '').trim().toUpperCase();
-    const validCode = (process.env.BETA_ACCESS_CODE || 'FORGEBETA').trim().toUpperCase();
+    const configuredCode = process.env.BETA_ACCESS_CODE?.trim();
+    if (!configuredCode) {
+      return { success: false, error: 'Tester access codes are not enabled.' };
+    }
+    const validCode = configuredCode.toUpperCase();
 
-    if (cleanCode !== 'FORGEBETA' && cleanCode !== validCode) {
+    if (cleanCode !== validCode) {
       return {
         success: false,
-        error: 'Invalid tester code. Please enter FORGEBETA or contact support.',
+        error: 'Invalid tester code. Please contact support.',
       };
     }
 
@@ -186,6 +202,17 @@ export async function deleteUserAccountAndData() {
     });
   }
 
+  await prisma.playPurchase.deleteMany({ where: { userId } });
+  await prisma.razorpayPayment.deleteMany({ where: { userId } });
+
+  const cookieStore = await cookies();
+  cookieStore.set('forge_guest_id', randomUUID(), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365,
+  });
   revalidatePath('/');
   await signOut({ redirectTo: '/' });
 }
@@ -452,7 +479,7 @@ export async function createStackedHabit(data: {
         temptationBundleUrl: data.temptationBundleUrl?.trim() || null,
         dailyGoalMinutes: Math.max(0, Math.floor(data.dailyGoalMinutes || 0)),
         weeklyGoalDays: Math.max(0, Math.floor(data.weeklyGoalDays || 0)),
-      } as any,
+      },
     });
 
     if (displacedHabitId) {
@@ -559,7 +586,7 @@ export async function updateStackedHabit(data: {
           data.weeklyGoalDays !== undefined
             ? Math.max(0, Math.floor(data.weeklyGoalDays || 0))
             : undefined,
-      } as any,
+      },
     });
   });
 

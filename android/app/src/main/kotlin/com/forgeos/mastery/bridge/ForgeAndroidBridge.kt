@@ -10,6 +10,7 @@ import android.os.Build
 import android.webkit.JavascriptInterface
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationManagerCompat
 import com.forgeos.mastery.billing.PlayBillingManager
 import com.forgeos.mastery.notifications.HabitReminderReceiver
 import com.forgeos.mastery.notifications.StreakDangerReceiver
@@ -25,21 +26,24 @@ class ForgeAndroidBridge(
     fun isNativeApp(): Boolean = true
 
     /**
-     * Returns the exact version name configured in build.gradle.kts (e.g., "1.0.12").
+     * Returns the exact version name configured in build.gradle.kts (e.g., "1.0.13").
      * Allows the Web UI (Quick Tools, Settings) to dynamically display the matching native version.
      */
     @JavascriptInterface
     fun getAppVersion(): String {
         return try {
             val pInfo = activity.packageManager.getPackageInfo(activity.packageName, 0)
-            pInfo.versionName ?: "1.0.12"
+            pInfo.versionName ?: "1.0.13"
         } catch (_: Exception) {
-            "1.0.12"
+            "1.0.13"
         }
     }
 
     @JavascriptInterface
     fun isGooglePlayBillingSupported(): Boolean = true
+
+    @JavascriptInterface
+    fun areNotificationsEnabled(): Boolean = NotificationManagerCompat.from(activity).areNotificationsEnabled()
 
     @JavascriptInterface
     fun launchGooglePlayPurchase(productId: String?) {

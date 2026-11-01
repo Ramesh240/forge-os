@@ -26,7 +26,6 @@ import {
   deleteUserAccountAndData,
   toggleArchiveHabitAction,
   togglePinHabitAction,
-  verifyUserProStatusAction,
 } from '@/app/actions';
 import ProUpgradeCard from '@/components/ProUpgradeCard';
 import FeatureWalkthrough from '@/components/FeatureWalkthrough';
@@ -148,6 +147,7 @@ type TabType = 'WORKSPACE' | 'ANALYTICS' | 'HEATMAP' | 'VAULT' | 'ACCOUNT';
 interface ForgeAndroidBridgeInterface {
   isNativeApp?: () => boolean;
   getAppVersion?: () => string;
+  areNotificationsEnabled?: () => boolean;
   isGooglePlayBillingSupported?: () => boolean;
   restoreGooglePlayPurchases?: () => void;
   requestNotificationPermission?: () => void;
@@ -188,6 +188,7 @@ export default function ForgeAppShell({
   currentUser = null,
   googleAuthEnabled = false,
   isPro = false,
+  referenceTime,
 }: {
   identities: SerializedIdentity[];
   habits: SerializedHabit[];
@@ -195,6 +196,7 @@ export default function ForgeAppShell({
   currentUser?: UserProfile | null;
   googleAuthEnabled?: boolean;
   isPro?: boolean;
+  referenceTime: number;
 }) {
   // ── Reactive Local State (Enables Instant 0ms Optimistic UI Updates) ─────────
   const [identities, setIdentities] = useState<SerializedIdentity[]>(initialIdentities);
@@ -203,43 +205,22 @@ export default function ForgeAppShell({
 
   // Synchronize state when server props update without discarding render passes (Audit #20)
   useEffect(() => {
-    setIdentities(initialIdentities);
+    const timer = window.setTimeout(() => setIdentities(initialIdentities), 0);
+    return () => window.clearTimeout(timer);
   }, [initialIdentities]);
 
   useEffect(() => {
-    setHabits(initialHabits);
+    const timer = window.setTimeout(() => setHabits(initialHabits), 0);
+    return () => window.clearTimeout(timer);
   }, [initialHabits]);
 
   useEffect(() => {
-    setSessions(initialSessions);
+    const timer = window.setTimeout(() => setSessions(initialSessions), 0);
+    return () => window.clearTimeout(timer);
   }, [initialSessions]);
 
-  const [userUnlockedPro, setUserUnlockedPro] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('forge_pro_unlocked') === 'true';
-    }
-    return false;
-  });
+  const [userUnlockedPro, setUserUnlockedPro] = useState(false);
   const userIsPro = isPro || userUnlockedPro;
-
-  // Server-side verified Pro status (Audit #21)
-  // Validates with database/session so localStorage cannot be spoofed via DevTools
-  useEffect(() => {
-    if (userUnlockedPro && !isPro) {
-      verifyUserProStatusAction()
-        .then((res) => {
-          if (!res.isPro) {
-            if (typeof window !== 'undefined') {
-              localStorage.removeItem('forge_pro_unlocked');
-            }
-            setUserUnlockedPro(false);
-          }
-        })
-        .catch(() => {
-          // Network failure fallback
-        });
-    }
-  }, [userUnlockedPro, isPro]);
 
   // Pro Modal Trigger State
   const [showProModal, setShowProModal] = useState(false);
@@ -251,32 +232,35 @@ export default function ForgeAppShell({
     if (typeof window === 'undefined') return;
 
     const win = window as unknown as {
-      onGooglePlayPurchaseSuccess?: (orderId: string) => void;
+      onGooglePlayPurchaseSuccess?: (purchaseToken: string, productId: string) => void;
+      onGooglePlayPurchaseError?: (error: string) => void;
       ForgeAndroidBridge?: {
         restoreGooglePlayPurchases?: () => void;
       };
     };
 
-    win.onGooglePlayPurchaseSuccess = async (orderId: string) => {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('forge_pro_unlocked', 'true');
-      }
-      setUserUnlockedPro(true);
-      setShowProModal(false);
-
+    win.onGooglePlayPurchaseSuccess = async (purchaseToken: string, productId: string) => {
       try {
-        await fetch('/api/verify-payment', {
+        const response = await fetch('/api/verify-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            razorpay_order_id: `gplay_${orderId}`,
-            razorpay_payment_id: orderId,
-            razorpay_signature: 'gplay_verified',
             source: 'google_play',
+            purchaseToken,
+            productId,
           }),
         });
+        const result = await response.json();
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || 'Google Play purchase verification failed.');
+        }
+        setUserUnlockedPro(true);
+        setShowProModal(false);
       } catch (err) {
         console.error('Failed to verify Google Play purchase:', err);
+        const message = err instanceof Error ? err.message : 'Google Play purchase verification failed.';
+        (window as unknown as { onGooglePlayPurchaseError?: (error: string) => void })
+          .onGooglePlayPurchaseError?.(message);
       }
     };
 
@@ -329,7 +313,8 @@ export default function ForgeAppShell({
   useEffect(() => {
     const nativeVer = getAndroidBridge()?.getAppVersion?.();
     if (nativeVer) {
-      setAppVersion(nativeVer);
+      const timer = window.setTimeout(() => setAppVersion(nativeVer), 0);
+      return () => window.clearTimeout(timer);
     }
   }, []);
 
@@ -345,6 +330,8 @@ export default function ForgeAppShell({
     return true;
   });
   const [notifPermission, setNotifPermission] = useState<string>(() => {
+    const nativePermission = getAndroidBridge()?.areNotificationsEnabled?.();
+    if (typeof nativePermission === 'boolean') return nativePermission ? 'granted' : 'denied';
     if (typeof window !== 'undefined' && 'Notification' in window) {
       return Notification.permission;
     }
@@ -367,10 +354,27 @@ export default function ForgeAppShell({
   const [insightNote, setInsightNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  useEffect(() => {
+    const win = window as unknown as {
+      onForgeNotificationPermissionResult?: (granted: boolean) => void;
+    };
+    win.onForgeNotificationPermissionResult = (granted) => {
+      setNotifPermission(granted ? 'granted' : 'denied');
+      setToastMessage(
+        granted
+          ? 'Notifications are enabled. Your scheduled reminders can now appear.'
+          : 'Notifications are off. Enable them in Android settings to receive reminders.',
+      );
+    };
+    return () => {
+      delete win.onForgeNotificationPermissionResult;
+    };
+  }, []);
   const [isWakeLockActive, setIsWakeLockActive] = useState<boolean>(false);
   const [chainTransitionData, setChainTransitionData] = useState<{
     habit: SerializedHabit;
     votesEarned: number;
+    identityVotesThisWeek: number;
     durationMinutes: number;
     isPerfectDayNow: boolean;
     nextHabit: SerializedHabit | null;
@@ -1047,9 +1051,7 @@ export default function ForgeAppShell({
             ForgeAndroidBridge: { requestNotificationPermission: () => void };
           }
         ).ForgeAndroidBridge.requestNotificationPermission();
-        soundEngine.playMicroClearedChime(soundEnabled);
-        setToastMessage('Requested Android notification permission.');
-        setNotifPermission('granted');
+        setToastMessage('Choose Allow in the Android prompt to turn on reminders.');
         return;
       } catch (err) {
         console.warn('Native Android notification request error:', err);
@@ -1155,16 +1157,23 @@ export default function ForgeAppShell({
   // Maintains active Screen Wake Lock so mobile & desktop displays don't sleep mid-focus session
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    let wakeLockSentinel: any = null;
+    type WakeLockSentinelLike = {
+      release: () => Promise<void>;
+      addEventListener: (type: 'release', listener: () => void) => void;
+    };
+    type NavigatorWithWakeLock = Navigator & {
+      wakeLock?: { request: (type: 'screen') => Promise<WakeLockSentinelLike> };
+    };
+    let wakeLockSentinel: WakeLockSentinelLike | null = null;
 
     const acquireWakeLock = async () => {
       try {
         if (
           typeof navigator !== 'undefined' &&
-          'wakeLock' in navigator &&
+          (navigator as NavigatorWithWakeLock).wakeLock &&
           document.visibilityState === 'visible'
         ) {
-          wakeLockSentinel = await (navigator as any).wakeLock.request('screen');
+          wakeLockSentinel = await (navigator as NavigatorWithWakeLock).wakeLock!.request('screen');
           setIsWakeLockActive(true);
           wakeLockSentinel.addEventListener('release', () => {
             setIsWakeLockActive(false);
@@ -1216,8 +1225,6 @@ export default function ForgeAppShell({
         window.removeEventListener('focus', handleSync);
         window.removeEventListener('pageshow', handleSync);
       };
-    } else {
-      setIsWakeLockActive(false);
     }
   }, [isRunning, activeHabit, syncTimerFromWallClock]);
 
@@ -1413,6 +1420,16 @@ export default function ForgeAppShell({
     });
     const hoursAdded = Number((durMins / 60).toFixed(2));
     const todayStr = new Date().toISOString().split('T')[0];
+    const localWeekStart = new Date();
+    localWeekStart.setHours(0, 0, 0, 0);
+    localWeekStart.setDate(localWeekStart.getDate() - ((localWeekStart.getDay() + 6) % 7));
+    const identityVotesThisWeek = sessions.reduce((count, session) => {
+      const loggedAt = new Date(session.loggedAt).getTime();
+      return session.identityId === activeHabit.identityId &&
+        loggedAt >= localWeekStart.getTime() && loggedAt <= Date.now()
+        ? count + 1
+        : count;
+    }, 1);
 
     // 2. Play sound fanfare & give instant audio/haptic feedback
     soundEngine.playSessionCompleteFanfare(soundEnabled);
@@ -1505,6 +1522,7 @@ export default function ForgeAppShell({
     setChainTransitionData({
       habit: targetHabit,
       votesEarned,
+      identityVotesThisWeek,
       durationMinutes: durMins,
       isPerfectDayNow,
       nextHabit: nextHabitToPrompt,
@@ -2117,6 +2135,7 @@ export default function ForgeAppShell({
             <DailyRetentionBanner
               habits={habits}
               sessions={sessions}
+              referenceTime={referenceTime}
               strictStreak={analytics.strictStreak}
               resilientStreak={analytics.resilientStreak}
               onStartHabit={startFocusSession}
@@ -2981,7 +3000,7 @@ export default function ForgeAppShell({
               )}
 
               <div className="pt-3 border-t border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs theme-subtext">
-                <span>Google Play &amp; Privacy Policy Compliant. Only session logs and profile are stored.</span>
+                <span>Manage your cloud data, delete your workspace, and review the privacy policy.</span>
                 <a
                   href="/privacy"
                   className="text-xs font-semibold theme-text underline hover:opacity-80 transition inline-flex items-center gap-1"
@@ -3017,8 +3036,10 @@ export default function ForgeAppShell({
                 >
                   <Bell className="w-3.5 h-3.5" />
                   {notifPermission === 'granted'
-                    ? 'Notifications Active (Test)'
-                    : 'Enable Notifications'}
+                    ? 'Notifications enabled'
+                    : notifPermission === 'denied'
+                      ? 'Notifications blocked in Android settings'
+                      : 'Enable notifications'}
                 </button>
               </div>
 
@@ -3046,7 +3067,7 @@ export default function ForgeAppShell({
                     rel="noreferrer"
                     className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl glass-panel text-xs font-semibold text-indigo-400"
                   >
-                    <span>/widget URL</span>
+                    <span>Open full-page widget</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
@@ -3203,6 +3224,8 @@ export default function ForgeAppShell({
             return (
               <button
                 key={item.id}
+                aria-label={item.label}
+                aria-current={active ? 'page' : undefined}
                 onClick={() => {
                   soundEngine.playTactileClick(soundEnabled);
                   navigateToTab(item.id);
@@ -4434,6 +4457,7 @@ export default function ForgeAppShell({
           isOpen={true}
           habit={chainTransitionData.habit}
           votesEarned={chainTransitionData.votesEarned}
+          identityVotesThisWeek={chainTransitionData.identityVotesThisWeek}
           durationMinutes={chainTransitionData.durationMinutes}
           isPerfectDayNow={chainTransitionData.isPerfectDayNow}
           nextHabit={chainTransitionData.nextHabit}

@@ -14,33 +14,22 @@ function sanitizeKey(val: string | undefined): string | undefined {
   return trimmed;
 }
 
-// Active test credentials provided for this project
-const DEFAULT_TEST_KEY_ID = 'rzp_test_TpNUwvKA4Hg5rK';
-const DEFAULT_TEST_KEY_SECRET = '6W7PMFirCvZL4dfzRP2SdXOq';
+export const FORGE_PRO_PRICE_PAISE = 15000;
+export const FORGE_PRO_CURRENCY = 'INR';
 
 /**
  * Server-only Razorpay configuration.
- * Automatically sanitizes wrapping quotes/spaces and falls back to active test credentials.
+ * Credentials must be explicitly configured in the server environment.
  */
 export const RazorpayConfig = {
   get keyId() {
-    return (
-      sanitizeKey(process.env.RAZORPAY_KEY_ID) ||
-      sanitizeKey(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) ||
-      DEFAULT_TEST_KEY_ID
-    );
+    return sanitizeKey(process.env.RAZORPAY_KEY_ID);
   },
   get keySecret() {
-    return (
-      sanitizeKey(process.env.RAZORPAY_KEY_SECRET) ||
-      DEFAULT_TEST_KEY_SECRET
-    );
+    return sanitizeKey(process.env.RAZORPAY_KEY_SECRET);
   },
   get isConfigured() {
-    return Boolean(
-      (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) ||
-      (DEFAULT_TEST_KEY_ID && DEFAULT_TEST_KEY_SECRET)
-    );
+    return Boolean(sanitizeKey(process.env.RAZORPAY_KEY_ID) && sanitizeKey(process.env.RAZORPAY_KEY_SECRET));
   },
 };
 
@@ -76,8 +65,8 @@ export interface CreateOrderParams {
 }
 
 export async function createOrder({
-  amount = 15000, // 15000 paise = ₹150.00 INR
-  currency = 'INR',
+  amount = FORGE_PRO_PRICE_PAISE,
+  currency = FORGE_PRO_CURRENCY,
   receipt,
   notes,
 }: CreateOrderParams) {

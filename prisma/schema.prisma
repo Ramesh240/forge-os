@@ -11,7 +11,7 @@ datasource db {
 
 model IdentityVector {
   id                   String       @id @default(cuid())
-  userId               String       @default("demo-user") // Scopes workspace to Google user email
+  userId               String       // Google account email or per-install guest ID
   lifesTaskStatement   String
   title                String       // e.g., "Algorithms Specialist"
   totalVotes           Int          @default(0)
@@ -79,4 +79,23 @@ model SessionLog {
 
   @@index([identityId, loggedAt])
   @@index([habitId, loggedAt])
+}
+
+model PlayPurchase {
+  tokenHash   String   @id
+  userId      String
+  productId   String
+  orderId     String?
+  purchasedAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model RazorpayPayment {
+  paymentId String   @id
+  userId    String
+  orderId   String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }

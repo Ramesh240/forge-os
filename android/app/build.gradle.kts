@@ -5,6 +5,13 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+val uploadStoreFile = System.getenv("FORGEOS_UPLOAD_STORE_FILE")
+val uploadStorePassword = System.getenv("FORGEOS_UPLOAD_STORE_PASSWORD")
+val uploadKeyAlias = System.getenv("FORGEOS_UPLOAD_KEY_ALIAS")
+val uploadKeyPassword = System.getenv("FORGEOS_UPLOAD_KEY_PASSWORD")
+val hasUploadSigning = listOf(uploadStoreFile, uploadStorePassword, uploadKeyAlias, uploadKeyPassword)
+    .all { !it.isNullOrBlank() }
+
 android {
     namespace  = "com.forgeos.mastery"
     compileSdk = 36
@@ -13,16 +20,22 @@ android {
         applicationId   = "com.forgeos.mastery"
         minSdk          = 26        // Android 8.0 — covers 97%+ of active devices
         targetSdk       = 36        // Android 16 — required by Play Store Aug 2026
-        versionCode     = 12        // Bumped for v1.0.12 release: Updated fragment SDK to modern 1.8.6 & instant skeleton UI
-        versionName     = "1.0.12"
+        versionCode     = 13        // Payment verification and production isolation release
+        versionName     = "1.0.13"
 
         // Your deployed Vercel URL
         buildConfigField("String", "APP_URL", "\"https://forge-os-eta-five.vercel.app\"")
     }
 
     signingConfigs {
-        // Release signing is done via Android Studio's "Generate Signed Bundle"
-        // or via CI using environment variables. Do NOT hardcode keystore paths here.
+        if (hasUploadSigning) {
+            create("release") {
+                storeFile = file(uploadStoreFile!!)
+                storePassword = uploadStorePassword
+                keyAlias = uploadKeyAlias
+                keyPassword = uploadKeyPassword
+            }
+        }
     }
 
     buildTypes {
@@ -31,6 +44,9 @@ android {
             isDebuggable = true
         }
         getByName("release") {
+            if (hasUploadSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled    = true
             isShrinkResources  = true
             proguardFiles(
@@ -61,6 +77,25 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+}
+
+// Validate signing before any release package task can leave an unsigned AAB behind.
+val validateReleaseSigning = tasks.register("validateReleaseSigning") {
+    doLast {
+        if (!hasUploadSigning) {
+            throw GradleException(
+                "Release signing is required. Set FORGEOS_UPLOAD_STORE_FILE, " +
+                    "FORGEOS_UPLOAD_STORE_PASSWORD, FORGEOS_UPLOAD_KEY_ALIAS, and " +
+                    "FORGEOS_UPLOAD_KEY_PASSWORD using the Play upload keystore."
+            )
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name == "bundleRelease" || name == "assembleRelease") {
+        dependsOn(validateReleaseSigning)
     }
 }
 

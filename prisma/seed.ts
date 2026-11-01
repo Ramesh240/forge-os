@@ -10,6 +10,7 @@ async function main() {
   // 1. Create Identity Vectors
   const algoIdentity = await prisma.identityVector.create({
     data: {
+      userId: 'seed-user',
       lifesTaskStatement: 'Master algorithmic problem-solving and computational thinking.',
       title: 'Algorithms Specialist',
       totalVotes: 14,
@@ -21,6 +22,7 @@ async function main() {
 
   const archIdentity = await prisma.identityVector.create({
     data: {
+      userId: 'seed-user',
       lifesTaskStatement: 'Architect resilient, high-throughput full-stack distributed systems.',
       title: 'Full-Stack Systems Architect',
       totalVotes: 9,
@@ -32,6 +34,7 @@ async function main() {
 
   const guitarIdentity = await prisma.identityVector.create({
     data: {
+      userId: 'seed-user',
       lifesTaskStatement: 'Develop fluid fretboard command and expressive musicality.',
       title: 'Virtuoso Guitarist',
       totalVotes: 6,

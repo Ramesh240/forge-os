@@ -18,11 +18,13 @@ Native (new): Android → MainActivity → native SplashScreen → WebView
 
 ```
 android/
+├── gradlew / gradlew.bat         Gradle wrapper launchers
 ├── build.gradle.kts              Root Gradle build
 ├── settings.gradle.kts           Module declarations
 ├── gradle/
 │   ├── libs.versions.toml        Version catalog (all dependency versions)
 │   └── wrapper/
+│       ├── gradle-wrapper.jar
 │       └── gradle-wrapper.properties
 └── app/
     ├── build.gradle.kts          App-level build
@@ -61,17 +63,29 @@ After generating the icon, update `res/values/themes.xml`:
 ```
 
 ### 4. Build & sign for Play Store
-```bash
-# In Android Studio: Build → Generate Signed Bundle/APK
-# Choose Android App Bundle (.aab)
-# Use your existing keystore (same one used for the TWA)
-# versionCode MUST be ≥ 3 (codes 1 and 2 were used by the TWA)
+
+Use the same upload keystore already registered with this Play app. Set these environment variables in PowerShell for the current session:
+
+```powershell
+$env:FORGEOS_UPLOAD_STORE_FILE = 'C:\path\to\upload-key.jks'
+$env:FORGEOS_UPLOAD_STORE_PASSWORD = '...'
+$env:FORGEOS_UPLOAD_KEY_ALIAS = '...'
+$env:FORGEOS_UPLOAD_KEY_PASSWORD = '...'
 ```
 
+Then run:
+
+```bash
+powershell -ExecutionPolicy Bypass -File .\build-release.ps1
+```
+
+The script uses the project-local JDK 17 when available. Release packaging fails if upload signing variables are missing, so it cannot silently create an unsigned bundle.
+
 ### 5. Upload to Play Console
-- Go to **Closed Testing → Create new release**
+- Go to the intended Play Console track and create a release
 - Upload the signed `.aab`
-- Version code: `3`, version name: `1.0.3`
+- Current version code: `13`, version name: `1.0.13`
+- Keep increasing the version code for every uploaded update
 
 ## Updating the app URL
 

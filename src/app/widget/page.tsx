@@ -1,14 +1,13 @@
 // src/app/widget/page.tsx
 import { prisma } from '@/lib/prisma';
-import { auth } from '@/auth';
+import { getActiveUserId } from '@/app/actions';
 import Link from 'next/link';
 import { Play, Flame, CheckCircle2, Plus } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ForgeWidgetPage() {
-  const session = await auth();
-  const activeUserId = session?.user?.email || 'demo-user';
+  const activeUserId = await getActiveUserId();
   const todayStr = new Date().toISOString().split('T')[0];
 
   const habits = await prisma.habit.findMany({

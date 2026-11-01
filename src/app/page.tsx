@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import Loading from './loading';
 import { prisma } from '@/lib/prisma';
 import { auth, isGoogleAuthConfigured } from '@/auth';
-import { ensureUserWorkspaceSeeded } from '@/app/actions';
+import { ensureUserWorkspaceSeeded, getActiveUserId } from '@/app/actions';
 import ForgeAppShell, {
   SerializedIdentity,
   SerializedHabit,
@@ -39,7 +39,7 @@ async function ForgeOSDataLayer() {
       };
     }
 
-    const activeUserId = currentUser?.email || 'demo-user';
+    const activeUserId = await getActiveUserId();
 
     // Parallel fetch: get identities, habits, and sessions in ONE single concurrent roundtrip
     let [rawIdentities, rawHabits, rawSessions] = await Promise.all([
@@ -104,7 +104,7 @@ async function ForgeOSDataLayer() {
       .filter(Boolean)
       .includes(activeUserId.toLowerCase());
 
-    isPro = isBetaTester || rawIdentities.some((i) => i.isPro);
+    isPro = process.env.NODE_ENV === 'development' || isBetaTester || rawIdentities.some((i) => i.isPro);
 
     identities = rawIdentities.map((i) => ({
       id: i.id,
@@ -161,6 +161,7 @@ async function ForgeOSDataLayer() {
     }));
   } catch (err: unknown) {
     dbError = err instanceof Error ? err.message : 'Database connection error';
+    console.error('ForgeOS workspace data could not be loaded:', err);
   }
 
   return (
@@ -169,11 +170,8 @@ async function ForgeOSDataLayer() {
         <div className="bg-rose-950/90 border-b border-rose-500/50 px-4 py-3 text-xs text-rose-200">
           <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span>
-              <strong>Database Notice:</strong> Ensure Supabase <code>DATABASE_URL</code> is configured in <code>.env.local</code> (locally) or Vercel Environment Variables.
+              <strong>Workspace unavailable:</strong> ForgeOS couldn&apos;t load your data. Please try again shortly.
             </span>
-            <code className="text-[11px] bg-black/40 px-2 py-1 rounded text-rose-300 truncate max-w-md">
-              {dbError}
-            </code>
           </div>
         </div>
       )}
@@ -184,6 +182,7 @@ async function ForgeOSDataLayer() {
         currentUser={currentUser}
         googleAuthEnabled={isGoogleAuthConfigured}
         isPro={isPro}
+        referenceTime={new Date().getTime()}
       />
     </>
   );

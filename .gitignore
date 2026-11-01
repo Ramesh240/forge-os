@@ -56,6 +56,9 @@ android/local.properties
 android/.idea/
 android/**/*.iml
 android/captures/
+
+# Local build toolchains (never commit JDK archives or installations)
+.toolchains/
 android/.cxx/
 # openfilm temporary caches
 **/.film/

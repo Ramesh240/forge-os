@@ -1,6 +1,6 @@
 // src/app/api/razorpay/order/route.ts
 import { NextResponse } from 'next/server';
-import { createOrder, getRazorpayCredentials, extractRazorpayError } from '@/lib/razorpay';
+import { createOrder, getRazorpayCredentials, extractRazorpayError, FORGE_PRO_PRICE_PAISE, FORGE_PRO_CURRENCY } from '@/lib/razorpay';
 import { getActiveUserId } from '@/app/actions';
 
 export const dynamic = 'force-dynamic';
@@ -32,19 +32,11 @@ export async function POST(req: Request) {
       }
     }
 
-    const amount = body.amount !== undefined ? Number(body.amount) : 15000;
-    if (isNaN(amount) || amount < 100) {
-      return NextResponse.json(
-        { error: 'Amount must be at least 100 paise (₹1.00).' },
-        { status: 400 }
-      );
-    }
-
     const userId = await getActiveUserId();
 
     const orderData = await createOrder({
-      amount,
-      currency: body.currency || 'INR',
+      amount: FORGE_PRO_PRICE_PAISE,
+      currency: FORGE_PRO_CURRENCY,
       receipt: body.receipt,
       notes: {
         userId,

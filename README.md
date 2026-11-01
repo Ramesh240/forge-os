@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://play.google.com/store/apps/details?id=com.forgeos.mastery"><img src="https://img.shields.io/badge/Google_Play-v1.0.7-34d399?style=for-the-badge&logo=google-play&logoColor=white" alt="Google Play" /></a>
+  <a href="https://play.google.com/store/apps/details?id=com.forgeos.mastery"><img src="https://img.shields.io/badge/Google_Play-v1.0.13-34d399?style=for-the-badge&logo=google-play&logoColor=white" alt="Google Play" /></a>
   <img src="https://img.shields.io/badge/Platform-Web%20%7C%20Android-38bdf8?style=for-the-badge" alt="Platform" />
   <img src="https://img.shields.io/badge/Billing-Library%208.0.0-a855f7?style=for-the-badge" alt="Billing" />
   <img src="https://img.shields.io/badge/Privacy-Zero_Data_Broker-emerald?style=for-the-badge" alt="Privacy" />
@@ -78,6 +78,18 @@ Open the `android/` directory in **Android Studio**:
 cd android
 ./gradlew assembleRelease
 ```
+
+### Production deployment requirements
+
+Before deploying the web service or uploading the Android bundle:
+
+- Local `npm run dev` sessions automatically have Pro enabled; this development-only override is disabled in production.
+- Set a unique `AUTH_SECRET` with at least 32 characters in production.
+- Configure `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` for a service account granted Android Publisher access in Play Console. Set the package and product IDs if they differ from the defaults.
+- Set live `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` only if web checkout is enabled; the server no longer falls back to test credentials.
+- Provide the existing Play upload keystore to Gradle through `FORGEOS_UPLOAD_STORE_FILE`, `FORGEOS_UPLOAD_STORE_PASSWORD`, `FORGEOS_UPLOAD_KEY_ALIAS`, and `FORGEOS_UPLOAD_KEY_PASSWORD`; release builds now fail instead of producing an unsigned AAB.
+- Apply the included database migration with `npm run db:migrate` and production `DIRECT_URL` before deploying the new server code.
+- Build the web app with `npm run build`. On Windows, use `cd android; .\build-release.ps1` for a signed Android bundle (the script uses the local JDK 17 if present).
 
 ---
 

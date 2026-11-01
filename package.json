@@ -1,10 +1,11 @@
 {
   "name": "forge-os",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && next build --webpack",
+    "db:migrate": "prisma migrate deploy",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint src",
