@@ -64,6 +64,36 @@ const THEME_OPTIONS: Array<{
   },
 ];
 
+export const ACCENT_PALETTES: Record<
+  AccentColor,
+  { primary: string; glow: string; text: string; orb: string }
+> = {
+  indigo: {
+    primary: '#6366f1',
+    glow: 'rgba(99, 102, 241, 0.28)',
+    text: '#818cf8',
+    orb: 'rgba(99, 102, 241, 0.14)',
+  },
+  amber: {
+    primary: '#f59e0b',
+    glow: 'rgba(245, 158, 11, 0.28)',
+    text: '#fbbf24',
+    orb: 'rgba(245, 158, 11, 0.14)',
+  },
+  emerald: {
+    primary: '#10b981',
+    glow: 'rgba(16, 185, 129, 0.28)',
+    text: '#34d399',
+    orb: 'rgba(16, 185, 129, 0.14)',
+  },
+  rose: {
+    primary: '#f43f5e',
+    glow: 'rgba(244, 63, 94, 0.28)',
+    text: '#fb7185',
+    orb: 'rgba(244, 63, 94, 0.14)',
+  },
+};
+
 const ACCENT_OPTIONS: Array<{
   id: AccentColor;
   name: string;
@@ -86,7 +116,7 @@ const ACCENT_OPTIONS: Array<{
     colorHex: '#f59e0b',
     glowHex: 'rgba(245,158,11,0.3)',
     meaning: 'Energy, Grit & Execution',
-    locked: true,
+    locked: false,
   },
   {
     id: 'emerald',
@@ -94,7 +124,7 @@ const ACCENT_OPTIONS: Array<{
     colorHex: '#10b981',
     glowHex: 'rgba(16,185,129,0.3)',
     meaning: 'Habit Consistency & Health',
-    locked: true,
+    locked: false,
   },
   {
     id: 'rose',
@@ -102,7 +132,7 @@ const ACCENT_OPTIONS: Array<{
     colorHex: '#f43f5e',
     glowHex: 'rgba(244,63,94,0.3)',
     meaning: 'Relentless Drive & Precision',
-    locked: true,
+    locked: false,
   },
 ];
 
@@ -115,6 +145,12 @@ export function applyThemeAndAccentToDocument(theme: ThemeMode, accent: AccentCo
 
     document.documentElement.setAttribute('data-theme', theme);
     document.documentElement.setAttribute('data-accent', accent);
+
+    const palette = ACCENT_PALETTES[accent] || ACCENT_PALETTES.indigo;
+    document.documentElement.style.setProperty('--accent-primary', palette.primary);
+    document.documentElement.style.setProperty('--accent-glow', palette.glow);
+    document.documentElement.style.setProperty('--accent-text', palette.text);
+    document.documentElement.style.setProperty('--orb-1', palette.orb);
 
     if (theme === 'light') {
       document.documentElement.classList.remove('dark');
@@ -166,11 +202,7 @@ export default function ThemePaletteModal({
     applyThemeAndAccentToDocument(themeId, currentAccent);
   };
 
-  const handleAccentClick = (accentId: AccentColor, isLocked: boolean) => {
-    if (isLocked && !isPro) {
-      onOpenProModal();
-      return;
-    }
+  const handleAccentClick = (accentId: AccentColor) => {
     onSelectAccent(accentId);
     applyThemeAndAccentToDocument(currentTheme, accentId);
   };
@@ -223,10 +255,14 @@ export default function ThemePaletteModal({
                     onClick={() => handleThemeClick(t.id, locked)}
                     className={`relative p-3.5 rounded-2xl border text-left transition flex flex-col justify-between gap-3 cursor-pointer ${
                       isSelected
-                        ? 'border-indigo-500 ring-2 ring-indigo-500/30'
+                        ? 'ring-2'
                         : 'border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
                     }`}
-                    style={{ backgroundColor: t.bgHex }}
+                    style={{
+                      backgroundColor: t.bgHex,
+                      borderColor: isSelected ? 'var(--accent-primary)' : undefined,
+                      boxShadow: isSelected ? '0 0 0 2px var(--accent-glow)' : undefined,
+                    }}
                   >
                     <div className="flex items-center justify-between w-full">
                       <div
@@ -245,7 +281,10 @@ export default function ThemePaletteModal({
                           <Lock className="w-2.5 h-2.5" /> Pro
                         </span>
                       ) : isSelected ? (
-                        <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs">
+                        <span
+                          className="w-5 h-5 rounded-full text-white flex items-center justify-center text-xs"
+                          style={{ backgroundColor: 'var(--accent-primary)' }}
+                        >
                           <Check className="w-3 h-3 stroke-[3]" />
                         </span>
                       ) : null}
@@ -277,18 +316,25 @@ export default function ThemePaletteModal({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {ACCENT_OPTIONS.map((a) => {
                 const isSelected = currentAccent === a.id;
-                const locked = a.locked && !isPro;
 
                 return (
                   <button
                     key={a.id}
                     type="button"
-                    onClick={() => handleAccentClick(a.id, locked)}
+                    onClick={() => handleAccentClick(a.id)}
                     className={`p-3 rounded-2xl glass-panel border text-left transition flex flex-col justify-between gap-2.5 cursor-pointer ${
                       isSelected
-                        ? 'border-indigo-500 ring-2 ring-indigo-500/30'
+                        ? 'ring-2'
                         : 'border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
                     }`}
+                    style={
+                      isSelected
+                        ? {
+                            borderColor: a.colorHex,
+                            boxShadow: `0 0 0 2px ${a.glowHex}`,
+                          }
+                        : undefined
+                    }
                   >
                     <div className="flex items-center justify-between">
                       <div
@@ -297,12 +343,6 @@ export default function ThemePaletteModal({
                       >
                         {isSelected && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
                       </div>
-
-                      {locked && (
-                        <span className="text-[10px] font-bold text-amber-400 flex items-center gap-0.5">
-                          <Lock className="w-2.5 h-2.5" />
-                        </span>
-                      )}
                     </div>
 
                     <div>
@@ -317,7 +357,7 @@ export default function ThemePaletteModal({
 
           {/* Section 3: Android System Info Badge */}
           <div className="p-3.5 rounded-2xl glass-panel border border-[var(--border-subtle)] flex items-center gap-3">
-            <Smartphone className="w-5 h-5 text-indigo-400 shrink-0" />
+            <Smartphone className="w-5 h-5 theme-accent-text shrink-0" />
             <div className="text-xs space-y-0.5 flex-1 min-w-0">
               <div className="font-semibold theme-text">Native Android Sync Ready</div>
               <p className="text-[11px] theme-muted">

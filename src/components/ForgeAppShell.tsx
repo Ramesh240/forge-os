@@ -296,10 +296,7 @@ export default function ForgeAppShell({
   const [accent, setAccent] = useState<AccentColor>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('forge_accent') as AccentColor;
-      if (saved) {
-        if (!isPro && saved !== 'indigo') {
-          return 'indigo';
-        }
+      if (saved && (saved === 'indigo' || saved === 'amber' || saved === 'emerald' || saved === 'rose')) {
         return saved;
       }
     }
@@ -1086,11 +1083,6 @@ export default function ForgeAppShell({
   };
 
   const selectAccent = (nextAccent: AccentColor) => {
-    if (nextAccent !== 'indigo' && !userIsPro) {
-      soundEngine.playTactileClick(soundEnabled);
-      setShowProModal(true);
-      return;
-    }
     setAccent(nextAccent);
     applyThemeAndAccentToDocument(theme, nextAccent);
     soundEngine.playTactileClick(soundEnabled);

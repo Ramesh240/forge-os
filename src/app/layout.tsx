@@ -45,8 +45,18 @@ export default function RootLayout({
                 try {
                   var t = localStorage.getItem('forge_theme') || 'obsidian';
                   var a = localStorage.getItem('forge_accent') || 'indigo';
+                  var pal = {
+                    indigo: ['#6366f1', 'rgba(99, 102, 241, 0.28)', '#818cf8', 'rgba(99, 102, 241, 0.14)'],
+                    amber: ['#f59e0b', 'rgba(245, 158, 11, 0.28)', '#fbbf24', 'rgba(245, 158, 11, 0.14)'],
+                    emerald: ['#10b981', 'rgba(16, 185, 129, 0.28)', '#34d399', 'rgba(16, 185, 129, 0.14)'],
+                    rose: ['#f43f5e', 'rgba(244, 63, 94, 0.28)', '#fb7185', 'rgba(244, 63, 94, 0.14)']
+                  }[a] || ['#6366f1', 'rgba(99, 102, 241, 0.28)', '#818cf8', 'rgba(99, 102, 241, 0.14)'];
                   document.documentElement.setAttribute('data-theme', t);
                   document.documentElement.setAttribute('data-accent', a);
+                  document.documentElement.style.setProperty('--accent-primary', pal[0]);
+                  document.documentElement.style.setProperty('--accent-glow', pal[1]);
+                  document.documentElement.style.setProperty('--accent-text', pal[2]);
+                  document.documentElement.style.setProperty('--orb-1', pal[3]);
                   if (t === 'light') {
                     document.documentElement.classList.remove('dark');
                     document.documentElement.classList.add('light');

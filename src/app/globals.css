@@ -17,6 +17,7 @@ html.dark {
   --text-muted: #71717a;
   --accent-primary: #6366f1;
   --accent-glow: rgba(99, 102, 241, 0.28);
+  --accent-text: #818cf8;
   --orb-1: rgba(99, 102, 241, 0.14);
   --orb-2: rgba(168, 85, 247, 0.1);
 }
@@ -34,8 +35,6 @@ html[data-theme="sepia"] {
   --text-primary: #2b2118;
   --text-secondary: #5c4938;
   --text-muted: #7d654f;
-  --accent-primary: #b45309;
-  --accent-glow: rgba(180, 83, 9, 0.2);
   --orb-1: rgba(217, 119, 6, 0.1);
   --orb-2: rgba(180, 83, 9, 0.07);
 }
@@ -54,33 +53,45 @@ html.light {
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #64748b;
-  --accent-primary: #4f46e5;
-  --accent-glow: rgba(79, 70, 229, 0.2);
+  --orb-1: rgba(79, 70, 229, 0.1);
+  --orb-2: rgba(99, 102, 241, 0.07);
 }
 
-/* Accent Palettes */
+/* Accent Palettes - High Specificity */
 :root,
+html[data-accent="indigo"],
+:root[data-accent="indigo"],
 [data-accent="indigo"] {
   --accent-primary: #6366f1;
   --accent-glow: rgba(99, 102, 241, 0.28);
+  --accent-text: #818cf8;
   --orb-1: rgba(99, 102, 241, 0.14);
 }
 
+html[data-accent="amber"],
+:root[data-accent="amber"],
 [data-accent="amber"] {
   --accent-primary: #f59e0b;
   --accent-glow: rgba(245, 158, 11, 0.28);
+  --accent-text: #fbbf24;
   --orb-1: rgba(245, 158, 11, 0.14);
 }
 
+html[data-accent="emerald"],
+:root[data-accent="emerald"],
 [data-accent="emerald"] {
   --accent-primary: #10b981;
   --accent-glow: rgba(16, 185, 129, 0.28);
+  --accent-text: #34d399;
   --orb-1: rgba(16, 185, 129, 0.14);
 }
 
+html[data-accent="rose"],
+:root[data-accent="rose"],
 [data-accent="rose"] {
   --accent-primary: #f43f5e;
   --accent-glow: rgba(244, 63, 94, 0.28);
+  --accent-text: #fb7185;
   --orb-1: rgba(244, 63, 94, 0.14);
 }
 
@@ -114,6 +125,18 @@ body {
   background-color: var(--bg-input);
   border: 1px solid var(--border-subtle);
   color: var(--text-primary);
+}
+
+.theme-accent-text {
+  color: var(--accent-text, var(--accent-primary));
+}
+
+.theme-accent-bg {
+  background-color: var(--accent-primary);
+}
+
+.theme-accent-border {
+  border-color: var(--accent-primary);
 }
 
 .glass-panel {
