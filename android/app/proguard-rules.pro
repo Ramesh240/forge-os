@@ -1,21 +1,21 @@
-# ProGuard rules for ForgeOS native WebView wrapper
-# Minimal rules — most shrinking is handled by R8's default config.
+# ProGuard / R8 optimization rules for ForgeOS
+# Source: https://developer.android.com/build/shrink-code
 
-# Keep WebViewClient subclasses (reflection-based by Android system)
--keep class com.forgeos.mastery.** { *; }
--keep class * extends android.webkit.WebViewClient { *; }
--keep class * extends android.webkit.WebChromeClient { *; }
+# Preserve JavaScript interface methods for WebView bridge reflection
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
 
-# Keep AndroidX WebKit compat classes
--keep class androidx.webkit.** { *; }
+# Preserve ForgeAndroidBridge public methods accessed via WebView
+-keepclassmembers class com.forgeos.mastery.bridge.ForgeAndroidBridge {
+    public *;
+}
 
-# Compose
--keep class androidx.compose.** { *; }
--dontwarn androidx.compose.**
+# Google Play In-App Billing Client
+-keep class com.android.billingclient.api.** { *; }
+-dontwarn com.android.billingclient.api.**
 
-# Kotlin coroutines / StateFlow
--keepnames class kotlinx.coroutines.** { *; }
+# Coroutines internal dispatcher preservation
+-keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
+-keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
 -dontwarn kotlinx.coroutines.**
-
-# Kotlin metadata (needed for reflection-free Kotlin code)
--keep class kotlin.Metadata { *; }
