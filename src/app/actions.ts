@@ -467,10 +467,22 @@ export async function createStackedHabit(data: {
       });
       targetIdentityId = createdIdentity.id;
     }
+  } else {
+    const userOwnedIdentity = await prisma.identityVector.findFirst({
+      where: { id: targetIdentityId, userId },
+    });
+    if (!userOwnedIdentity) throw new Error('Identity not found or unauthorized');
   }
 
   const anchorId =
     data.anchorHabitId && data.anchorHabitId !== 'NONE' ? data.anchorHabitId : null;
+
+  if (anchorId) {
+    const userOwnedAnchor = await prisma.habit.findFirst({
+      where: { id: anchorId, identity: { userId } },
+    });
+    if (!userOwnedAnchor) throw new Error('Anchor habit not found or unauthorized');
+  }
 
   await prisma.$transaction(async (tx) => {
     let displacedHabitId: string | null = null;
@@ -539,6 +551,20 @@ export async function updateStackedHabit(data: {
     });
 
     if (!current) throw new Error('Habit not found or unauthorized');
+
+    if (newAnchorId) {
+      const userOwnedAnchor = await tx.habit.findFirst({
+        where: { id: newAnchorId, identity: { userId } },
+      });
+      if (!userOwnedAnchor) throw new Error('Anchor habit not found or unauthorized');
+    }
+
+    if (data.identityId !== current.identityId) {
+      const targetIdentity = await tx.identityVector.findFirst({
+        where: { id: data.identityId, userId },
+      });
+      if (!targetIdentity) throw new Error('Target identity not found or unauthorized');
+    }
 
     const anchorChanged = (current.anchorHabitId ?? null) !== newAnchorId;
 

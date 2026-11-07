@@ -559,6 +559,9 @@ export async function GET() {
     {
       width: 1024,
       height: 500,
+      headers: {
+        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+      },
     }
   );
 }
