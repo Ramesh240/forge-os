@@ -6,6 +6,7 @@ import {
   buildSystemAnalytics,
   calculateSessionScore,
   IDENTITY_PRESETS,
+  POPULAR_HABIT_RECIPES,
   SKILL_MILESTONES,
   STAGE_LABELS,
   SkillStage,
@@ -230,6 +231,8 @@ export default function ForgeAppShell({
   const [showProModal, setShowProModal] = useState(false);
   // Feature Walkthrough Onboarding State
   const [showWalkthrough, setShowWalkthrough] = useState(false);
+  // Beginner Tip Banner State
+  const [showBeginnerTip, setShowBeginnerTip] = useState(false);
 
   // ── Global Google Play Billing Listener & Auto-Restore ──────────────────────
   useEffect(() => {
@@ -892,6 +895,11 @@ export default function ForgeAppShell({
         const timer = setTimeout(() => {
           setShowWalkthrough(true);
         }, 600);
+      }
+
+      const tipDismissed = localStorage.getItem('forge_beginner_tip_dismissed');
+      if (!tipDismissed) {
+        setShowBeginnerTip(true);
       }
 
       const params = new URLSearchParams(window.location.search);
@@ -2182,7 +2190,7 @@ export default function ForgeAppShell({
                   {analytics.effectiveHours} Effective Hrs • {analytics.completionRate14d}% Consistency
                 </span>
                 <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight theme-text">
-                  What identity are you building today?
+                  What life area are you focusing on today?
                 </h1>
               </div>
 
@@ -2252,6 +2260,51 @@ export default function ForgeAppShell({
                 )}
               </div>
             </section>
+
+            {/* BEGINNER QUICK TIP BANNER (Dismissible) */}
+            {showBeginnerTip && (
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-amber-500/10 border border-indigo-500/25 flex items-start justify-between gap-3 relative animate-in fade-in duration-300">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs sm:text-sm font-bold theme-text">
+                        The 2-Minute Secret
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-indigo-500/20 text-indigo-300 font-bold">
+                        Quick Guide
+                      </span>
+                    </div>
+                    <p className="text-xs theme-subtext leading-relaxed">
+                      You don&apos;t need 45 minutes of motivation to build consistency. Just tap <strong className="text-indigo-400">Start (2m)</strong> on any habit below and complete the easy 2-minute starting step to keep your streak glowing!
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowWalkthrough(true)}
+                      className="text-xs font-semibold text-indigo-400 hover:underline inline-flex items-center gap-1 pt-1 cursor-pointer"
+                    >
+                      <span>How ForgeOS Works (30-Sec Walkthrough)</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBeginnerTip(false);
+                    try {
+                      localStorage.setItem('forge_beginner_tip_dismissed', 'true');
+                    } catch {}
+                  }}
+                  className="p-1.5 rounded-lg theme-muted hover:opacity-80 shrink-0 cursor-pointer"
+                  aria-label="Dismiss Tip"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
 
             {/* ACTIVE HABIT QUEUE */}
             <section className="space-y-3">
@@ -2401,8 +2454,8 @@ export default function ForgeAppShell({
                             {habit.title}
                           </h3>
                           <p className="text-xs theme-subtext mt-0.5">
-                            <strong className="text-emerald-500 dark:text-emerald-400">
-                              2m:
+                            <strong className="text-emerald-500 dark:text-emerald-400 font-bold">
+                              ⚡ 2m start:
                             </strong>{' '}
                             {habit.gatewayVersion}
                           </p>
@@ -2505,7 +2558,7 @@ export default function ForgeAppShell({
             {/* COMPACT IDENTITY SUMMARY STRIP BELOW HABITS */}
             <section className="space-y-2.5 pt-2">
               <span className="text-xs font-bold uppercase tracking-wider theme-muted px-1 block">
-                Your Identity Vectors ({identities.length})
+                Your Life Focus Areas ({identities.length})
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {identities.map((idVec) => (
@@ -2521,7 +2574,7 @@ export default function ForgeAppShell({
                         {idVec.title}
                       </h3>
                       <span className="text-xs theme-subtext">
-                        {idVec.totalHoursLogged}h • {idVec.weightedScore.toFixed(0)} pts
+                        {idVec.totalHoursLogged}h • {idVec.weightedScore.toFixed(0)} identity reps
                       </span>
                     </div>
 
@@ -3416,13 +3469,13 @@ export default function ForgeAppShell({
               <div>
                 <h3 className="text-lg sm:text-xl font-bold tracking-tight theme-text">
                   {creatorTab === 'HABIT'
-                    ? 'Create New Habit'
-                    : 'Choose or Create an Identity'}
+                    ? 'Add a New Habit'
+                    : 'Choose or Create a Life Focus'}
                 </h3>
                 <p className="text-xs sm:text-sm theme-subtext mt-0.5">
                   {creatorTab === 'HABIT'
-                    ? 'Attach a simple habit and micro-start to an identity.'
-                    : 'Pick a ready-made template or define your own.'}
+                    ? 'Pick a 1-tap recipe below or enter your own 2-minute starting step.'
+                    : 'Pick a ready-made life archetype or define your own custom focus.'}
                 </p>
               </div>
               <button
@@ -3455,16 +3508,65 @@ export default function ForgeAppShell({
                     creatorTab === 'IDENTITY' ? 'glass-tab-active' : 'theme-subtext hover:text-white'
                   }`}
                 >
-                  + Identity Library
+                  + Life Focus Areas
                 </button>
               </div>
 
               {creatorTab === 'HABIT' ? (
                 <form onSubmit={handleCreateHabitSubmit} className="space-y-4">
+                  {/* 1-Tap Popular Habit Recipes Shelf */}
+                  <div className="space-y-2 p-3.5 sm:p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-amber-400">
+                        <Sparkles className="w-4 h-4 text-amber-400" />
+                        <span>1-Tap Popular Habit Recipes</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-amber-400/90 bg-amber-500/15 px-2 py-0.5 rounded-full font-bold">
+                        Tap to Auto-Fill
+                      </span>
+                    </div>
+                    <p className="text-[11px] theme-subtext">
+                      New to habit building? Tap any goal below to instantly load the habit and its easy 2-minute start:
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                      {POPULAR_HABIT_RECIPES.map((recipe) => {
+                        const isSelected = newHabitTitle === recipe.title;
+                        return (
+                          <button
+                            key={recipe.title}
+                            type="button"
+                            onClick={() => {
+                              setNewHabitTitle(recipe.title);
+                              setNewHabitMicro(recipe.gatewayVersion);
+                              const matchingId = identities.find(
+                                (i) => i.title.toLowerCase() === recipe.suggestedIdentityTitle.toLowerCase()
+                              );
+                              setNewHabitIdentityId(matchingId ? matchingId.id : `preset:${recipe.suggestedIdentityKey}`);
+                            }}
+                            className={`p-2.5 rounded-xl border text-left transition flex items-center gap-2.5 cursor-pointer ${
+                              isSelected
+                                ? 'glass-tab-active border-amber-400/50 bg-amber-500/10'
+                                : 'glass-panel hover:border-[var(--border-strong)]'
+                            }`}
+                          >
+                            <span className="text-xl shrink-0">{recipe.icon}</span>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-semibold text-xs theme-text truncate">{recipe.title}</div>
+                              <div className="text-[10px] text-amber-400/90 truncate">
+                                2m: {recipe.gatewayVersion}
+                              </div>
+                            </div>
+                            {isSelected && <Check className="w-4 h-4 shrink-0 text-amber-400" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* 1. Selected Identity Card with Expandable Switcher */}
                   <div className="space-y-2">
                     <label className="text-xs font-semibold theme-subtext block">
-                      Target Identity
+                      Who is this habit for? (Life Focus Area)
                     </label>
                     <div className="p-3.5 rounded-2xl glass-panel border border-[var(--border-subtle)] flex items-center justify-between gap-3">
                       <div className="min-w-0 flex-1">
@@ -3489,7 +3591,7 @@ export default function ForgeAppShell({
                     {isIdentityPickerOpen && (
                       <div className="p-2.5 rounded-2xl glass-nav border border-[var(--border-strong)] space-y-2">
                         <span className="text-[10px] font-mono uppercase tracking-wider theme-muted block px-1">
-                          Select from Active Identities or Templates:
+                          Select from Active Focus Areas or Templates:
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
                           {identities.map((i) => {
@@ -3510,7 +3612,7 @@ export default function ForgeAppShell({
                               >
                                 <div className="min-w-0 flex-1">
                                   <span className="text-[9px] font-mono uppercase text-indigo-400 font-bold block">
-                                    Active Identity
+                                    Active Focus
                                   </span>
                                   <span className="text-xs font-bold block theme-text truncate">
                                     {i.title}
@@ -3562,52 +3664,15 @@ export default function ForgeAppShell({
                     )}
                   </div>
 
-                  {/* 1-Tap Habit Inspiration Accordion */}
-                  {activeHabitExamples.length > 0 && (
-                    <div className="space-y-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setShowHabitSuggestions((o) => !o)}
-                        className="text-xs font-medium text-indigo-400 hover:underline flex items-center gap-1.5 cursor-pointer py-0.5"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                        <span>{showHabitSuggestions ? 'Hide 1-tap habit examples' : '💡 Need inspiration? View 1-tap examples'}</span>
-                        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showHabitSuggestions ? 'rotate-180' : ''}`} />
-                      </button>
-                      {showHabitSuggestions && (
-                        <div className="p-3 rounded-2xl glass-panel flex flex-col gap-1.5 border border-[var(--border-subtle)]">
-                          {activeHabitExamples.map((ex, idx) => (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => {
-                                setNewHabitTitle(ex.title);
-                                setNewHabitMicro(ex.gatewayVersion);
-                                setNewHabitStage(ex.stage);
-                                setShowHabitSuggestions(false);
-                              }}
-                              className="text-left p-2.5 rounded-xl border border-[var(--border-subtle)] hover:border-[var(--border-strong)] transition text-xs cursor-pointer"
-                            >
-                              <div className="font-semibold theme-text">{ex.title}</div>
-                              <div className="text-[11px] theme-subtext truncate">
-                                2m Start: {ex.gatewayVersion}
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 2. Core Habit Inputs (Action + 2-Min Micro-Start) */}
+                  {/* 2. Core Habit Inputs (Name + 2-Min Micro-Start) */}
                   <div>
                     <label className="text-xs font-semibold theme-subtext block mb-1">
-                      Habit Action
+                      Habit Name
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g., Complete 25-Min Strength Workout"
+                      placeholder="e.g., Complete 25-Min Strength Workout, Read 10 Pages"
                       value={newHabitTitle}
                       onChange={(e) => setNewHabitTitle(e.target.value)}
                       className="w-full theme-input rounded-xl p-3 text-sm"
@@ -3615,17 +3680,23 @@ export default function ForgeAppShell({
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold theme-subtext block mb-1">
-                      2-Minute Micro-Start Step
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-semibold theme-subtext block">
+                        The 2-Minute Starting Step (Defeat Procrastination)
+                      </label>
+                      <span className="text-[10px] text-indigo-400 font-mono font-bold">120-Sec Rule</span>
+                    </div>
                     <input
                       type="text"
                       required
-                      placeholder="e.g., Put on workout shoes and do 5 pushups"
+                      placeholder="e.g., Put on workout shoes and do 5 squats, or open book to page 1"
                       value={newHabitMicro}
                       onChange={(e) => setNewHabitMicro(e.target.value)}
                       className="w-full theme-input rounded-xl p-3 text-sm"
                     />
+                    <p className="text-[11px] text-zinc-400 mt-1">
+                      💡 <strong>The secret:</strong> Make this tiny so it takes less than 2 minutes. On busy days, doing just this step still wins the day!
+                    </p>
                   </div>
 
                   {/* 3. Collapsible Dropdown for All Additional Options */}

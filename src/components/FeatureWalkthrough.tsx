@@ -13,6 +13,8 @@ import {
   X,
   Flame,
   Timer,
+  Shield,
+  HeartHandshake,
 } from 'lucide-react';
 
 interface FeatureWalkthroughProps {
@@ -23,94 +25,92 @@ interface FeatureWalkthroughProps {
 
 const STEPS = [
   {
-    badge: 'Step 1 of 3 • Core Philosophy',
-    title: 'Forge Your Identity',
-    subtitle: 'Every habit is a vote for who you want to become.',
+    badge: 'Step 1 of 3 • The Core Secret',
+    title: 'Who Do You Want to Become?',
+    subtitle: 'Habits stick when they shape your identity, not just a checklist.',
     icon: Target,
     accentColor: 'from-indigo-500 to-purple-600',
     description:
-      'Instead of tracking random chores, ForgeOS anchors habits to your core identities (like "Systems Craftsman", "Vitality Athlete", or "Deep Worker"). You earn skill points and cast votes for your desired self every time you execute.',
-    tip: '💡 Tip: Start with 2 to 3 identities that truly matter to you this season.',
+      'Most people say "I want to exercise" or "I need to read more", and quit after a week. In ForgeOS, every habit is tied to a Life Focus Area (like "Vitality & Health", "Focused Craftsman", or "Lifelong Reader"). Every time you show up, you cast a vote for your future self.',
+    tip: '💡 Secret: You don\'t need 10 habits. Start with just 1 or 2 life areas that matter most to you right now.',
     cardMock: (
       <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-[var(--border-subtle)] space-y-2.5">
         <div className="flex items-center justify-between text-xs">
           <span className="font-mono text-[10px] text-indigo-400 uppercase tracking-wider font-bold">
-            Identity Vector
+            Life Focus Area
           </span>
           <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/15 text-indigo-300">
-            Level 2 • Practice
+            Active Progress
           </span>
         </div>
-        <div className="font-bold text-sm theme-text">Systems & Software Craftsman</div>
+        <div className="font-bold text-sm theme-text">Strength &amp; Vitality Athlete</div>
         <p className="text-[11px] theme-subtext line-clamp-2">
-          Master problem-solving, clean architecture, and modern engineering.
+          Build daily physical strength, energy, and cardiovascular stamina.
         </p>
         <div className="flex items-center gap-2 pt-1 text-[11px] font-mono text-zinc-400">
-          <span className="text-emerald-400 font-bold">✓ 24 Votes Earned</span>
+          <span className="text-emerald-400 font-bold">✓ +1 Vote for Future Self</span>
           <span>•</span>
-          <span>12h Logged</span>
+          <span>14 Days Consistent</span>
         </div>
       </div>
     ),
   },
   {
-    badge: 'Step 2 of 3 • Overcoming Inertia',
-    title: 'The 2-Minute Micro-Start',
-    subtitle: 'Defeat procrastination by shrinking the starting barrier.',
+    badge: 'Step 2 of 3 • Defeating Procrastination',
+    title: 'The 2-Minute Easy Start',
+    subtitle: 'The hardest part is starting. We shrink the beginning to 120 seconds.',
     icon: Zap,
     accentColor: 'from-amber-500 to-orange-600',
     description:
-      'The hardest part of any habit is the first 120 seconds. ForgeOS gives every habit a "Gateway Version" — just put on your shoes, or open your editor. Once the 2-minute timer finishes, your resistance drops and flow takes over.',
-    tip: '⚡ Success rule: If you only do the 2-minute gateway version, you STILL win the day.',
+      'When you are exhausted after work, starting a 45-minute workout feels impossible. ForgeOS gives every habit an easy 2-minute starting step (e.g. "Just put on your workout shoes and do 5 stretches"). Once the 2 minutes are up, the mental resistance disappears and flow takes over.',
+    tip: '⚡ Golden Rule: If all you do today is the 2-minute starting step, you STILL win the day and protect your streak.',
     cardMock: (
       <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-amber-500/20 bg-amber-500/5 space-y-2.5">
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5 font-bold text-amber-400">
             <Timer className="w-4 h-4 animate-pulse" />
-            <span>2-Minute Micro-Start</span>
+            <span>2-Minute Easy Start</span>
           </div>
           <span className="font-mono font-bold text-xs text-amber-300">01:45</span>
         </div>
         <div className="font-bold text-sm theme-text">
-          Gateway: Bench 5 warmup reps with empty bar
+          2m Step: Put on workout shoes &amp; do 5 light stretches
         </div>
         <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
           <div className="bg-gradient-to-r from-amber-400 to-orange-500 h-full w-[65%] rounded-full animate-pulse" />
         </div>
         <p className="text-[10px] text-amber-300/80">
-          Once the bell rings, choose to keep going into Pomodoro flow or bank the win!
+          When the timer chimes, you can keep going into deep focus or bank the win!
         </p>
       </div>
     ),
   },
   {
-    badge: 'Step 3 of 3 • Momentum & Chains',
-    title: 'Chain Sequences & Flow',
-    subtitle: 'Stack habits together to put your entire day on autopilot.',
-    icon: Layers,
+    badge: 'Step 3 of 3 • No More Streak Shame',
+    title: 'Never Miss Twice',
+    subtitle: 'Missing one day is normal life. Missing twice starts a bad habit.',
+    icon: Shield,
     accentColor: 'from-emerald-500 to-teal-600',
     description:
-      'Link habits so that completing one automatically triggers the next. As your streaks compound, ForgeOS maps your consistency on the Continuity Grid and lets you run deep Pomodoro focus sessions.',
-    tip: '🔗 Pro-tip: Anchor new habits to an existing routine you already do without thinking.',
+      'Traditional apps punish you with a big red "0" and streak guilt if you miss a single day. In ForgeOS, if you miss yesterday, your habit gets a Rebound Priority Shield today with a +1.25x point bonus to get your momentum right back.',
+    tip: '🛡️ Relief: You never have to be perfect. You just have to rebound the next day.',
     cardMock: (
-      <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-[var(--border-subtle)] space-y-2">
-        <div className="flex items-center gap-2 text-xs font-semibold theme-text">
-          <span className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs">
-            1
+      <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-amber-500/30 bg-amber-500/10 space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-400">
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
+            Never Miss Twice: Rebound Priority
           </span>
-          <span className="truncate">Morning Mobility Stretch (5 mins)</span>
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 ml-auto" />
-        </div>
-        <div className="pl-3 py-0.5 border-l-2 border-emerald-500/40 ml-3 text-[10px] text-emerald-400 font-mono">
-          ↳ Auto-triggers next
-        </div>
-        <div className="flex items-center gap-2 text-xs font-semibold theme-text">
-          <span className="w-6 h-6 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
-            2
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300">
+            +1.25x Recovery Bonus
           </span>
-          <span className="truncate">Deep Work: Solve 1 Coding Challenge</span>
-          <Flame className="w-4 h-4 text-amber-400 ml-auto" />
         </div>
+        <div className="font-bold text-sm theme-text">
+          Morning Reading: Open book and read just 1 page
+        </div>
+        <p className="text-[11px] theme-subtext">
+          Clear your 2-minute step today to keep your streak alive!
+        </p>
       </div>
     ),
   },
@@ -176,7 +176,6 @@ export default function FeatureWalkthrough({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-
         {/* Top Header (Fixed) */}
         <div className="flex items-center justify-between border-b border-[var(--border-subtle)] p-5 sm:p-6 pb-3.5 sm:pb-4 shrink-0">
           <div className="flex items-center gap-3">
@@ -258,7 +257,7 @@ export default function FeatureWalkthrough({
               className="flex-1 py-4 px-5 rounded-2xl text-white font-bold text-sm sm:text-base transition shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-95"
               style={{ background: 'var(--accent-primary)' }}
             >
-              <span>{isLastStep ? 'Get Started — Create Habit' : 'Next Step'}</span>
+              <span>{isLastStep ? 'Ready! Choose Your First Habit' : 'Next Step'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

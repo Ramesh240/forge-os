@@ -626,3 +626,88 @@ export const IDENTITY_PRESETS: IdentityPreset[] = [
   },
 ];
 
+export interface PopularHabitRecipe {
+  category: string;
+  icon: string;
+  title: string;
+  gatewayVersion: string;
+  suggestedIdentityTitle: string;
+  suggestedIdentityKey: string;
+  description: string;
+}
+
+export const POPULAR_HABIT_RECIPES: PopularHabitRecipe[] = [
+  {
+    category: 'Fitness',
+    icon: '🏃',
+    title: '25-Min Daily Strength or Cardio Workout',
+    gatewayVersion: 'Put on workout shoes and do 5 warmup squats (2 mins)',
+    suggestedIdentityTitle: 'Strength & Vitality Athlete',
+    suggestedIdentityKey: 'vitality-athlete',
+    description: 'Build physical stamina and energy every single day.',
+  },
+  {
+    category: 'Reading',
+    icon: '📚',
+    title: 'Read 10-15 Pages of a Book',
+    gatewayVersion: 'Open the book and read just 1 page (2 mins)',
+    suggestedIdentityTitle: 'Lifelong Scholar & Reader',
+    suggestedIdentityKey: 'lifelong-scholar',
+    description: 'Compound knowledge daily without reading fatigue.',
+  },
+  {
+    category: 'Focus',
+    icon: '⚡',
+    title: '45-Min Uninterrupted Deep Work Block',
+    gatewayVersion: 'Silence phone and write down your 1 target outcome (2 mins)',
+    suggestedIdentityTitle: 'Disciplined Deep Worker',
+    suggestedIdentityKey: 'deep-worker',
+    description: 'Conquer distractions and make progress on what matters.',
+  },
+  {
+    category: 'Mindfulness',
+    icon: '🧘',
+    title: '10-Min Calm Breathwork or Meditation',
+    gatewayVersion: 'Sit upright, close eyes, and take 10 slow breaths (2 mins)',
+    suggestedIdentityTitle: 'Calm & Resilient Mind',
+    suggestedIdentityKey: 'mindful-stoic',
+    description: 'Reduce daily stress, center your thoughts, and reset.',
+  },
+  {
+    category: 'Health',
+    icon: '💧',
+    title: 'Drink 2 Liters of Water Daily',
+    gatewayVersion: 'Fill a full water bottle and drink first 3 sips (2 mins)',
+    suggestedIdentityTitle: 'Strength & Vitality Athlete',
+    suggestedIdentityKey: 'vitality-athlete',
+    description: 'Keep your body hydrated and prevent afternoon brain fog.',
+  },
+  {
+    category: 'Sleep',
+    icon: '🌙',
+    title: '30-Min Screen-Free Evening Wind Down',
+    gatewayVersion: 'Plug phone across room and turn on a dim lamp (2 mins)',
+    suggestedIdentityTitle: 'Calm & Resilient Mind',
+    suggestedIdentityKey: 'mindful-stoic',
+    description: 'Improve deep sleep quality and wake up refreshed.',
+  },
+  {
+    category: 'Writing',
+    icon: '✍️',
+    title: 'Daily 3-Bullet Reflection or Journaling',
+    gatewayVersion: 'Open notebook and write 1 win from today (2 mins)',
+    suggestedIdentityTitle: 'Creative & Musical Practitioner',
+    suggestedIdentityKey: 'creative-artist',
+    description: 'Reflect on your day, capture insights, and clear mental clutter.',
+  },
+  {
+    category: 'Coding',
+    icon: '💻',
+    title: 'Solve 1 Problem or Ship 1 Code Commit',
+    gatewayVersion: 'Open editor and read the problem prompt or git diff (2 mins)',
+    suggestedIdentityTitle: 'Systems & Software Craftsman',
+    suggestedIdentityKey: 'software-craftsman',
+    description: 'Keep your programming skills sharp and build your portfolio.',
+  },
+];
+

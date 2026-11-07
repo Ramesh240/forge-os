@@ -268,7 +268,7 @@ export const FocusTimerModal: React.FC<FocusTimerModalProps> = ({
                 className="px-5 py-2.5 rounded-xl text-white text-xs font-bold cursor-pointer"
                 style={{ background: 'var(--accent-primary)' }}
               >
-                Finish &amp; Bank (+{liveScorePreview} pts)
+                Complete Session (+{liveScorePreview} pts)
               </button>
             </div>
           </div>
@@ -305,7 +305,10 @@ export const FocusTimerModal: React.FC<FocusTimerModalProps> = ({
       ) : (
         <div className="max-w-md w-full mx-auto my-auto glass-nav rounded-3xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold theme-text">Session Summary</h3>
+            <div>
+              <h3 className="text-base font-bold theme-text">Session Complete! 🎉</h3>
+              <p className="text-xs theme-subtext">You just proved your consistency for today.</p>
+            </div>
             {pomoCyclesCompleted > 0 && (
               <span className="text-xs font-bold text-emerald-500">
                 🍅 {pomoCyclesCompleted} Pomodoro Cycles
@@ -314,14 +317,14 @@ export const FocusTimerModal: React.FC<FocusTimerModalProps> = ({
           </div>
           <input
             type="text"
-            placeholder="Challenge or bottleneck tackled (Optional)"
+            placeholder="Any obstacle or distraction you overcame? (Optional)"
             value={bottleneckNote}
             onChange={(e) => onChangeBottleneck(e.target.value)}
             className="w-full theme-input rounded-xl p-3 text-sm"
           />
           <textarea
             rows={3}
-            placeholder="Key insight or takeaway (Optional)"
+            placeholder="One quick lesson or win from this session (Optional)"
             value={insightNote}
             onChange={(e) => onChangeInsight(e.target.value)}
             className="w-full theme-input rounded-xl p-3 text-sm"
@@ -331,18 +334,18 @@ export const FocusTimerModal: React.FC<FocusTimerModalProps> = ({
               type="button"
               disabled={isSubmitting}
               onClick={() => onFinishSession(true)}
-              className="py-3 rounded-xl bg-emerald-600 text-white font-bold text-xs cursor-pointer"
+              className="py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer shadow-sm transition"
             >
-              Log 2m Save
+              Bank 2-Min Win
             </button>
             <button
               type="button"
               disabled={isSubmitting}
               onClick={() => onFinishSession(false)}
-              className="py-3 rounded-xl text-white font-bold text-xs cursor-pointer"
+              className="py-3 rounded-xl text-white font-bold text-xs cursor-pointer shadow-sm hover:opacity-90 transition"
               style={{ background: 'var(--accent-primary)' }}
             >
-              Log Focus ({sessionMins}m)
+              Log Full Focus ({sessionMins}m)
             </button>
           </div>
         </div>
