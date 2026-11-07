@@ -309,10 +309,11 @@ export async function logForgeSession(data: {
   bottleneckAttacked?: string;
   tacitInsight?: string;
 }) {
-  const habit = await prisma.habit.findUnique({
-    where: { id: data.habitId },
+  const userId = await getActiveUserId();
+  const habit = await prisma.habit.findFirst({
+    where: { id: data.habitId, identity: { userId } },
   });
-  if (!habit) throw new Error('Habit not found');
+  if (!habit) throw new Error('Habit not found or unauthorized');
 
   const votesEarned = calculateSessionScore({
     phase: data.phase,
@@ -390,6 +391,12 @@ export async function updateIdentityVector(data: {
   lifesTaskStatement: string;
   currentPhase: string;
 }) {
+  const userId = await getActiveUserId();
+  const existing = await prisma.identityVector.findFirst({
+    where: { id: data.id, userId },
+  });
+  if (!existing) throw new Error('Identity not found or unauthorized');
+
   await prisma.identityVector.update({
     where: { id: data.id },
     data: {
@@ -403,6 +410,12 @@ export async function updateIdentityVector(data: {
 }
 
 export async function deleteIdentityVector(id: string) {
+  const userId = await getActiveUserId();
+  const existing = await prisma.identityVector.findFirst({
+    where: { id, userId },
+  });
+  if (!existing) throw new Error('Identity not found or unauthorized');
+
   await prisma.habit.updateMany({
     where: { identityId: id },
     data: { anchorHabitId: null },
@@ -513,18 +526,19 @@ export async function updateStackedHabit(data: {
   dailyGoalMinutes?: number | null;
   weeklyGoalDays?: number | null;
 }) {
+  const userId = await getActiveUserId();
   const newAnchorId =
     data.anchorHabitId && data.anchorHabitId !== 'NONE' && data.anchorHabitId !== data.id
       ? data.anchorHabitId
       : null;
 
   await prisma.$transaction(async (tx) => {
-    const current = await tx.habit.findUnique({
-      where: { id: data.id },
+    const current = await tx.habit.findFirst({
+      where: { id: data.id, identity: { userId } },
       include: { nextStackedHabit: true },
     });
 
-    if (!current) throw new Error('Habit not found');
+    if (!current) throw new Error('Habit not found or unauthorized');
 
     const anchorChanged = (current.anchorHabitId ?? null) !== newAnchorId;
 
@@ -617,13 +631,14 @@ export async function verifyUserProStatusAction(): Promise<{ isPro: boolean }> {
 }
 
 export async function deleteStackedHabit(id: string) {
+  const userId = await getActiveUserId();
   await prisma.$transaction(async (tx) => {
-    const habit = await tx.habit.findUnique({
-      where: { id },
+    const habit = await tx.habit.findFirst({
+      where: { id, identity: { userId } },
       include: { nextStackedHabit: true },
     });
 
-    if (!habit) return;
+    if (!habit) throw new Error('Habit not found or unauthorized');
 
     const parentAnchorId = habit.anchorHabitId;
     const childHabitId = habit.nextStackedHabit?.id ?? null;
@@ -719,44 +734,65 @@ export async function seedSampleChainHistory() {
 }
 
 export async function runMidnightGuardrailAudit() {
-  const habits = await prisma.habit.findMany();
-  if (habits.length === 0) return { success: true, count: 0 };
-
   const todayStr = new Date().toISOString().split('T')[0];
 
-  await prisma.$transaction(
-    habits.map((h) => {
-      // If completed today, streak is safe and not missed
-      if (h.lastCompletedDate === todayStr) {
-        return prisma.habit.update({
-          where: { id: h.id },
-          data: {
-            missedYesterday: false,
-            isReboundPriority: false,
-          },
-        });
-      }
+  // High-performance set-based batch queries: scales to 100k+ habits without timeout
+  const [missedTwiceHabits, firstMissHabits, safeHabits] = await prisma.$transaction([
+    // 1. Habits NOT completed today that were already missed yesterday (missed twice -> streak broken)
+    prisma.habit.updateMany({
+      where: {
+        OR: [
+          { lastCompletedDate: { not: todayStr } },
+          { lastCompletedDate: null },
+        ],
+        missedYesterday: true,
+      },
+      data: {
+        currentStreak: 0,
+        isReboundPriority: true,
+        downscaledDaysRemaining: 3,
+      },
+    }),
 
-      // Not completed today: evaluate "Never Miss Twice"
-      const missedTwice = h.missedYesterday;
-      return prisma.habit.update({
-        where: { id: h.id },
-        data: {
-          currentStreak: missedTwice ? 0 : h.currentStreak,
-          missedYesterday: true,
-          isReboundPriority: true,
-          downscaledDaysRemaining: missedTwice ? 3 : h.downscaledDaysRemaining,
-        },
-      });
-    })
-  );
+    // 2. Habits NOT completed today that were NOT missed yesterday (first miss -> preserve streak, mark rebound)
+    prisma.habit.updateMany({
+      where: {
+        OR: [
+          { lastCompletedDate: { not: todayStr } },
+          { lastCompletedDate: null },
+        ],
+        missedYesterday: false,
+      },
+      data: {
+        missedYesterday: true,
+        isReboundPriority: true,
+      },
+    }),
+
+    // 3. Habits completed today: streak is safe, clear rebound & missed flags
+    prisma.habit.updateMany({
+      where: {
+        lastCompletedDate: todayStr,
+      },
+      data: {
+        missedYesterday: false,
+        isReboundPriority: false,
+      },
+    }),
+  ]);
 
   try {
     revalidatePath('/');
   } catch {
     // safe outside request context
   }
-  return { success: true, count: habits.length };
+
+  return {
+    success: true,
+    safeCount: safeHabits.count,
+    missedTwiceCount: missedTwiceHabits.count,
+    firstMissCount: firstMissHabits.count,
+  };
 }
 
 export async function toggleArchiveHabitAction(id: string, isArchived: boolean) {

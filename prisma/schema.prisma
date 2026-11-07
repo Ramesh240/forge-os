@@ -59,6 +59,8 @@ model Habit {
   createdAt               DateTime       @default(now())
 
   sessions            SessionLog[]
+
+  @@index([identityId])
 }
 
 model SessionLog {

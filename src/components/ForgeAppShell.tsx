@@ -27,20 +27,24 @@ import {
   toggleArchiveHabitAction,
   togglePinHabitAction,
 } from '@/app/actions';
-import ProUpgradeCard from '@/components/ProUpgradeCard';
-import FeatureWalkthrough from '@/components/FeatureWalkthrough';
+import dynamic from 'next/dynamic';
 import HabitVisualChain from '@/components/HabitVisualChain';
-import ThemePaletteModal, {
+import {
   ThemeMode,
   AccentColor,
   applyThemeAndAccentToDocument,
 } from '@/components/ThemePaletteModal';
 import QuickCreateFab from '@/components/QuickCreateFab';
 import DailyRetentionBanner from '@/components/DailyRetentionBanner';
-import HabitChainTransitionModal from '@/components/HabitChainTransitionModal';
-import { WeeklyReviewCard } from '@/components/WeeklyReviewCard';
 import { SessionHistoryFeed } from '@/components/SessionHistoryFeed';
-import { FocusTimerModal } from '@/components/modals/FocusTimerModal';
+
+// Code-split heavy modals and secondary views to shrink initial client bundle
+const ProUpgradeCard = dynamic(() => import('@/components/ProUpgradeCard'), { ssr: false });
+const FeatureWalkthrough = dynamic(() => import('@/components/FeatureWalkthrough'), { ssr: false });
+const ThemePaletteModal = dynamic(() => import('@/components/ThemePaletteModal'), { ssr: false });
+const HabitChainTransitionModal = dynamic(() => import('@/components/HabitChainTransitionModal'), { ssr: false });
+const WeeklyReviewCard = dynamic(() => import('@/components/WeeklyReviewCard').then((m) => m.WeeklyReviewCard), { ssr: false });
+const FocusTimerModal = dynamic(() => import('@/components/modals/FocusTimerModal').then((m) => m.FocusTimerModal), { ssr: false });
 import {
   HelpCircle,
   Zap,
